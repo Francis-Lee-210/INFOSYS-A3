@@ -2,7 +2,7 @@
 
 小组的A3候选比较、SAP API参考、技术练习和后续应用开发资料。
 
-**当前平台：OpenCode.ai + SAP APIs。** 四份候选文件已收集；Kevin文件归属待核对，尚未在现有资料中记录团队最终决定。此仓库初始化不表示API/MCP部署、A3应用开发或课程提交已经完成。
+**当前平台：OpenCode.ai + SAP APIs。** 四份候选文件已收集，归属已于14 October核对；尚未在现有资料中记录团队最终决定。此仓库初始化不表示API/MCP部署、A3应用开发或课程提交已经完成。
 
 ## 从哪里开始
 
@@ -14,9 +14,9 @@
 | 文件标签 | 候选业务方向 | 方案 |
 |---|---|---|
 | Francis | Strategic/Competitive | [PlanFit Navigator Core](candidates/A3_App_Candidate_Options-Francis.md) |
-| Kevin（归属待核对） | Operational | [Fibre Handoff Desk](candidates/A3_App_Candidate_Options-Kevin.md) |
+| Kevin | Organisational | [Verified Knowledge Handover](candidates/A3_App_Candidate_Options-Kevin.md) |
 | Rae | Financial | [Plan Review Snapshot](candidates/A3_App_Candidate_Options-Rae.md) |
-| Ryan | Organisational | [Verified Knowledge Handover](candidates/A3_App_Candidate_Options-Ryan.md) |
+| Ryan | Operational | [Fibre Handoff Desk](candidates/A3_App_Candidate_Options-Ryan.md) |
 
 候选正文与估算主要保留23 September的研究状态。旧Build Apps/AppGyver/Build Code实现段不可直接作为当前开发指引；适配新版API后需重新验证范围与工时。[历史平台笔记](docs/platform-history/A3_Platform_Feasibility_Notes_2026-09-23.md)只供了解当时的判断。
 
@@ -28,6 +28,7 @@ decisions/                选题工作表和组员Agent提示词
 docs/requirements/        A3相关Staff原文摘录
 docs/platform-history/    23 September旧平台研究
 references/Francis/       Francis的四项既有作业参考
+references/Kevin/         Kevin的四项既有作业参考及AS-IS/TO-BE
 resources/api/            SAP API Pool与教学EDMX
 resources/course/         Lab 7、8比较方法参考
 resources/templates/      Groupwork Management Slide
@@ -35,7 +36,7 @@ tools/                    SAP API检查脚本
 examples/purchase-order/  独立Lab参考页面
 ```
 
-[资源说明与复制记录](resources/README.md)列出来源。外部课程文件与Lab文件只复制；[Francis的A1/A2参考](references/Francis/README.md)已按授权复制入仓库；原件仍在个人工作区。未打包来源在候选文档中以文件名定位。Canvas/Ed链接需要课程权限。
+[资源说明与复制记录](resources/README.md)列出来源。外部课程文件与Lab文件只复制；[Francis](references/Francis/README.md)和[Kevin](references/Kevin/README.md)的A1/A2参考已按授权复制入仓库；原件仍在个人工作区。未打包来源在候选文档中以文件名定位。Canvas/Ed链接需要课程权限。
 
 ## 运行采购订单参考页面
 

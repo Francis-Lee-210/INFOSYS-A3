@@ -1,0 +1,59 @@
+{
+  "copied_on": "2026-10-14",
+  "timezone": "Pacific/Auckland",
+  "provided_by": "Kevin (Xuan Zeng)",
+  "files": [
+    {
+      "source_file_name": "A1-D1_Spark_Organisational (4).docx",
+      "repository_path": "references/Kevin/A1-D1/A1-D1_Spark_Organisational_Xuan_Zeng.docx",
+      "source_sha256": "6cc47366964398c91a968b13e80145f035fd5f6e11cd73ffbb84c2c31241fbd2",
+      "copied_sha256": "6cc47366964398c91a968b13e80145f035fd5f6e11cd73ffbb84c2c31241fbd2",
+      "operation": "copy_renamed",
+      "source_bytes": 1329744,
+      "repository_bytes": 1329744
+    },
+    {
+      "source_file_name": "A1-D2_Spark_Organisational (2).docx",
+      "repository_path": "references/Kevin/A1-D2/A1-D2_Spark_Organisational_Xuan_Zeng.docx",
+      "source_sha256": "6397689ccff77dc84874eadbeb70e49c6f4a0a5cf2180645d3e3394de8783b9a",
+      "copied_sha256": "6397689ccff77dc84874eadbeb70e49c6f4a0a5cf2180645d3e3394de8783b9a",
+      "operation": "copy_renamed",
+      "source_bytes": 1199718,
+      "repository_bytes": 1199718
+    },
+    {
+      "source_file_name": "A2-D1_Consulting_Proposal (4).docx",
+      "repository_path": "references/Kevin/A2-D1/A2-D1_Consulting_Proposal_Xuan_Zeng.docx",
+      "source_sha256": "d841eba9e8696a922dc226c35499a924d6b1b7ce48f1e57addce45984b1f93e7",
+      "copied_sha256": "d841eba9e8696a922dc226c35499a924d6b1b7ce48f1e57addce45984b1f93e7",
+      "operation": "copy_renamed",
+      "source_bytes": 1251458,
+      "repository_bytes": 1251458
+    },
+    {
+      "source_file_name": "A2-D2_Business_Case_Presentation_Xuan_Zeng.pptx",
+      "repository_path": "references/Kevin/A2-D2/A2-D2_Business_Case_Presentation_Xuan_Zeng.pptx",
+      "source_sha256": "dc109d7d936dc3a1db580e10482f7b049bc48e8b88a200bc6a1f736547896632",
+      "copied_sha256": "dc109d7d936dc3a1db580e10482f7b049bc48e8b88a200bc6a1f736547896632",
+      "operation": "copy_renamed",
+      "source_bytes": 203224,
+      "repository_bytes": 203224
+    },
+    {
+      "source_file_name": "A2-D1_Consulting_Proposal (4).docx",
+      "source_member": "word/media/image1.png",
+      "repository_path": "references/Kevin/models/AS-IS_Employee_Exit_and_Knowledge_Handover.png",
+      "copied_sha256": "f9260528e2a239ff1f91270d473a112e10462cc3c866fa4d4f49bea043264f06",
+      "operation": "extracted_unchanged",
+      "repository_bytes": 106407
+    },
+    {
+      "source_file_name": "A2-D1_Consulting_Proposal (4).docx",
+      "source_member": "word/media/image2.png",
+      "repository_path": "references/Kevin/models/TO-BE_Gated_Knowledge_Handover.png",
+      "copied_sha256": "1e2e46a650b863b1146737f21af64dc2dcb2b13170e0c7df68bf82df60ff9d18",
+      "operation": "extracted_unchanged",
+      "repository_bytes": 160281
+    }
+  ]
+}

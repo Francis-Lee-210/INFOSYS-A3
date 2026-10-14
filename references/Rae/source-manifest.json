@@ -1,0 +1,40 @@
+{
+  "member": "Rae Huang",
+  "domain": "Financial",
+  "copied_on": "2026-10-14",
+  "source_root_label": "INFOSYS 704 course workspace",
+  "files": [
+    {
+      "assessment": "A1-D1",
+      "source_relative_to_course_workspace": "A3/INFOSYS704_A1-A2_Rae/A1-D1_Spark_FinancialRae_Huang_xhua725.docx",
+      "repository_path": "references/Rae/A1-D1/A1-D1_Spark_FinancialRae_Huang_xhua725.docx",
+      "bytes": 1013020,
+      "sha256": "5e175177feec1cc5cd66962c76170f1b76a2a04ad5f25a321c657492d4530824",
+      "git_blob_sha": "186ffaf9dcf7d65ae6cc12547743d48a4f70734d"
+    },
+    {
+      "assessment": "A1-D2",
+      "source_relative_to_course_workspace": "A3/INFOSYS704_A1-A2_Rae/A1-D2_Spark_Financial_Rae_Huang_xhua725.docx",
+      "repository_path": "references/Rae/A1-D2/A1-D2_Spark_Financial_Rae_Huang_xhua725.docx",
+      "bytes": 1642535,
+      "sha256": "be5af78ec32591565235e07f0c004e5eb87439a871e4b00061cb9dc184ce7524",
+      "git_blob_sha": "315bb56fcd876675ca0d7bcc2f22813d3c662a9a"
+    },
+    {
+      "assessment": "A2-D1",
+      "source_relative_to_course_workspace": "A3/INFOSYS704_A1-A2_Rae/A2-D1_Consulting_Proposal_Rae_Huang_xhua725.docx",
+      "repository_path": "references/Rae/A2-D1/A2-D1_Consulting_Proposal_Rae_Huang_xhua725.docx",
+      "bytes": 1408646,
+      "sha256": "63d68be4316128058b634b1c5b1e2668eedc56957fe74797f53ce44710240d5d",
+      "git_blob_sha": "7f6509f5abf051f7ffa2403ed94762e632936ec0"
+    },
+    {
+      "assessment": "A2-D2",
+      "source_relative_to_course_workspace": "A3/INFOSYS704_A1-A2_Rae/A2-D2_Business_Case_Slides_Rae_Huang_xhua725.pptx",
+      "repository_path": "references/Rae/A2-D2/A2-D2_Business_Case_Slides_Rae_Huang_xhua725.pptx",
+      "bytes": 805691,
+      "sha256": "55e23dd25ff1cd778b41705bfa75740353407bd46faf2e3b3defa93d6890221e",
+      "git_blob_sha": "fec8d1186b88cd537e6e064a44b4b07fc33dea25"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "member": "Xuan Zeng",
+  "domain": "Organisational",
+  "copied_on": "2026-10-14",
+  "source_root_label": "INFOSYS 704 course workspace",
+  "files": [
+    {
+      "assessment": "A1-D1",
+      "source_relative_to_course_workspace": "A3/A1-D1_Spark_Organisational (4).docx",
+      "repository_path": "references/Xuan_Zeng/A1-D1/A1-D1_Spark_Organisational (4).docx",
+      "bytes": 1329744,
+      "sha256": "6cc47366964398c91a968b13e80145f035fd5f6e11cd73ffbb84c2c31241fbd2",
+      "git_blob_sha": "a6ad04e35fbc25e22617df5dbdc2c794cf1e160e"
+    },
+    {
+      "assessment": "A1-D2",
+      "source_relative_to_course_workspace": "A3/A1-D2_Spark_Organisational (2).docx",
+      "repository_path": "references/Xuan_Zeng/A1-D2/A1-D2_Spark_Organisational (2).docx",
+      "bytes": 1199718,
+      "sha256": "6397689ccff77dc84874eadbeb70e49c6f4a0a5cf2180645d3e3394de8783b9a",
+      "git_blob_sha": "5bf1650ed8c977993932c084edaf76d71435b6f2"
+    },
+    {
+      "assessment": "A2-D1",
+      "source_relative_to_course_workspace": "A3/A2-D1_Consulting_Proposal (4).docx",
+      "repository_path": "references/Xuan_Zeng/A2-D1/A2-D1_Consulting_Proposal (4).docx",
+      "bytes": 1251458,
+      "sha256": "d841eba9e8696a922dc226c35499a924d6b1b7ce48f1e57addce45984b1f93e7",
+      "git_blob_sha": "2583e3c7621e66bbbf429e1a8a4116c5fa9a4062"
+    },
+    {
+      "assessment": "A2-D2",
+      "source_relative_to_course_workspace": "A3/A2-D2_Business_Case_Presentation_Xuan_Zeng.pptx",
+      "repository_path": "references/Xuan_Zeng/A2-D2/A2-D2_Business_Case_Presentation_Xuan_Zeng.pptx",
+      "bytes": 203224,
+      "sha256": "dc109d7d936dc3a1db580e10482f7b049bc48e8b88a200bc6a1f736547896632",
+      "git_blob_sha": "4c185a990550e9a47d7889a1d7c23cff8f07a0d4"
+    }
+  ]
+}

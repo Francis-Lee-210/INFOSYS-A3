@@ -1,0 +1,40 @@
+{
+  "member": "Ryan Li",
+  "domain": "Operational",
+  "copied_on": "2026-10-14",
+  "source_root_label": "INFOSYS 704 course workspace",
+  "files": [
+    {
+      "assessment": "A1-D1",
+      "source_relative_to_course_workspace": "A1-D1/Ryan_Li_ali409_INFOSYS704_A1-D1.docx",
+      "repository_path": "references/Ryan/A1-D1/Ryan_Li_ali409_INFOSYS704_A1-D1.docx",
+      "bytes": 4448053,
+      "sha256": "f2a20e4e37b093f29616629296383e6dbbfa717148cb44ab18a2c5305716c7c8",
+      "git_blob_sha": "514725951797a51187380ec819c618f7fe3d4076"
+    },
+    {
+      "assessment": "A1-D2",
+      "source_relative_to_course_workspace": "A1-D2/Ryan_Li_ali409_INFOSYS704_A1-D2.docx",
+      "repository_path": "references/Ryan/A1-D2/Ryan_Li_ali409_INFOSYS704_A1-D2.docx",
+      "bytes": 2510196,
+      "sha256": "093427116f2edec554a0b6d4ba5e36227ae875d22b76d5ac0aeb825489998603",
+      "git_blob_sha": "0eba525f0ba21a0e9adeb1c12117b87ef3cdad23"
+    },
+    {
+      "assessment": "A2-D1",
+      "source_relative_to_course_workspace": "A2-D1/Ryan_Li_ali409_A2_D1.docx",
+      "repository_path": "references/Ryan/A2-D1/Ryan_Li_ali409_A2_D1.docx",
+      "bytes": 1023894,
+      "sha256": "27c0fd5c055aa4c0ebc4a5b9d9b8ba8b64ea9ed2a73ac749179a3aea2547192f",
+      "git_blob_sha": "f27ee1635affd398ea45ef3e4e8b2f4cde6d295c"
+    },
+    {
+      "assessment": "A2-D2",
+      "source_relative_to_course_workspace": "A2-D2/output/final/Spark_NZ_A2D2_Business_Case_Concise.pptx",
+      "repository_path": "references/Ryan/A2-D2/Spark_NZ_A2D2_Business_Case_Concise.pptx",
+      "bytes": 1386797,
+      "sha256": "3101cbc3cd891b9c47457464b8edb91fc42bd8cadc1b56619a774362699ff8cf",
+      "git_blob_sha": "c33a3f8c4f348cbc7a5d1e3a8986fb7b0168c711"
+    }
+  ]
+}

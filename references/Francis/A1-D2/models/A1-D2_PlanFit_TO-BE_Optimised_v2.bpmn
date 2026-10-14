@@ -1,0 +1,833 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_A1D2_PlanFit_Optimised_v2"
+  targetNamespace="https://www.auckland.ac.nz/infosys704/a1-d2/to-be/optimised/v2"
+  exporter="Codex"
+  exporterVersion="2.1">
+
+  <bpmn:documentation>Optimised v2 generated against the Signavio Best Practice convention catalog at https://www.modeling-guidelines.org/conventions/signavio-best-practice/. Assistance-status propagation has been separated from displayed-output recording. This is a proposed analytical model, not a validated Spark internal process.</bpmn:documentation>
+
+  <bpmn:message id="Message_Review_Request_Optimised" name="PlanFit review request"/>
+  <bpmn:message id="Message_Assigned_Output_Optimised" name="Output or assistance status"/>
+  <bpmn:message id="Message_Coded_Response_Optimised" name="Coded review response"/>
+  <bpmn:message id="Message_Status_Optimised" name="Outcome or revised output"/>
+
+  <bpmn:collaboration id="Collaboration_PlanFit_Optimised" name="PlanFit Navigator Core — Proposed TO-BE">
+    <bpmn:documentation>Proposed analytical BPMN 2.0 collaboration for Spark-branded individual-consumer mobile plan-value review. It is not a validated Spark internal process.</bpmn:documentation>
+    <bpmn:participant id="Participant_Customer_Optimised" name="Mobile customer" processRef="Process_Customer_Optimised"/>
+    <bpmn:participant id="Participant_Spark_Optimised" name="Spark" processRef="Process_Spark_Optimised"/>
+    <bpmn:messageFlow id="CMF01O" name="Review request" sourceRef="C02O" targetRef="S01O"/>
+    <bpmn:messageFlow id="CMF02O" name="Output or assistance status" sourceRef="S03O" targetRef="C03O"/>
+    <bpmn:messageFlow id="CMF03O" name="Coded response" sourceRef="C05O" targetRef="S04O"/>
+    <bpmn:messageFlow id="CMF04O" name="Outcome or revised output" sourceRef="S07O" targetRef="C06O"/>
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_Customer_Optimised" name="Mobile customer PlanFit decision cycle" isExecutable="false">
+    <bpmn:documentation>Customer-side decision cycle for the proposed PlanFit Navigator Core analytical model.</bpmn:documentation>
+    <bpmn:startEvent id="C01O" name="Review need recognised"/>
+    <bpmn:sendTask id="C02O" name="Send PlanFit review request" messageRef="Message_Review_Request_Optimised">
+      <bpmn:documentation>Send the customer&apos;s request to start a Spark-branded individual-consumer mobile plan-value review.</bpmn:documentation>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="C03O" name="Receive output or assistance status" messageRef="Message_Assigned_Output_Optimised">
+      <bpmn:documentation>Receive either the versioned output assigned to the customer&apos;s experimental arm or an assistance-required status when approved inputs are not valid and permitted.</bpmn:documentation>
+    </bpmn:receiveTask>
+    <bpmn:exclusiveGateway id="C04MO" name="Merge decision cycles"/>
+    <bpmn:userTask id="C04O" name="Review evidence and choose response">
+      <bpmn:documentation>Review the displayed evidence and choose Keep, Change, Correct, Help, Defer or Exit without hiding the no-change option.</bpmn:documentation>
+    </bpmn:userTask>
+    <bpmn:sendTask id="C05O" name="Send coded review response" messageRef="Message_Coded_Response_Optimised">
+      <bpmn:documentation>Send the selected response code while retaining the assigned arm and displayed output version.</bpmn:documentation>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="C06O" name="Receive outcome or revised output" messageRef="Message_Status_Optimised">
+      <bpmn:documentation>Receive the recorded outcome, assistance status, fulfilment status or revised output.</bpmn:documentation>
+    </bpmn:receiveTask>
+    <bpmn:exclusiveGateway id="C07O" name="Further decision required?"/>
+    <bpmn:endEvent id="C08O" name="Review closed with recorded status"/>
+    <bpmn:sequenceFlow id="CCF01O" sourceRef="C01O" targetRef="C02O"/>
+    <bpmn:sequenceFlow id="CCF02O" sourceRef="C02O" targetRef="C03O"/>
+    <bpmn:sequenceFlow id="CCF03O" sourceRef="C03O" targetRef="C04MO"/>
+    <bpmn:sequenceFlow id="CCF04MO" sourceRef="C04MO" targetRef="C04O"/>
+    <bpmn:sequenceFlow id="CCF04O" sourceRef="C04O" targetRef="C05O"/>
+    <bpmn:sequenceFlow id="CCF05O" sourceRef="C05O" targetRef="C06O"/>
+    <bpmn:sequenceFlow id="CCF06O" sourceRef="C06O" targetRef="C07O"/>
+    <bpmn:sequenceFlow id="CCF07NO" name="No" sourceRef="C07O" targetRef="C08O"/>
+    <bpmn:sequenceFlow id="CCF07YO" name="Yes — review again" sourceRef="C07O" targetRef="C04MO"/>
+  </bpmn:process>
+
+  <bpmn:process id="Process_Spark_Optimised" name="Spark PlanFit orchestration" isExecutable="false">
+    <bpmn:documentation>Spark-side orchestration for one PlanFit customer decision cycle. Daily 90-day measurement is separated into its own timer-start process so this process has one unambiguous trigger.</bpmn:documentation>
+    <bpmn:laneSet id="LaneSet_Process_Spark_Optimised">
+      <bpmn:lane id="Lane_Digital_Optimised" name="Digital experience">
+        <bpmn:flowNodeRef>S01O</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>S03O</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>S03GO</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>S04MO</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>S04O</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>S07O</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>S08O</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>S09O</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Decision_Optimised" name="PlanFit decision service">
+        <bpmn:flowNodeRef>S02O</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Response_Optimised" name="Response resolution and fulfilment">
+        <bpmn:flowNodeRef>S05O</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Analytics_Optimised" name="Analytics and governance">
+        <bpmn:flowNodeRef>S03AO</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="S01O" name="PlanFit review request received">
+      <bpmn:messageEventDefinition id="EventDef_S01O" messageRef="Message_Review_Request_Optimised"/>
+    </bpmn:startEvent>
+    <bpmn:callActivity id="S02O" name="Prepare matched PlanFit output" calledElement="Process_Output_Optimised">
+      <bpmn:documentation>Invoke the linked process that returns either a matched comparator or treatment output, or an assistance-required status when approved inputs are not valid and permitted.</bpmn:documentation>
+    </bpmn:callActivity>
+    <bpmn:sendTask id="S03O" name="Send output or assistance status" messageRef="Message_Assigned_Output_Optimised">
+      <bpmn:documentation>Send either the versioned assigned output or the assistance-required status returned by the linked preparation process.</bpmn:documentation>
+    </bpmn:sendTask>
+    <bpmn:exclusiveGateway id="S03GO" name="Assigned output displayed?"/>
+    <bpmn:serviceTask id="S03AO" name="Record displayed output version">
+      <bpmn:documentation>Record the assigned arm, output version and confirmed display event. Count R_c only after the assigned output is displayed.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="S04MO" name="Merge response cycles"/>
+    <bpmn:receiveTask id="S04O" name="Receive coded review response" messageRef="Message_Coded_Response_Optimised">
+      <bpmn:documentation>Receive the customer&apos;s coded response together with the retained assignment and displayed output version.</bpmn:documentation>
+    </bpmn:receiveTask>
+    <bpmn:callActivity id="S05O" name="Resolve customer response" calledElement="Process_Response_Optimised">
+      <bpmn:documentation>Invoke the linked response process to handle Keep, Change, Correct, Help, Defer or Exit and return a traceable status.</bpmn:documentation>
+    </bpmn:callActivity>
+    <bpmn:sendTask id="S07O" name="Send outcome or revised output" messageRef="Message_Status_Optimised">
+      <bpmn:documentation>Send the recorded outcome, fulfilment status, assistance status or revised output to the customer.</bpmn:documentation>
+    </bpmn:sendTask>
+    <bpmn:exclusiveGateway id="S08O" name="Further decision required?"/>
+    <bpmn:endEvent id="S09O" name="Journey orchestration closed"/>
+    <bpmn:sequenceFlow id="CSF01O" sourceRef="S01O" targetRef="S02O"/>
+    <bpmn:sequenceFlow id="CSF02O" sourceRef="S02O" targetRef="S03O"/>
+    <bpmn:sequenceFlow id="CSF03O" sourceRef="S03O" targetRef="S03GO"/>
+    <bpmn:sequenceFlow id="CSF03YO" name="Yes — valid output" sourceRef="S03GO" targetRef="S03AO"/>
+    <bpmn:sequenceFlow id="CSF03NO" name="No — assistance status" sourceRef="S03GO" targetRef="S04MO"/>
+    <bpmn:sequenceFlow id="CSF03AO" sourceRef="S03AO" targetRef="S04MO"/>
+    <bpmn:sequenceFlow id="CSF04MO" sourceRef="S04MO" targetRef="S04O"/>
+    <bpmn:sequenceFlow id="CSF04O" sourceRef="S04O" targetRef="S05O"/>
+    <bpmn:sequenceFlow id="CSF05O" sourceRef="S05O" targetRef="S07O"/>
+    <bpmn:sequenceFlow id="CSF07O" sourceRef="S07O" targetRef="S08O"/>
+    <bpmn:sequenceFlow id="CSF08NO" name="No" sourceRef="S08O" targetRef="S09O"/>
+    <bpmn:sequenceFlow id="CSF08YO" name="Yes — next response cycle" sourceRef="S08O" targetRef="S04MO"/>
+  </bpmn:process>
+
+  <bpmn:process id="Process_Output_Optimised" name="Prepare matched PlanFit output" isExecutable="false">
+    <bpmn:documentation>Linked child process that creates an arm-equivalent comparator or explainable treatment output while preserving assignment integrity.</bpmn:documentation>
+    <bpmn:startEvent id="O01O" name="Output requested"/>
+    <bpmn:serviceTask id="O02O" name="Validate eligibility and preserve assignment">
+      <bpmn:documentation>Validate review eligibility. Assign the H1Q arm once for a new case, retain it for correction cycles, and record N_g/R_s once.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="O03O" name="Retrieve approved review inputs">
+      <bpmn:documentation>Retrieve only the approved plan, usage, spending and purpose-limited inputs needed for the review.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="O04O" name="Inputs valid and permitted?"/>
+    <bpmn:serviceTask id="O05O" name="Return assistance-required status">
+      <bpmn:documentation>Return an assistance-required status when inputs are invalid, unavailable or outside the approved purpose.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="O10AO" name="Assistance-required status ready"/>
+    <bpmn:businessRuleTask id="O06O" name="Calculate fit and apply suitability rules">
+      <bpmn:documentation>Apply the common cost, allowance, eligibility and suitability rules to the approved inputs before presentation.</bpmn:documentation>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="O07O" name="Which assigned H1Q arm?"/>
+    <bpmn:serviceTask id="O08TO" name="Create explainable treatment output">
+      <bpmn:documentation>Add a neutral fit or no-change conclusion, visible reasons, trade-offs and uncertainty to the common information.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="O10TO" name="Treatment output ready"/>
+    <bpmn:serviceTask id="O08CO" name="Create equivalent comparator output">
+      <bpmn:documentation>Show the equivalent plan, usage and spending information without the treatment conclusion or explanation.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="O10CO" name="Comparator output ready"/>
+    <bpmn:sequenceFlow id="OF01O" sourceRef="O01O" targetRef="O02O"/>
+    <bpmn:sequenceFlow id="OF02O" sourceRef="O02O" targetRef="O03O"/>
+    <bpmn:sequenceFlow id="OF03O" sourceRef="O03O" targetRef="O04O"/>
+    <bpmn:sequenceFlow id="OF04NO" name="No" sourceRef="O04O" targetRef="O05O"/>
+    <bpmn:sequenceFlow id="OF05O" sourceRef="O05O" targetRef="O10AO"/>
+    <bpmn:sequenceFlow id="OF04YO" name="Yes" sourceRef="O04O" targetRef="O06O"/>
+    <bpmn:sequenceFlow id="OF06O" sourceRef="O06O" targetRef="O07O"/>
+    <bpmn:sequenceFlow id="OF07TO" name="Treatment" sourceRef="O07O" targetRef="O08TO"/>
+    <bpmn:sequenceFlow id="OF08TO" sourceRef="O08TO" targetRef="O10TO"/>
+    <bpmn:sequenceFlow id="OF07CO" name="Comparator" sourceRef="O07O" targetRef="O08CO"/>
+    <bpmn:sequenceFlow id="OF08CO" sourceRef="O08CO" targetRef="O10CO"/>
+  </bpmn:process>
+
+  <bpmn:process id="Process_Response_Optimised" name="Resolve customer response" isExecutable="false">
+    <bpmn:documentation>Linked child process that resolves a coded PlanFit response through explicit binary decisions and distinct final statuses.</bpmn:documentation>
+    <bpmn:startEvent id="R01O" name="Coded response received"/>
+    <bpmn:businessRuleTask id="R02O" name="Classify coded response">
+      <bpmn:documentation>Classify the immutable response code and retrieve the versioned review record that produced the displayed output.</bpmn:documentation>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="R03O" name="Help requested?"/>
+    <bpmn:userTask id="R04O" name="Resolve explanation or record safe exception">
+      <bpmn:documentation>Resolve the explanation request or record a safe assistance-required exception without inventing a customer decision.</bpmn:documentation>
+    </bpmn:userTask>
+    <bpmn:endEvent id="R05O" name="Assisted status ready"/>
+    <bpmn:exclusiveGateway id="R06O" name="Change or correction?"/>
+    <bpmn:serviceTask id="R07O" name="Record Keep, Defer or Exit outcome">
+      <bpmn:documentation>For Keep, record a suitable no-change decision. For Defer, record the reason and permitted follow-up. For Exit, invoke the approved hand-off and record the status.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="R08O" name="Final status ready"/>
+    <bpmn:exclusiveGateway id="R09O" name="Change selected?"/>
+    <bpmn:callActivity id="R10O" name="Revalidate and fulfil selected change" calledElement="Process_Fulfilment_Optimised">
+      <bpmn:documentation>Invoke the linked fulfilment process to revalidate the selected change before any fulfilment is recorded.</bpmn:documentation>
+    </bpmn:callActivity>
+    <bpmn:endEvent id="R11O" name="Fulfilment or assistance status ready"/>
+    <bpmn:callActivity id="R12O" name="Prepare matched PlanFit output" calledElement="Process_Output_Optimised">
+      <bpmn:documentation>Reuse the linked output process with corrected inputs while preserving the original arm and denominator record.</bpmn:documentation>
+    </bpmn:callActivity>
+    <bpmn:endEvent id="R13O" name="Revised output or assistance status ready"/>
+    <bpmn:sequenceFlow id="RF01O" sourceRef="R01O" targetRef="R02O"/>
+    <bpmn:sequenceFlow id="RF02O" sourceRef="R02O" targetRef="R03O"/>
+    <bpmn:sequenceFlow id="RF03YO" name="Yes — Help" sourceRef="R03O" targetRef="R04O"/>
+    <bpmn:sequenceFlow id="RF04O" sourceRef="R04O" targetRef="R05O"/>
+    <bpmn:sequenceFlow id="RF03NO" name="No" sourceRef="R03O" targetRef="R06O"/>
+    <bpmn:sequenceFlow id="RF06NO" name="No — Keep / Defer / Exit" sourceRef="R06O" targetRef="R07O"/>
+    <bpmn:sequenceFlow id="RF07O" sourceRef="R07O" targetRef="R08O"/>
+    <bpmn:sequenceFlow id="RF06YO" name="Yes" sourceRef="R06O" targetRef="R09O"/>
+    <bpmn:sequenceFlow id="RF09YO" name="Yes — Change" sourceRef="R09O" targetRef="R10O"/>
+    <bpmn:sequenceFlow id="RF10O" sourceRef="R10O" targetRef="R11O"/>
+    <bpmn:sequenceFlow id="RF09NO" name="No — Correct" sourceRef="R09O" targetRef="R12O"/>
+    <bpmn:sequenceFlow id="RF12O" sourceRef="R12O" targetRef="R13O"/>
+  </bpmn:process>
+
+  <bpmn:process id="Process_Fulfilment_Optimised" name="Revalidate and fulfil selected change" isExecutable="false">
+    <bpmn:documentation>Linked child process that revalidates eligibility and terms before recording a suitability-valid fulfilled change.</bpmn:documentation>
+    <bpmn:startEvent id="F01O" name="Change selected"/>
+    <bpmn:businessRuleTask id="F02O" name="Revalidate eligibility, terms and effective date">
+      <bpmn:documentation>Revalidate current eligibility, plan terms and effective date before fulfilment; do not rely only on the earlier display.</bpmn:documentation>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="F03O" name="Selection still valid?"/>
+    <bpmn:serviceTask id="F04O" name="Return changed-terms or assistance status">
+      <bpmn:documentation>Return the changed-terms or assistance-required status without fulfilling the original request when the selection is no longer valid.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="F06NO" name="Assistance-required status ready"/>
+    <bpmn:serviceTask id="F05O" name="Fulfil change and record valid acceptance">
+      <bpmn:documentation>Fulfil the revalidated change and record the suitability-valid acceptance, decision version and effective status.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="F06YO" name="Fulfilment status ready"/>
+    <bpmn:sequenceFlow id="FF01O" sourceRef="F01O" targetRef="F02O"/>
+    <bpmn:sequenceFlow id="FF02O" sourceRef="F02O" targetRef="F03O"/>
+    <bpmn:sequenceFlow id="FF03NO" name="No" sourceRef="F03O" targetRef="F04O"/>
+    <bpmn:sequenceFlow id="FF04O" sourceRef="F04O" targetRef="F06NO"/>
+    <bpmn:sequenceFlow id="FF03YO" name="Yes" sourceRef="F03O" targetRef="F05O"/>
+    <bpmn:sequenceFlow id="FF05O" sourceRef="F05O" targetRef="F06YO"/>
+  </bpmn:process>
+
+  <bpmn:process id="Process_Measurement_Optimised" name="Measure 90-day outcomes and guardrails" isExecutable="false">
+    <bpmn:documentation>Independent timer-start supporting process for daily measurement of matured assigned cohorts, including non-completers.</bpmn:documentation>
+    <bpmn:startEvent id="M01O" name="Daily matured-cohort cycle">
+      <bpmn:timerEventDefinition id="EventDef_M01O">
+        <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">R/P1D</bpmn:timeCycle>
+      </bpmn:timerEventDefinition>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="M02O" name="Extract all eligible assignments">
+      <bpmn:documentation>Extract every eligible assignment in the matured cohort, including assigned customers who did not complete a review.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="M03O" name="Join outcome and guardrail events">
+      <bpmn:documentation>Join assignment, display, response, fulfilment, churn and approved guardrail events using traceable identifiers.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:businessRuleTask id="M04O" name="Apply analysis and data-quality rules">
+      <bpmn:documentation>Apply the approved exclusions, censoring, missingness and data-quality rules before outcome calculation.</bpmn:documentation>
+    </bpmn:businessRuleTask>
+    <bpmn:serviceTask id="M05O" name="Calculate ITT outcomes and guardrails">
+      <bpmn:documentation>Calculate intention-to-treat churn, completion, valid acceptance and approved guardrails with uncertainty.</bpmn:documentation>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="M06O" name="Material integrity or suitability exception?"/>
+    <bpmn:userTask id="M07O" name="Pause, investigate or redesign">
+      <bpmn:documentation>Pause the decision and investigate the exception; correct the analysis or redesign the proposed intervention before resuming when a material integrity, privacy or suitability exception is detected.</bpmn:documentation>
+    </bpmn:userTask>
+    <bpmn:endEvent id="M08YO" name="Governance action recorded"/>
+    <bpmn:endEvent id="M08NO" name="Measurement cycle complete"/>
+    <bpmn:sequenceFlow id="MF01O" sourceRef="M01O" targetRef="M02O"/>
+    <bpmn:sequenceFlow id="MF02O" sourceRef="M02O" targetRef="M03O"/>
+    <bpmn:sequenceFlow id="MF03O" sourceRef="M03O" targetRef="M04O"/>
+    <bpmn:sequenceFlow id="MF04O" sourceRef="M04O" targetRef="M05O"/>
+    <bpmn:sequenceFlow id="MF05O" sourceRef="M05O" targetRef="M06O"/>
+    <bpmn:sequenceFlow id="MF06YO" name="Yes" sourceRef="M06O" targetRef="M07O"/>
+    <bpmn:sequenceFlow id="MF07O" sourceRef="M07O" targetRef="M08YO"/>
+    <bpmn:sequenceFlow id="MF06NO" name="No" sourceRef="M06O" targetRef="M08NO"/>
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="Diagram_PlanFit_Optimised_Main" name="PlanFit Navigator Core — Proposed TO-BE">
+    <bpmndi:BPMNPlane id="Plane_Diagram_PlanFit_Optimised_Main" bpmnElement="Collaboration_PlanFit_Optimised">
+      <bpmndi:BPMNShape id="Shape_Participant_Customer_Optimised" bpmnElement="Participant_Customer_Optimised" isHorizontal="true">
+        <dc:Bounds x="40" y="40" width="1600" height="210"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Participant_Spark_Optimised" bpmnElement="Participant_Spark_Optimised" isHorizontal="true">
+        <dc:Bounds x="40" y="300" width="1600" height="600"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Digital_Optimised" bpmnElement="Lane_Digital_Optimised" isHorizontal="true">
+        <dc:Bounds x="70" y="300" width="1570" height="170"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Decision_Optimised" bpmnElement="Lane_Decision_Optimised" isHorizontal="true">
+        <dc:Bounds x="70" y="470" width="1570" height="130"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Response_Optimised" bpmnElement="Lane_Response_Optimised" isHorizontal="true">
+        <dc:Bounds x="70" y="600" width="1570" height="130"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Analytics_Optimised" bpmnElement="Lane_Analytics_Optimised" isHorizontal="true">
+        <dc:Bounds x="70" y="730" width="1570" height="170"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_C01O" bpmnElement="C01O">
+        <dc:Bounds x="80" y="127" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_C02O" bpmnElement="C02O">
+        <dc:Bounds x="170" y="110" width="120" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_C03O" bpmnElement="C03O">
+        <dc:Bounds x="425" y="110" width="150" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_C04MO" bpmnElement="C04MO" isMarkerVisible="true">
+        <dc:Bounds x="655" y="120" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_C04O" bpmnElement="C04O">
+        <dc:Bounds x="755" y="105" width="150" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_C05O" bpmnElement="C05O">
+        <dc:Bounds x="990" y="110" width="120" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_C06O" bpmnElement="C06O">
+        <dc:Bounds x="1230" y="110" width="140" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_C07O" bpmnElement="C07O" isMarkerVisible="true">
+        <dc:Bounds x="1455" y="120" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_C08O" bpmnElement="C08O">
+        <dc:Bounds x="1560" y="127" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_S01O" bpmnElement="S01O">
+        <dc:Bounds x="212" y="347" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_S02O" bpmnElement="S02O" isExpanded="false">
+        <dc:Bounds x="305" y="495" width="150" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_S03O" bpmnElement="S03O">
+        <dc:Bounds x="430" y="330" width="140" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_S03GO" bpmnElement="S03GO" isMarkerVisible="true">
+        <dc:Bounds x="600" y="340" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_S03AO" bpmnElement="S03AO">
+        <dc:Bounds x="650" y="775" width="150" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_S04MO" bpmnElement="S04MO" isMarkerVisible="true">
+        <dc:Bounds x="870" y="340" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_S04O" bpmnElement="S04O">
+        <dc:Bounds x="990" y="330" width="120" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_S05O" bpmnElement="S05O" isExpanded="false">
+        <dc:Bounds x="1000" y="625" width="170" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_S07O" bpmnElement="S07O">
+        <dc:Bounds x="1230" y="330" width="140" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_S08O" bpmnElement="S08O" isMarkerVisible="true">
+        <dc:Bounds x="1455" y="340" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_S09O" bpmnElement="S09O">
+        <dc:Bounds x="1560" y="347" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Edge_CCF01O" bpmnElement="CCF01O">
+        <di:waypoint x="116" y="145"/>
+        <di:waypoint x="170" y="145"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CCF02O" bpmnElement="CCF02O">
+        <di:waypoint x="290" y="145"/>
+        <di:waypoint x="425" y="145"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CCF03O" bpmnElement="CCF03O">
+        <di:waypoint x="575" y="145"/>
+        <di:waypoint x="655" y="145"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CCF04MO" bpmnElement="CCF04MO">
+        <di:waypoint x="705" y="145"/>
+        <di:waypoint x="755" y="145"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CCF04O" bpmnElement="CCF04O">
+        <di:waypoint x="905" y="145"/>
+        <di:waypoint x="990" y="145"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CCF05O" bpmnElement="CCF05O">
+        <di:waypoint x="1110" y="145"/>
+        <di:waypoint x="1230" y="145"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CCF06O" bpmnElement="CCF06O">
+        <di:waypoint x="1370" y="145"/>
+        <di:waypoint x="1455" y="145"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CCF07NO" bpmnElement="CCF07NO">
+        <di:waypoint x="1505" y="145"/>
+        <di:waypoint x="1560" y="145"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1514" y="118" width="34" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CCF07YO" bpmnElement="CCF07YO">
+        <di:waypoint x="1480" y="120"/>
+        <di:waypoint x="1480" y="70"/>
+        <di:waypoint x="680" y="70"/>
+        <di:waypoint x="680" y="120"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1325" y="48" width="125" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF01O" bpmnElement="CSF01O">
+        <di:waypoint x="248" y="365"/>
+        <di:waypoint x="275" y="365"/>
+        <di:waypoint x="275" y="535"/>
+        <di:waypoint x="305" y="535"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF02O" bpmnElement="CSF02O">
+        <di:waypoint x="380" y="495"/>
+        <di:waypoint x="380" y="440"/>
+        <di:waypoint x="500" y="440"/>
+        <di:waypoint x="500" y="400"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF03O" bpmnElement="CSF03O">
+        <di:waypoint x="570" y="365"/>
+        <di:waypoint x="600" y="365"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF03YO" bpmnElement="CSF03YO">
+        <di:waypoint x="625" y="390"/>
+        <di:waypoint x="625" y="815"/>
+        <di:waypoint x="650" y="815"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="515" y="645" width="100" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF03NO" bpmnElement="CSF03NO">
+        <di:waypoint x="650" y="365"/>
+        <di:waypoint x="820" y="365"/>
+        <di:waypoint x="820" y="320"/>
+        <di:waypoint x="895" y="320"/>
+        <di:waypoint x="895" y="340"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="665" y="337" width="145" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF03AO" bpmnElement="CSF03AO">
+        <di:waypoint x="725" y="775"/>
+        <di:waypoint x="725" y="450"/>
+        <di:waypoint x="870" y="450"/>
+        <di:waypoint x="870" y="365"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF04MO" bpmnElement="CSF04MO">
+        <di:waypoint x="920" y="365"/>
+        <di:waypoint x="990" y="365"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF04O" bpmnElement="CSF04O">
+        <di:waypoint x="1050" y="400"/>
+        <di:waypoint x="1050" y="450"/>
+        <di:waypoint x="940" y="450"/>
+        <di:waypoint x="940" y="665"/>
+        <di:waypoint x="1000" y="665"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF05O" bpmnElement="CSF05O">
+        <di:waypoint x="1170" y="665"/>
+        <di:waypoint x="1300" y="665"/>
+        <di:waypoint x="1300" y="400"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF07O" bpmnElement="CSF07O">
+        <di:waypoint x="1370" y="365"/>
+        <di:waypoint x="1455" y="365"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF08NO" bpmnElement="CSF08NO">
+        <di:waypoint x="1505" y="365"/>
+        <di:waypoint x="1560" y="365"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1514" y="338" width="34" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CSF08YO" bpmnElement="CSF08YO">
+        <di:waypoint x="1480" y="390"/>
+        <di:waypoint x="1480" y="880"/>
+        <di:waypoint x="895" y="880"/>
+        <di:waypoint x="895" y="390"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1270" y="852" width="160" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CMF01O" bpmnElement="CMF01O">
+        <di:waypoint x="230" y="180"/>
+        <di:waypoint x="230" y="347"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="240" y="248" width="92" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CMF02O" bpmnElement="CMF02O">
+        <di:waypoint x="500" y="330"/>
+        <di:waypoint x="500" y="180"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="510" y="235" width="150" height="32"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CMF03O" bpmnElement="CMF03O">
+        <di:waypoint x="1050" y="180"/>
+        <di:waypoint x="1050" y="330"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1060" y="245" width="100" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_CMF04O" bpmnElement="CMF04O">
+        <di:waypoint x="1300" y="330"/>
+        <di:waypoint x="1300" y="180"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1310" y="238" width="142" height="32"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+  <bpmndi:BPMNDiagram id="Diagram_Output_Optimised" name="Prepare matched PlanFit output">
+    <bpmndi:BPMNPlane id="Plane_Diagram_Output_Optimised" bpmnElement="Process_Output_Optimised">
+      <bpmndi:BPMNShape id="Shape_O01O" bpmnElement="O01O">
+        <dc:Bounds x="30" y="197" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_O02O" bpmnElement="O02O">
+        <dc:Bounds x="110" y="180" width="180" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_O03O" bpmnElement="O03O">
+        <dc:Bounds x="390" y="180" width="180" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_O04O" bpmnElement="O04O" isMarkerVisible="true">
+        <dc:Bounds x="660" y="190" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_O05O" bpmnElement="O05O">
+        <dc:Bounds x="800" y="300" width="200" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_O10AO" bpmnElement="O10AO">
+        <dc:Bounds x="1110" y="317" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_O06O" bpmnElement="O06O">
+        <dc:Bounds x="800" y="80" width="200" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_O07O" bpmnElement="O07O" isMarkerVisible="true">
+        <dc:Bounds x="1080" y="95" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_O08TO" bpmnElement="O08TO">
+        <dc:Bounds x="1220" y="30" width="180" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_O10TO" bpmnElement="O10TO">
+        <dc:Bounds x="1500" y="47" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_O08CO" bpmnElement="O08CO">
+        <dc:Bounds x="1220" y="150" width="180" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_O10CO" bpmnElement="O10CO">
+        <dc:Bounds x="1500" y="167" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Edge_OF01O" bpmnElement="OF01O">
+        <di:waypoint x="66" y="215"/>
+        <di:waypoint x="110" y="215"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_OF02O" bpmnElement="OF02O">
+        <di:waypoint x="290" y="215"/>
+        <di:waypoint x="390" y="215"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_OF03O" bpmnElement="OF03O">
+        <di:waypoint x="570" y="215"/>
+        <di:waypoint x="660" y="215"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_OF04NO" bpmnElement="OF04NO">
+        <di:waypoint x="685" y="240"/>
+        <di:waypoint x="685" y="335"/>
+        <di:waypoint x="800" y="335"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="694" y="270" width="34" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_OF05O" bpmnElement="OF05O">
+        <di:waypoint x="1000" y="335"/>
+        <di:waypoint x="1110" y="335"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_OF04YO" bpmnElement="OF04YO">
+        <di:waypoint x="685" y="190"/>
+        <di:waypoint x="685" y="120"/>
+        <di:waypoint x="800" y="120"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="694" y="145" width="34" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_OF06O" bpmnElement="OF06O">
+        <di:waypoint x="1000" y="120"/>
+        <di:waypoint x="1080" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_OF07TO" bpmnElement="OF07TO">
+        <di:waypoint x="1105" y="95"/>
+        <di:waypoint x="1105" y="65"/>
+        <di:waypoint x="1220" y="65"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1120" y="42" width="74" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_OF08TO" bpmnElement="OF08TO">
+        <di:waypoint x="1400" y="65"/>
+        <di:waypoint x="1500" y="65"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_OF07CO" bpmnElement="OF07CO">
+        <di:waypoint x="1105" y="145"/>
+        <di:waypoint x="1105" y="185"/>
+        <di:waypoint x="1220" y="185"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1118" y="190" width="80" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_OF08CO" bpmnElement="OF08CO">
+        <di:waypoint x="1400" y="185"/>
+        <di:waypoint x="1500" y="185"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+  <bpmndi:BPMNDiagram id="Diagram_Response_Optimised" name="Resolve customer response">
+    <bpmndi:BPMNPlane id="Plane_Diagram_Response_Optimised" bpmnElement="Process_Response_Optimised">
+      <bpmndi:BPMNShape id="Shape_R01O" bpmnElement="R01O">
+        <dc:Bounds x="30" y="277" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R02O" bpmnElement="R02O">
+        <dc:Bounds x="120" y="260" width="190" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R03O" bpmnElement="R03O" isMarkerVisible="true">
+        <dc:Bounds x="380" y="270" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R04O" bpmnElement="R04O">
+        <dc:Bounds x="520" y="410" width="200" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R05O" bpmnElement="R05O">
+        <dc:Bounds x="820" y="427" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R06O" bpmnElement="R06O" isMarkerVisible="true">
+        <dc:Bounds x="520" y="270" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R07O" bpmnElement="R07O">
+        <dc:Bounds x="660" y="260" width="200" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R08O" bpmnElement="R08O">
+        <dc:Bounds x="950" y="277" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R09O" bpmnElement="R09O" isMarkerVisible="true">
+        <dc:Bounds x="660" y="100" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R10O" bpmnElement="R10O" isExpanded="false">
+        <dc:Bounds x="810" y="35" width="220" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R11O" bpmnElement="R11O">
+        <dc:Bounds x="1140" y="57" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R12O" bpmnElement="R12O" isExpanded="false">
+        <dc:Bounds x="810" y="175" width="220" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_R13O" bpmnElement="R13O">
+        <dc:Bounds x="1140" y="197" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Edge_RF01O" bpmnElement="RF01O">
+        <di:waypoint x="66" y="295"/>
+        <di:waypoint x="120" y="295"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_RF02O" bpmnElement="RF02O">
+        <di:waypoint x="310" y="295"/>
+        <di:waypoint x="380" y="295"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_RF03YO" bpmnElement="RF03YO">
+        <di:waypoint x="405" y="320"/>
+        <di:waypoint x="405" y="445"/>
+        <di:waypoint x="520" y="445"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="414" y="350" width="78" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_RF04O" bpmnElement="RF04O">
+        <di:waypoint x="720" y="445"/>
+        <di:waypoint x="820" y="445"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_RF03NO" bpmnElement="RF03NO">
+        <di:waypoint x="430" y="295"/>
+        <di:waypoint x="520" y="295"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="458" y="270" width="34" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_RF06NO" bpmnElement="RF06NO">
+        <di:waypoint x="570" y="295"/>
+        <di:waypoint x="660" y="295"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="575" y="302" width="82" height="32"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_RF07O" bpmnElement="RF07O">
+        <di:waypoint x="860" y="295"/>
+        <di:waypoint x="950" y="295"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_RF06YO" bpmnElement="RF06YO">
+        <di:waypoint x="545" y="270"/>
+        <di:waypoint x="545" y="125"/>
+        <di:waypoint x="660" y="125"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="554" y="185" width="34" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_RF09YO" bpmnElement="RF09YO">
+        <di:waypoint x="685" y="100"/>
+        <di:waypoint x="685" y="75"/>
+        <di:waypoint x="810" y="75"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="704" y="50" width="86" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_RF10O" bpmnElement="RF10O">
+        <di:waypoint x="1030" y="75"/>
+        <di:waypoint x="1140" y="75"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_RF09NO" bpmnElement="RF09NO">
+        <di:waypoint x="685" y="150"/>
+        <di:waypoint x="685" y="215"/>
+        <di:waypoint x="810" y="215"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="700" y="220" width="82" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_RF12O" bpmnElement="RF12O">
+        <di:waypoint x="1030" y="215"/>
+        <di:waypoint x="1140" y="215"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+  <bpmndi:BPMNDiagram id="Diagram_Fulfilment_Optimised" name="Revalidate and fulfil selected change">
+    <bpmndi:BPMNPlane id="Plane_Diagram_Fulfilment_Optimised" bpmnElement="Process_Fulfilment_Optimised">
+      <bpmndi:BPMNShape id="Shape_F01O" bpmnElement="F01O">
+        <dc:Bounds x="30" y="182" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_F02O" bpmnElement="F02O">
+        <dc:Bounds x="130" y="165" width="210" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_F03O" bpmnElement="F03O" isMarkerVisible="true">
+        <dc:Bounds x="450" y="175" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_F04O" bpmnElement="F04O">
+        <dc:Bounds x="590" y="270" width="220" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_F06NO" bpmnElement="F06NO">
+        <dc:Bounds x="920" y="287" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_F05O" bpmnElement="F05O">
+        <dc:Bounds x="590" y="80" width="220" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_F06YO" bpmnElement="F06YO">
+        <dc:Bounds x="920" y="97" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Edge_FF01O" bpmnElement="FF01O">
+        <di:waypoint x="66" y="200"/>
+        <di:waypoint x="130" y="200"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_FF02O" bpmnElement="FF02O">
+        <di:waypoint x="340" y="200"/>
+        <di:waypoint x="450" y="200"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_FF03NO" bpmnElement="FF03NO">
+        <di:waypoint x="475" y="225"/>
+        <di:waypoint x="475" y="305"/>
+        <di:waypoint x="590" y="305"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="484" y="250" width="34" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_FF04O" bpmnElement="FF04O">
+        <di:waypoint x="810" y="305"/>
+        <di:waypoint x="920" y="305"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_FF03YO" bpmnElement="FF03YO">
+        <di:waypoint x="475" y="175"/>
+        <di:waypoint x="475" y="115"/>
+        <di:waypoint x="590" y="115"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="484" y="137" width="34" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_FF05O" bpmnElement="FF05O">
+        <di:waypoint x="810" y="115"/>
+        <di:waypoint x="920" y="115"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+  <bpmndi:BPMNDiagram id="Diagram_Measurement_Optimised" name="Measure 90-day outcomes and guardrails">
+    <bpmndi:BPMNPlane id="Plane_Diagram_Measurement_Optimised" bpmnElement="Process_Measurement_Optimised">
+      <bpmndi:BPMNShape id="Shape_M01O" bpmnElement="M01O">
+        <dc:Bounds x="30" y="192" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_M02O" bpmnElement="M02O">
+        <dc:Bounds x="100" y="175" width="140" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_M03O" bpmnElement="M03O">
+        <dc:Bounds x="340" y="175" width="140" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_M04O" bpmnElement="M04O">
+        <dc:Bounds x="580" y="175" width="140" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_M05O" bpmnElement="M05O">
+        <dc:Bounds x="820" y="175" width="140" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_M06O" bpmnElement="M06O" isMarkerVisible="true">
+        <dc:Bounds x="1060" y="185" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_M07O" bpmnElement="M07O">
+        <dc:Bounds x="1210" y="65" width="180" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_M08YO" bpmnElement="M08YO">
+        <dc:Bounds x="1480" y="82" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_M08NO" bpmnElement="M08NO">
+        <dc:Bounds x="1210" y="192" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Edge_MF01O" bpmnElement="MF01O">
+        <di:waypoint x="66" y="210"/>
+        <di:waypoint x="100" y="210"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_MF02O" bpmnElement="MF02O">
+        <di:waypoint x="240" y="210"/>
+        <di:waypoint x="340" y="210"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_MF03O" bpmnElement="MF03O">
+        <di:waypoint x="480" y="210"/>
+        <di:waypoint x="580" y="210"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_MF04O" bpmnElement="MF04O">
+        <di:waypoint x="720" y="210"/>
+        <di:waypoint x="820" y="210"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_MF05O" bpmnElement="MF05O">
+        <di:waypoint x="960" y="210"/>
+        <di:waypoint x="1060" y="210"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_MF06YO" bpmnElement="MF06YO">
+        <di:waypoint x="1085" y="185"/>
+        <di:waypoint x="1085" y="100"/>
+        <di:waypoint x="1210" y="100"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1094" y="125" width="34" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_MF07O" bpmnElement="MF07O">
+        <di:waypoint x="1390" y="100"/>
+        <di:waypoint x="1480" y="100"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_MF06NO" bpmnElement="MF06NO">
+        <di:waypoint x="1110" y="210"/>
+        <di:waypoint x="1210" y="210"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1140" y="185" width="34" height="18"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

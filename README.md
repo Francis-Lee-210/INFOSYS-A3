@@ -27,6 +27,7 @@ candidates/               四份个人候选方案
 decisions/                选题工作表和组员Agent提示词
 docs/requirements/        A3相关Staff原文摘录
 docs/platform-history/    23 September旧平台研究
+references/Francis/       Francis的四项既有作业参考
 resources/api/            SAP API Pool与教学EDMX
 resources/course/         Lab 7、8比较方法参考
 resources/templates/      Groupwork Management Slide
@@ -34,7 +35,7 @@ tools/                    SAP API检查脚本
 examples/purchase-order/  独立Lab参考页面
 ```
 
-[资源说明与复制记录](resources/README.md)列出来源。外部课程文件与Lab文件只复制；个人A1/A2和访谈原文保留在各自工作区，候选文档内以文件名定位。Canvas/Ed链接需要课程权限。
+[资源说明与复制记录](resources/README.md)列出来源。外部课程文件与Lab文件只复制；[Francis的A1/A2参考](references/Francis/README.md)已按授权复制入仓库；原件仍在个人工作区。未打包来源在候选文档中以文件名定位。Canvas/Ed链接需要课程权限。
 
 ## 运行采购订单参考页面
 

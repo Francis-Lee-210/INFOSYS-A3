@@ -1,0 +1,240 @@
+{
+  "copied_on": "2026-10-14",
+  "timezone": "Pacific/Auckland",
+  "files": [
+    {
+      "source_in_course_workspace": "03-Assignment/A1-D1/A1-D1 Francis Lee-tli174.docx",
+      "repository_path": "references/Francis/A1-D1/A1-D1 Francis Lee-tli174.docx",
+      "source_sha256": "72cb15b0f859e4256a2d3f472c5497f1f1f8c1a754c90c7030dfeee82fa97f98",
+      "copied_sha256": "72cb15b0f859e4256a2d3f472c5497f1f1f8c1a754c90c7030dfeee82fa97f98",
+      "operation": "copy",
+      "source_bytes": 4135452,
+      "repository_bytes": 4135452
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A1-D2/Submission/A1-D2_Submission_Draft_2026-08-28.docx",
+      "repository_path": "references/Francis/A1-D2/A1-D2_Submission_Draft_2026-08-28.docx",
+      "source_sha256": "185286411caa82f9a49a620c2d3b81f7aca5f87c0d8bab8aee7e059b26db5bf4",
+      "copied_sha256": "185286411caa82f9a49a620c2d3b81f7aca5f87c0d8bab8aee7e059b26db5bf4",
+      "operation": "copy",
+      "source_bytes": 1563517,
+      "repository_bytes": 1563517
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A1-D2/Drafts/A1-D2_Submission_Content_Frozen_2026-08-24.md",
+      "repository_path": "references/Francis/A1-D2/A1-D2_Submission_Content_Frozen_2026-08-24.md",
+      "source_sha256": "cde1673735efe35eca12ec61d2c849af10479f7f1c3ea727aa31f0e317b0ac28",
+      "copied_sha256": "cde1673735efe35eca12ec61d2c849af10479f7f1c3ea727aa31f0e317b0ac28",
+      "operation": "copy",
+      "source_bytes": 45155,
+      "repository_bytes": 45155
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A1-D2/Materials/Signavio/A1-D2_Revised_AS-IS.bpmn",
+      "repository_path": "references/Francis/A1-D2/models/A1-D2_Revised_AS-IS.bpmn",
+      "source_sha256": "cae9fb22bb856b929d6ea0066d29b72c91a59b979e2b4bd0bac40c6b9466e59d",
+      "copied_sha256": "cae9fb22bb856b929d6ea0066d29b72c91a59b979e2b4bd0bac40c6b9466e59d",
+      "operation": "copy",
+      "source_bytes": 17718,
+      "repository_bytes": 17718
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A1-D2/Materials/Signavio/A1-D2_PlanFit_TO-BE_Optimised_v2.bpmn",
+      "repository_path": "references/Francis/A1-D2/models/A1-D2_PlanFit_TO-BE_Optimised_v2.bpmn",
+      "source_sha256": "f031bfb68f190e48bfe91b39e3f89588d7cfd585271a4b297fef7eead7f3da5f",
+      "copied_sha256": "f031bfb68f190e48bfe91b39e3f89588d7cfd585271a4b297fef7eead7f3da5f",
+      "operation": "copy",
+      "source_bytes": 46432,
+      "repository_bytes": 46432
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A1-D2/Figures/SAP Signavio/Prepare matched PlanFit output.svg",
+      "repository_path": "references/Francis/A1-D2/models/SVG/Prepare matched PlanFit output.svg",
+      "source_sha256": "b3e7afd37aad4ce3d9172054e62d4439d89f06c38493d80294b34ac5fe2d79ef",
+      "copied_sha256": "b3e7afd37aad4ce3d9172054e62d4439d89f06c38493d80294b34ac5fe2d79ef",
+      "operation": "copy",
+      "source_bytes": 56709,
+      "repository_bytes": 56709
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A1-D2/Figures/SAP Signavio/Spark Consumer Mobile Plan-Value Review — Revised AS-IS.svg",
+      "repository_path": "references/Francis/A1-D2/models/SVG/Spark Consumer Mobile Plan-Value Review — Revised AS-IS.svg",
+      "source_sha256": "ed2f16336da9b5e35bebb668de5943481f1efac2d4ec33318228faac1dd09d5a",
+      "copied_sha256": "ed2f16336da9b5e35bebb668de5943481f1efac2d4ec33318228faac1dd09d5a",
+      "operation": "copy",
+      "source_bytes": 121729,
+      "repository_bytes": 121729
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A1-D2/Figures/SAP Signavio/PlanFit Navigator Core — Proposed TO-BE.svg",
+      "repository_path": "references/Francis/A1-D2/models/SVG/PlanFit Navigator Core — Proposed TO-BE.svg",
+      "source_sha256": "15a12b10bab0d9c242b9b37ac14296ae64793b66efed49e8d9b402a8a03089aa",
+      "copied_sha256": "15a12b10bab0d9c242b9b37ac14296ae64793b66efed49e8d9b402a8a03089aa",
+      "operation": "copy",
+      "source_bytes": 117229,
+      "repository_bytes": 117229
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A1-D2/Figures/SAP Signavio/Revalidate and fulfil selected change.svg",
+      "repository_path": "references/Francis/A1-D2/models/SVG/Revalidate and fulfil selected change.svg",
+      "source_sha256": "805ffcc911773e4b732b6c7ac5025fd8307f4ba103b2a0494fd1bc7c2edec374",
+      "copied_sha256": "805ffcc911773e4b732b6c7ac5025fd8307f4ba103b2a0494fd1bc7c2edec374",
+      "operation": "copy",
+      "source_bytes": 31036,
+      "repository_bytes": 31036
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A1-D2/Figures/SAP Signavio/Measure 90-day outcomes and guardrails.svg",
+      "repository_path": "references/Francis/A1-D2/models/SVG/Measure 90-day outcomes and guardrails.svg",
+      "source_sha256": "80f0728c85c729d8779f42efddf41a12062d5a04914023030d92206b6cf04a29",
+      "copied_sha256": "80f0728c85c729d8779f42efddf41a12062d5a04914023030d92206b6cf04a29",
+      "operation": "copy",
+      "source_bytes": 42873,
+      "repository_bytes": 42873
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A1-D2/Figures/SAP Signavio/Resolve customer response.svg",
+      "repository_path": "references/Francis/A1-D2/models/SVG/Resolve customer response.svg",
+      "source_sha256": "b515691dc0a3e576c903a2f1d580b301136e148ee4cb683c303a452bc5ee027b",
+      "copied_sha256": "b515691dc0a3e576c903a2f1d580b301136e148ee4cb683c303a452bc5ee027b",
+      "operation": "copy",
+      "source_bytes": 57607,
+      "repository_bytes": 57607
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D1/Submission/A2-D1_Consulting_Proposal_Francis_Lee_tli174_2026-09-18.docx",
+      "repository_path": "references/Francis/A2-D1/A2-D1_Consulting_Proposal_Francis_Lee_tli174_2026-09-18.docx",
+      "source_sha256": "0e25f4fe836d56f8297b3a6aa86779d3ec58f7c16c9729d9e7f693f678b63435",
+      "copied_sha256": "0e25f4fe836d56f8297b3a6aa86779d3ec58f7c16c9729d9e7f693f678b63435",
+      "operation": "copy",
+      "source_bytes": 6487380,
+      "repository_bytes": 6487380
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D1/Drafts/A2-D1_Submission_Content_Draft_2026-09-05.md",
+      "repository_path": "references/Francis/A2-D1/A2-D1_Submission_Content_Draft_2026-09-05.md",
+      "source_sha256": "eaa8bd6e855ced96cf7900e27dc3ce03a218849e5d49ff660c817beb689dd0c7",
+      "copied_sha256": "db737ac31ad9e96a3b17aa7aae94ae034a1b82063ae7dd0d0897afc8c040df7e",
+      "operation": "copy; Markdown image paths made relative; prose unchanged",
+      "source_bytes": 72273,
+      "repository_bytes": 71949
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D1/Supporting/A2-D1_Implementation_and_Value_Model.xlsx",
+      "repository_path": "references/Francis/A2-D1/A2-D1_Implementation_and_Value_Model.xlsx",
+      "source_sha256": "b5bf439332d63f9fd72efc6fb8b6e00d9d1d85e55b418820e281fe370a5de189",
+      "copied_sha256": "b5bf439332d63f9fd72efc6fb8b6e00d9d1d85e55b418820e281fe370a5de189",
+      "operation": "copy",
+      "source_bytes": 57336,
+      "repository_bytes": 57336
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D2/Submission/A2-D2_PlanFit_Executive_2026-09-25.pptx",
+      "repository_path": "references/Francis/A2-D2/A2-D2_PlanFit_Executive_2026-09-25.pptx",
+      "source_sha256": "71149db3ea3285cf0b06cfdfa85310c55e58c547844f15f4d17894561fd13017",
+      "copied_sha256": "71149db3ea3285cf0b06cfdfa85310c55e58c547844f15f4d17894561fd13017",
+      "operation": "copy",
+      "source_bytes": 97433,
+      "repository_bytes": 97433
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D2/Submission/A2-D2_PlanFit_Executive_2026-09-25.pdf",
+      "repository_path": "references/Francis/A2-D2/A2-D2_PlanFit_Executive_2026-09-25.pdf",
+      "source_sha256": "d17b9886a4835a262388f5b318bc1122c078d7781eac5c83862c06242f8dad6a",
+      "copied_sha256": "d17b9886a4835a262388f5b318bc1122c078d7781eac5c83862c06242f8dad6a",
+      "operation": "copy",
+      "source_bytes": 145486,
+      "repository_bytes": 145486
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D2/Submission/A2-D2_Recording_Script_2026-09-05.md",
+      "repository_path": "references/Francis/A2-D2/A2-D2_Recording_Script_2026-09-05.md",
+      "source_sha256": "c7c09e2c956a0c65938ca9ab3aea0901a28cbcafe5f13ce8ba09ffc3d61716e0",
+      "copied_sha256": "c7c09e2c956a0c65938ca9ab3aea0901a28cbcafe5f13ce8ba09ffc3d61716e0",
+      "operation": "copy",
+      "source_bytes": 6723,
+      "repository_bytes": 6723
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D2/Submission/A2-D2_Presentation_Sources_2026-09-25.md",
+      "repository_path": "references/Francis/A2-D2/A2-D2_Presentation_Sources_2026-09-25.md",
+      "source_sha256": "acb243803846c96e681891ed67c937b2a312a78594bcb213090744c13384936b",
+      "copied_sha256": "acb243803846c96e681891ed67c937b2a312a78594bcb213090744c13384936b",
+      "operation": "copy",
+      "source_bytes": 7087,
+      "repository_bytes": 7087
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D2/A2-D2.mp4",
+      "repository_path": "references/Francis/A2-D2/A2-D2.mp4",
+      "source_sha256": "96826e1a950c7f16664835e04128425ae9ddf866f0238898462aace8ca54bca3",
+      "copied_sha256": "96826e1a950c7f16664835e04128425ae9ddf866f0238898462aace8ca54bca3",
+      "operation": "copy",
+      "source_bytes": 32321492,
+      "repository_bytes": 32321492
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D2/Drafts/A2-D2_Business_Case_Presentation_Content_Draft_2026-09-05.md",
+      "repository_path": "references/Francis/A2-D2/A2-D2_Business_Case_Presentation_Content_Draft_2026-09-05.md",
+      "source_sha256": "6122d9e140821640f1c40634680e711e0be6cedc0d25d54049662fb6e473313f",
+      "copied_sha256": "6122d9e140821640f1c40634680e711e0be6cedc0d25d54049662fb6e473313f",
+      "operation": "copy",
+      "source_bytes": 20290,
+      "repository_bytes": 20290
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D1/Figures/ASIS_Report_2026-09-18.svg",
+      "repository_path": "references/Francis/A2-D1/Figures/ASIS_Report_2026-09-18.svg",
+      "source_sha256": "79c9ee09ad9a88a6f17280c7f6e0880c0d508af81be024954d2199932724a357",
+      "copied_sha256": "79c9ee09ad9a88a6f17280c7f6e0880c0d508af81be024954d2199932724a357",
+      "operation": "copy",
+      "source_bytes": 2088966,
+      "repository_bytes": 2088966
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D1/Figures/TOBE_Report_2026-09-18.svg",
+      "repository_path": "references/Francis/A2-D1/Figures/TOBE_Report_2026-09-18.svg",
+      "source_sha256": "4574af614335e73244114f26fc218fc40b96fd4de62a560ceef2d378e26847a8",
+      "copied_sha256": "4574af614335e73244114f26fc218fc40b96fd4de62a560ceef2d378e26847a8",
+      "operation": "copy",
+      "source_bytes": 3955035,
+      "repository_bytes": 3955035
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D1/Figures/Gantt_2026-09-11.png",
+      "repository_path": "references/Francis/A2-D1/Figures/Gantt_2026-09-11.png",
+      "source_sha256": "f7085ba5adc0d343af66d2e9092dcf263f463a0c72918e459c59d6401c39e572",
+      "copied_sha256": "f7085ba5adc0d343af66d2e9092dcf263f463a0c72918e459c59d6401c39e572",
+      "operation": "copy",
+      "source_bytes": 386697,
+      "repository_bytes": 386697
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D1/Figures/A2-D1_Hypothetical_Team_Portraits_2026-09-15.png",
+      "repository_path": "references/Francis/A2-D1/Figures/A2-D1_Hypothetical_Team_Portraits_2026-09-15.png",
+      "source_sha256": "5ec8d6563fd579b3bcd8cbdd2dd52d3c406b0118f0eb93cac5e2d519c8cdd982",
+      "copied_sha256": "5ec8d6563fd579b3bcd8cbdd2dd52d3c406b0118f0eb93cac5e2d519c8cdd982",
+      "operation": "copy",
+      "source_bytes": 1881990,
+      "repository_bytes": 1881990
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D1/Figures/Impact_Value_2026-09-11.png",
+      "repository_path": "references/Francis/A2-D1/Figures/Impact_Value_2026-09-11.png",
+      "source_sha256": "f9cc8d0ad088adb8a77ac295f2b3bcd3e2665fae5bdc6ed18f82d1c3ca2548ca",
+      "copied_sha256": "f9cc8d0ad088adb8a77ac295f2b3bcd3e2665fae5bdc6ed18f82d1c3ca2548ca",
+      "operation": "copy",
+      "source_bytes": 313254,
+      "repository_bytes": 313254
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/A2-D1/Figures/A2-D1_LJ_Evidence_Map_2026-09-11.png",
+      "repository_path": "references/Francis/A2-D1/Figures/A2-D1_LJ_Evidence_Map_2026-09-11.png",
+      "source_sha256": "c824968f52337401921227aede1bc5ac2c1d04791d2712471460e320fad244cd",
+      "copied_sha256": "c824968f52337401921227aede1bc5ac2c1d04791d2712471460e320fad244cd",
+      "operation": "copy",
+      "source_bytes": 428432,
+      "repository_bytes": 428432
+    }
+  ]
+}

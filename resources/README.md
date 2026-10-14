@@ -9,4 +9,4 @@
 - [Lab 8](<course/INFOSYS_704_2026_S2_Lab 8_Content_V1.pptx>)：组内讨论参考。两份课件的旧平台指引已被A3 V3覆盖。
 - [复制来源与哈希](source-manifest.json)：记录课程原件、目标路径及SHA-256。
 
-Week 9 的大型介绍PDF未打包，可在 [Canvas Modules](https://canvas.auckland.ac.nz/courses/143335/modules) 查看。Week 10 教程/录像应在课程站点使用；本仓库只包含已有Staff澄清，没有捏造未取得的教学材料。个人A1/A2全文、原始访谈、密钥与账号配置不在共享包内。
+Week 9 的大型介绍PDF未打包，可在 [Canvas Modules](https://canvas.auckland.ac.nz/courses/143335/modules) 查看。Week 10 教程/录像应在课程站点使用；本仓库只包含已有Staff澄清，没有捏造未取得的教学材料。Francis的既有A1/A2报告现已按授权复制至[reference目录](../references/Francis/README.md)；单独原始访谈记录、密钥与账号配置不在共享包内。

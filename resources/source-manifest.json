@@ -1,0 +1,69 @@
+{
+  "prepared_on": "2026-10-14",
+  "timezone": "Pacific/Auckland",
+  "files": [
+    {
+      "source_in_course_workspace": "0-Canvas Exported/viewer/files/Assignment resources/Assignment Specifications/704_A3_2026 Build App_Specificatication and Marking Criteria_V3.docx",
+      "repository_path": "Specification-and-Rubric.docx",
+      "sha256": "c2cd2ea6c3f9d51c73942db5e168811f0b27801f31edc4e7ecd473d514f69478",
+      "bytes": 69818,
+      "operation": "copy"
+    },
+    {
+      "source_in_course_workspace": "0-Canvas Exported/viewer/files/Lab resources/SAP API Pool v3.xlsx",
+      "repository_path": "resources/api/SAP API Pool v3.xlsx",
+      "sha256": "dcf0200ba136a1eb0e5001f50d8523859dc17cac740ab3495285f6e90559e711",
+      "bytes": 12514,
+      "operation": "copy"
+    },
+    {
+      "source_in_course_workspace": "0-Canvas Exported/viewer/files/Assignment resources/Assignment Specifications/Groupwork Management Slide.pptx",
+      "repository_path": "resources/templates/Groupwork Management Slide.pptx",
+      "sha256": "f6a7f21638c115bc163a9eac763d880645d5ee16a7425e0ceb9aee63e5f58b12",
+      "bytes": 47972,
+      "operation": "copy"
+    },
+    {
+      "source_in_course_workspace": "0-Canvas Exported/viewer/files/Lab resources/INFOSYS_704_2026_S2_Lab 7_Content_V1.pptx",
+      "repository_path": "resources/course/INFOSYS_704_2026_S2_Lab 7_Content_V1.pptx",
+      "sha256": "489fc2e2189c60a07a74cd1775739d3e4e98b93df1fa5406e438c7e43cafce06",
+      "bytes": 8661173,
+      "operation": "copy"
+    },
+    {
+      "source_in_course_workspace": "0-Canvas Exported/viewer/files/Lab resources/INFOSYS_704_2026_S2_Lab 8_Content_V1.pptx",
+      "repository_path": "resources/course/INFOSYS_704_2026_S2_Lab 8_Content_V1.pptx",
+      "sha256": "205d2522ec0867a8e5f0a533a503fa636edfa04b388a88cd7655cccef2a65672",
+      "bytes": 8373104,
+      "operation": "copy"
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/Lab/index.html",
+      "repository_path": "examples/purchase-order/index.html",
+      "source_sha256": "ae70f10c722e3bf8d39b4958ee457a345d51ef53e6b1c5d7b3e07c81d0d0cc7a",
+      "repository_sha256": "ae70f10c722e3bf8d39b4958ee457a345d51ef53e6b1c5d7b3e07c81d0d0cc7a",
+      "operation": "copy; README and prompt adapted for repository"
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/Lab/README.md",
+      "repository_path": "examples/purchase-order/README.md",
+      "source_sha256": "8d5684e0848150dead77a0721bd68759e19857760ab2f640a7b7466c537e2052",
+      "repository_sha256": "b9e3686a48955455c3493c0b7e9c72ef6887d167dd1a43707fb4d14ae7f54449",
+      "operation": "copy; README and prompt adapted for repository"
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/Lab/OpenCode_Build_Prompt.txt",
+      "repository_path": "examples/purchase-order/OpenCode_Build_Prompt.txt",
+      "source_sha256": "2d85bae0fec7f8fcae25695037beeff4c85ba2574012f9dd669c77f4234ab100",
+      "repository_sha256": "29d38f422f992189912e02b1e031d414838737220d98bf7c939d01ec22693edf",
+      "operation": "copy; README and prompt adapted for repository"
+    },
+    {
+      "source_in_course_workspace": "03-Assignment/Lab/CE_PURCHASEORDER_0001.edmx",
+      "repository_path": "examples/purchase-order/CE_PURCHASEORDER_0001.edmx",
+      "source_sha256": "c797e9b36712b98bb0d08af6b0bd010ecb2f81f0e43287395cad4a546dd3625d",
+      "repository_sha256": "c797e9b36712b98bb0d08af6b0bd010ecb2f81f0e43287395cad4a546dd3625d",
+      "operation": "copy; README and prompt adapted for repository"
+    }
+  ]
+}

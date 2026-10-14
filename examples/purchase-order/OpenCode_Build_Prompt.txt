@@ -1,0 +1,43 @@
+Build the INFOSYS 704 Lab 02 Purchase Order application now. Implement the software, rather than only proposing a plan.
+
+WORKSPACE AND SCOPE
+- Work ONLY inside the current example folder (`.`).
+- The existing `./CE_PURCHASEORDER_0001.edmx` is the API contract. Read it and preserve it unchanged.
+- Deliver one standalone index.html containing all HTML, CSS and JavaScript, plus a concise README.md with setup and verification instructions. No frameworks, packages, build tools, backend, deployment, login screen, or external fonts/scripts/styles.
+- This is a read-only Lab exercise, separate from assignment A3. Preserve every unrelated course file. Do not inspect _Archive, change assignments, modify model/provider settings, or use SAP Signavio.
+
+CONNECTION
+- Default editable OData V4 service root:
+  https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001
+- Provide a compact connection area with the service-root field, an empty password-type SAP API Key field, and a Load purchase orders button. The user supplies their API Hub sandbox key at runtime. Do not put any real key in the prompt, source, README, logs, URL, localStorage or sessionStorage. Keep the key in memory only; Clear connection must erase it and the displayed data.
+- Use browser fetch(), GET only, with headers APIKey and Accept: application/json. Do not add an unnecessary Content-Type header to GET. Use AbortController with a reasonable timeout, normalize trailing slashes, and build query strings with URLSearchParams. Never disable browser security, use a public proxy, or send the key to a different origin via an unchecked nextLink.
+
+CORE USER EXPERIENCE
+- A readable Purchase Orders table: PO Number, Supplier, Date, Total Value, Currency and Status.
+- Search/filter by supplier ID and an inclusive date range; include Apply and Clear filters. Apply the filters to the API query, resetting pagination. Escape OData string literals correctly, validate dates and reject inverted ranges.
+- Pagination with previous/next, a useful page size, accurate labels, and disabled controls at the boundaries. Handle @odata.nextLink or use $top/$skip when appropriate; do not claim that a fetched page is the entire dataset. Handle count being unavailable.
+- Clicking or keyboard-activating a PO opens its line items in an accessible drawer/dialog or expandable detail area. Show item number, item description, quantity, unit, NetAmount and currency. Close with a button and Escape; preserve focus appropriately. Cache fetched items within the current connection only, and guard against stale responses when the user changes selection, filters or connection.
+- Clear loading, empty, network/CORS, authentication (401/403), rate-limit (429), server and malformed-response states. Show an actionable message without exposing the key. Handle JSON and HTTP errors without leaving the interface stuck. No invented sample orders or silent demo fallback.
+
+VERIFIED EDMX MAPPING - CHECK THESE AGAINST THE FILE
+- PurchaseOrder entity-set key: PurchaseOrder (Edm.String).
+- Header fields: PurchaseOrder, Supplier, PurchaseOrderDate (Edm.Date), DocumentCurrency, PurchasingProcessingStatus.
+- PurchaseOrderItem composite keys: PurchaseOrder and PurchaseOrderItem.
+- Header-to-items navigation: _PurchaseOrderItem.
+- Example standard OData navigation: PurchaseOrder('4500000001')/_PurchaseOrderItem. Construct string keys safely. The EDMX is authoritative if an example conflicts with it.
+- Item fields: PurchaseOrderItem, PurchaseOrderItemText, OrderQuantity, PurchaseOrderQuantityUnit, NetAmount, DocumentCurrency; NetPriceAmount is a price, NOT a line total.
+- There is no header total-value property. Total Value must be clearly identified as the sum of item NetAmount in the PO currency. Do not use DownPaymentAmount or sum unit prices. Obtain items via an appropriate $expand or the navigation request. Follow any nested pagination before claiming a complete total. If items are not loaded, incomplete, invalid, missing their currency or use inconsistent currencies, show an honest pending/unavailable state, not a made-up zero. Do not infer a missing item currency from another item or the header. Update the table total once the complete items are fetched.
+- The EDMX supplies no verified code-to-label mapping for PurchasingProcessingStatus. Display the raw code with a clear Status code label/help, rather than guessing Approved, Open or Closed.
+- Preserve PO/item identifiers as strings and leading zeros. Treat Edm.Date as a calendar date so time-zone conversion cannot shift the displayed day. Use currency-aware display and handle decimal amounts carefully.
+
+DESIGN
+- English interface for a procurement user; concise labels, strong table hierarchy and comfortable density. A restrained navy/blue/white palette, system fonts, clear numeric alignment and one main action. Avoid a decorative hero, gradients, repeated KPI cards or oversized empty space.
+- Responsive layout for desktop and narrow screens, accessible table headers/form labels, visible keyboard focus, aria-live request status, adequate contrast and reduced-motion support. Render API strings as text, not untrusted HTML.
+
+ACCEPTANCE AND VERIFICATION
+- index.html opens directly as a file in Chrome/Edge and renders without a server. Actual API retrieval requires internet: do not promise disconnected/offline live data.
+- With a valid API key, real sandbox POs populate the table, supplier/date filtering narrows results, pagination works and selecting an order shows its real items.
+- No API write operations, secrets embedded/persisted, or unrelated-file modifications.
+- Verify the generated JavaScript parses; inspect the fetch URL/query construction, filtering, error handling, item loading and total calculation. Perform useful checks that do not require a private key. Do not create tests that merely duplicate the implementation or claim live API success without evidence.
+- In README, explain opening the file, obtaining the API Hub sandbox key, entering it locally, the meaning of computed totals/raw status codes, and the precise live checks the user should perform. Explain CORS restrictions honestly if encountered; keep the requested standalone-file architecture.
+- Finish with the created file paths, a concise implementation summary, checks actually performed and any remaining verification. Complete the implementation in this run.

@@ -1,0 +1,30 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+mcp.json
+.mcp.json
+opencode.json
+opencode.jsonc
+# Generated API responses may contain sample records
+tools/sap_api_probe_result.json
+**/sap_api_probe_result.json
+# Dependencies, builds and local state
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+dist/
+build/
+coverage/
+.DS_Store
+Thumbs.db
+*.log
+~$*
+*.tmp
+*.bak

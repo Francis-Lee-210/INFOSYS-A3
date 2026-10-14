@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Purchase Orders — SAP S/4HANA OData V4 viewer</title>
+<meta name="description" content="Read-only standalone viewer for SAP S/4HANA Cloud purchase orders (API_PURCHASEORDER_2, OData V4).">
+<style>
+  :root{
+    --navy:#0b2545;
+    --navy-700:#123258;
+    --blue:#1b5faa;
+    --blue-700:#144a86;
+    --blue-50:#eef4fb;
+    --line:#d3dce7;
+    --line-strong:#b8c6d6;
+    --bg:#f2f5f9;
+    --surface:#ffffff;
+    --text:#16212e;
+    --muted:#5a6b7d;
+    --ok:#0f6b45;
+    --warn:#8a5300;
+    --danger:#a01a2b;
+    --danger-bg:#fdf1f2;
+    --focus:#0b5cab;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app-bar{
+    background:var(--navy);
+    color:#fff;
+    padding:14px 20px;
+    border-bottom:3px solid var(--blue);
+  }
+  .app-bar .bar-inner{max-width:1240px;margin:0 auto;}
+  .app-bar h1{margin:0;font-size:19px;font-weight:600;letter-spacing:.2px;}
+  .app-bar p{margin:3px 0 0;font-size:12.5px;color:#c7d6e8;}
+  .app-bar code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#e6eef8;}
+  main{max-width:1240px;margin:0 auto;padding:18px 20px 48px;}
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 16px 14px;
+    margin:0 0 16px;
+  }
+  .panel > h2{
+    margin:0 0 12px;
+    font-size:13px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--navy);
+  }
+  .field-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px 16px;
+    align-items:flex-end;
+  }
+  .field{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .field.grow{flex:1 1 320px;}
+  .field.narrow{flex:0 1 190px;}
+  .field.supplier{flex:0 1 220px;}
+  label,.legend{font-size:12.5px;font-weight:600;color:var(--navy-700);}
+  input[type="url"],input[type="password"],input[type="text"],input[type="date"],select{
+    font:inherit;
+    font-size:14px;
+    color:var(--text);
+    background:#fff;
+    border:1px solid var(--line-strong);
+    border-radius:4px;
+    padding:8px 10px;
+    min-height:38px;
+    width:100%;
+  }
+  input[type="password"]{letter-spacing:.06em;}
+  input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{
+    outline:2px solid var(--focus);
+    outline-offset:2px;
+  }
+  button{font:inherit;cursor:pointer;}
+  .btn{
+    border:1px solid transparent;
+    border-radius:4px;
+    padding:9px 16px;
+    min-height:38px;
+    font-size:14px;
+    font-weight:600;
+    background:#e9eef5;
+    color:var(--navy);
+  }
+  .btn:hover{background:#dde6f1;}
+  .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .btn-primary:hover{background:var(--blue-700);}
+  .btn-quiet{background:#fff;border-color:var(--line-strong);color:var(--navy);}
+  .btn-quiet:hover{background:var(--blue-50);}
+  .btn:disabled,.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+  .hint{margin:10px 0 0;font-size:12.5px;color:var(--muted);max-width:80ch;}
+  .field-error{margin:0;font-size:12.5px;color:var(--danger);font-weight:600;}
+  .field-error:empty{display:none;}
+  .results-head{
+    display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .results-head h2{margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--navy);}
+  .summary{margin:0;font-size:12.5px;color:var(--muted);}
+  .status{margin:8px 0;font-size:13px;color:var(--navy-700);min-height:18px;}
+  .status[data-tone="busy"]::before{content:"◐ ";color:var(--blue);}
+  .alert{
+    border:1px solid var(--line-strong);
+    border-left:4px solid var(--danger);
+    background:var(--danger-bg);
+    border-radius:4px;
+    padding:10px 12px;
+    margin:10px 0;
+    font-size:13.5px;
+  }
+  .alert[data-tone="warn"]{border-left-color:var(--warn);background:#fdf8ee;}
+  .alert p{margin:0 0 6px;}
+  .alert p:last-child{margin-bottom:0;}
+  .alert .alert-title{font-weight:700;color:var(--navy);}
+  .alert .alert-actions{margin-top:8px;}
+  .table-wrap{
+    border:1px solid var(--line);
+    border-radius:4px;
+    overflow:auto;
+    max-height:62vh;
+  }
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:840px;font-size:14px;}
+  caption{text-align:left;font-size:12.5px;color:var(--muted);padding:0 0 8px;}
+  thead th{
+    position:sticky;top:0;z-index:1;
+    background:#f7fafd;
+    color:var(--navy);
+    text-align:left;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.45px;
+    padding:9px 12px;
+    border-bottom:1px solid var(--line-strong);
+    white-space:nowrap;
+  }
+  tbody td,tbody th{
+    padding:9px 12px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+    text-align:left;
+    font-weight:400;
+  }
+  tbody tr:last-child td,tbody tr:last-child th{border-bottom:0;}
+  tbody tr:hover{background:#f8fbff;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .po-btn{
+    background:none;border:0;padding:2px 0;color:var(--blue);font-weight:700;
+    font-variant-numeric:tabular-nums;text-decoration:underline;text-underline-offset:2px;
+    font-size:14px;
+  }
+  .po-btn:hover{color:var(--blue-700);}
+  .muted{color:var(--muted);}
+  .pending{color:var(--warn);font-style:italic;}
+  .unavailable{color:var(--danger);font-style:italic;}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  .empty-cell{padding:26px 12px;text-align:center;color:var(--muted);}
+  .pager{
+    display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+    margin-top:12px;
+  }
+  .pager .page-label{font-size:13.5px;color:var(--navy-700);font-weight:600;}
+  .pager .pager-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .pager .size-field{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted);}
+  .pager select{width:auto;min-height:34px;padding:5px 8px;}
+  .footnote{margin:10px 0 0;font-size:12.5px;color:var(--muted);max-width:100ch;}
+  .footnote + .footnote{margin-top:4px;}
+  /* Drawer */
+  dialog.drawer{
+    margin:0 0 0 auto;
+    inset:0 0 0 auto;
+    height:100dvh;
+    max-height:100dvh;
+    width:min(760px,100%);
+    border:0;
+    border-left:1px solid var(--line-strong);
+    border-radius:0;
+    padding:0;
+    background:var(--surface);
+    color:var(--text);
+  }
+  dialog.drawer::backdrop{background:rgba(11,37,69,.45);}
+  .drawer-head{
+    display:flex;gap:12px;align-items:flex-start;justify-content:space-between;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+    background:#f7fafd;
+  }
+  .drawer-head h2{margin:0;font-size:17px;color:var(--navy);}
+  .drawer-head .drawer-sub{margin:4px 0 0;font-size:12.5px;color:var(--muted);}
+  .drawer-body{padding:14px 18px 28px;overflow:auto;max-height:calc(100dvh - 74px);}
+  .drawer-body table{min-width:640px;font-size:13.5px;}
+  .drawer-body .table-wrap{max-height:none;}
+  .visually-hidden{
+    position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+    clip:rect(0 0 0 0);white-space:nowrap;border:0;
+  }
+  @media (max-width:720px){
+    main{padding:14px 12px 40px;}
+    .panel{padding:14px 12px 12px;}
+    .field.grow,.field.narrow,.field.supplier{flex:1 1 100%;}
+    .btn{width:100%;}
+    .btn-row{gap:8px;}
+    .pager{flex-direction:column;align-items:stretch;}
+    .pager .pager-controls{justify-content:space-between;}
+    dialog.drawer{width:100%;border-left:0;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important;scroll-behavior:auto!important;}
+  }
+</style>
+</head>
+<body>
+<header class="app-bar">
+  <div class="bar-inner">
+    <h1>Purchase Orders</h1>
+    <p>Read-only viewer for SAP S/4HANA Cloud <code>API_PURCHASEORDER_2</code> (OData V4). Nothing is written back to the service.</p>
+  </div>
+</header>
+
+<main>
+  <!-- Connection -->
+  <section class="panel" aria-labelledby="conn-h">
+    <h2 id="conn-h">Connection</h2>
+    <form id="conn-form" novalidate>
+      <div class="field-row">
+        <div class="field grow">
+          <label for="root">OData V4 service root</label>
+          <input id="root" name="root" type="url" spellcheck="false" autocomplete="off"
+                 aria-describedby="root-error"
+                 value="https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001">
+          <p class="field-error" id="root-error" aria-live="polite"></p>
+        </div>
+        <div class="field grow">
+          <label for="apikey">SAP API Hub sandbox key</label>
+          <input id="apikey" name="apikey" type="password" autocomplete="new-password" spellcheck="false"
+                 placeholder="Paste your API key (kept in memory only)" aria-describedby="key-help key-error">
+          <p class="field-error" id="key-error" aria-live="polite"></p>
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary" id="load-btn">Load purchase orders</button>
+          <button type="button" class="btn btn-quiet" id="clear-btn">Clear connection</button>
+        </div>
+      </div>
+      <p class="hint" id="key-help">
+        The key is held in memory for this tab only. It is never written to the URL, local storage, session storage,
+        logs or this page&rsquo;s source, and it is cleared when you press <strong>Clear connection</strong>.
+        Retrieval needs an internet connection.
+      </p>
+    </form>
+  </section>
+
+  <!-- Filters -->
+  <section class="panel" aria-labelledby="filter-h">
+    <h2 id="filter-h">Filters</h2>
+    <form id="filter-form" novalidate>
+      <div class="field-row">
+        <div class="field supplier">
+          <label for="f-supplier">Supplier ID (exact match)</label>
+          <input id="f-supplier" name="supplier" type="text" inputmode="numeric" spellcheck="false"
+                 placeholder="e.g. 17300003" aria-describedby="supplier-error">
+          <p class="field-error" id="supplier-error" aria-live="polite"></p>
+        </div>
+        <div class="field narrow">
+          <label for="f-from">PO date from</label>
+          <input id="f-from" name="from" type="date" aria-describedby="date-error">
+        </div>
+        <div class="field narrow">
+          <label for="f-to">PO date to</label>
+          <input id="f-to" name="to" type="date">
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn" id="apply-btn">Apply filters</button>
+          <button type="button" class="btn btn-quiet" id="clear-filters-btn">Clear filters</button>
+        </div>
+      </div>
+      <p class="field-error" id="date-error" aria-live="polite"></p>
+      <p class="hint">
+        Filters are sent to the service as an OData <span class="mono">$filter</span> expression.
+        The date range is inclusive; both ends are optional.
+      </p>
+    </form>
+  </section>
+
+  <!-- Results -->
+  <section class="panel" aria-labelledby="res-h">
+    <div class="results-head">
+      <h2 id="res-h">Purchase orders</h2>
+      <p class="summary" id="summary"></p>
+    </div>
+
+    <p class="status" id="status" role="status" aria-live="polite">No data loaded yet.</p>
+    <div class="alert" id="alert" role="alert" hidden></div>
+
+    <div class="table-wrap" id="table-wrap">
+      <table id="po-table" aria-describedby="table-note">
+        <caption class="visually-hidden">Purchase orders retrieved from the OData service. One page at a time.</caption>
+        <thead>
+          <tr>
+            <th scope="col">PO number</th>
+            <th scope="col">Supplier</th>
+            <th scope="col">Date</th>
+            <th scope="col" class="num">Total value</th>
+            <th scope="col">Currency</th>
+            <th scope="col">Status code</th>
+          </tr>
+        </thead>
+        <tbody id="po-rows">
+          <tr><td class="empty-cell" colspan="6">Press <strong>Load purchase orders</strong> to retrieve data from the service.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pager">
+      <span class="page-label" id="page-label">Page 1</span>
+      <div class="pager-controls">
+        <label class="size-field" for="page-size">Rows per page
+          <select id="page-size">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
+        <button type="button" class="btn btn-quiet" id="prev-btn" disabled>Previous</button>
+        <button type="button" class="btn btn-quiet" id="next-btn" disabled>Next</button>
+      </div>
+    </div>
+
+    <p class="footnote" id="table-note">
+      <strong>Total value</strong> is computed by this page as the sum of the line items&rsquo; net amounts
+      (<span class="mono">NetAmount</span>) for that purchase order. The API has no header total field, and unit
+      prices are never summed. A value stays <em>Pending</em> until the complete item list is available, shows
+      <em>Unavailable</em> when an item amount or currency is missing, is non-numeric, or when items use mixed
+      currencies, and shows <em>Partial</em> when the item list is incomplete. A missing item currency is never
+      assumed from the purchase order.
+    </p>
+    <p class="footnote">
+      <strong>Status code</strong> is the raw <span class="mono">PurchasingProcessingStatus</span> value returned by the
+      service. The API metadata contains no code-to-label mapping, so codes are shown untranslated rather than guessed.
+    </p>
+    <p class="footnote">
+      Pages are fetched with <span class="mono">$top</span>/<span class="mono">$skip</span>; a page is never the whole
+      dataset. Where the service does not report a row count, the page count is unknown and only page navigation is shown.
+    </p>
+  </section>
+</main>
+
+<dialog class="drawer" id="drawer" aria-labelledby="drawer-title">
+  <div class="drawer-head">
+    <div>
+      <h2 id="drawer-title">Purchase order</h2>
+      <p class="drawer-sub" id="drawer-sub"></p>
+    </div>
+    <button type="button" class="btn btn-quiet" id="drawer-close">Close</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</dialog>
+
+<script>
+'use strict';
+(function () {
+  /* =========================================================================
+   * Constants
+   * ====================================================================== */
+  var DEFAULT_SERVICE_ROOT =
+    'https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001';
+
+  var REQUEST_TIMEOUT_MS = 20000;   // per HTTP request
+  var ITEM_PAGE_SIZE = 200;         // $top for line-item requests
+  var MAX_ITEM_PAGES = 25;          // safety cap: 25 x 200 = 5,000 items per order
+  var PAGE_SIZES = [10, 20, 50, 100];
+  var DEFAULT_PAGE_SIZE = 20;
+
+  var HEADER_SELECT = [
+    'PurchaseOrder', 'Supplier', 'PurchaseOrderDate', 'DocumentCurrency', 'PurchasingProcessingStatus'
+  ];
+  var ITEM_SELECT = [
+    'PurchaseOrder', 'PurchaseOrderItem', 'PurchaseOrderItemText',
+    'OrderQuantity', 'PurchaseOrderQuantityUnit', 'NetAmount', 'DocumentCurrency'
+  ];
+  var EXPANDED_ITEM_SELECT = ITEM_SELECT.slice(1); // header key is already selected
+
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  /* =========================================================================
+   * Application state (all in memory — nothing is persisted)
+   * ====================================================================== */
+  var state = {
+    epoch: 0,                 // connection generation; bumped by Load / Clear
+    connected: false,
+    connection: null,         // { root, key } used by the active connection
+    apiKey: '',
+    root: DEFAULT_SERVICE_ROOT,
+    view: { skip: 0, pageSize: DEFAULT_PAGE_SIZE, page: 1 },
+    filters: { supplier: '', from: '', to: '' },
+    orders: [],
+    count: null,
+    hasNext: false,
+    nextLink: null,
+    listToken: 0,
+    busy: false,
+    expandSupported: null,    // null = unknown, true/false after first list request
+    lastListError: null,
+    drawer: { po: null, token: 0 }
+  };
+
+  var itemCache = new Map();   // PurchaseOrder number -> item record
+  var rowTotalCells = new Map(); // PurchaseOrder number -> <td> element for in-place updates
+
+  /* =========================================================================
+   * Small DOM helpers
+   * ====================================================================== */
+  function $(id) { return document.getElementById(id); }
+
+  function el(tag, props, children) {
+    var node = document.createElement(tag);
+    if (props) {
+      Object.keys(props).forEach(function (k) {
+        var v = props[k];
+        if (v === null || v === undefined || v === false) return;
+        if (k === 'text') node.textContent = String(v);   // always text, never HTML
+        else if (k === 'className') node.className = v;
+        else if (k === 'dataset') Object.keys(v).forEach(function (d) { node.dataset[d] = v[d]; });
+        else node.setAttribute(k, String(v));
+      });
+    }
+    (children || []).forEach(function (c) { if (c) node.appendChild(c); });
+    return node;
+  }
+
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+  function groupDigits(digits) {
+    return String(digits).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  /* =========================================================================
+   * OData helpers (pure — also exposed for automated verification)
+   * ====================================================================== */
+
+  // Escape an OData string literal: a single quote is doubled inside '...'.
+  function odataStringLiteral(value) {
+    return "'" + String(value === null || value === undefined ? '' : value).replace(/'/g, "''") + "'";
+  }
+
+  // Strict calendar-date validation for Edm.Date values (YYYY-MM-DD).
+  function isValidISODate(value) {
+    if (typeof value !== 'string') return false;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!m) return false;
+    var y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1) return false;
+    var probe = new Date(Date.UTC(y, mo - 1, d));
+    return probe.getUTCFullYear() === y && probe.getUTCMonth() === mo - 1 && probe.getUTCDate() === d;
+  }
+
+  // Display an Edm.Date as a calendar date. Never converts through a local time zone,
+  // so the rendered day can never shift.
+  function formatCalendarDate(value) {
+    if (typeof value !== 'string' || value === '') return '—';
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+    if (!m) return value;
+    var monthIndex = Number(m[2]) - 1;
+    if (monthIndex < 0 || monthIndex > 11) return value;
+    return m[3] + ' ' + MONTHS[monthIndex] + ' ' + m[1];
+  }
+
+  // Build the $filter expression. Supplier is an exact match; the date range is inclusive.
+  function buildFilterExpression(filters) {
+    var parts = [];
+    var supplier = (filters && filters.supplier ? String(filters.supplier) : '').trim();
+    if (supplier) parts.push('Supplier eq ' + odataStringLiteral(supplier));
+    if (filters && filters.from) parts.push('PurchaseOrderDate ge ' + filters.from);
+    if (filters && filters.to) parts.push('PurchaseOrderDate le ' + filters.to);
+    return parts.join(' and ');
+  }
+
+  function isFilterActive() {
+    var f = state.filters;
+    return !!(f && (f.supplier || f.from || f.to));
+  }
+
+  function normalizeServiceRoot(root) {
+    var r = String(root || '').trim();
+    while (r.length > 1 && r.charAt(r.length - 1) === '/') r = r.slice(0, -1);
+    return r;
+  }
+
+  // URLSearchParams percent-encodes the query in application/x-www-form-urlencoded
+  // form. Restore '$', use %20 for spaces, and un-escape the structural characters
+  // that are legal raw inside a query value, so the option expressions
+  // ($select / $expand / $filter) look exactly like canonical OData.
+  function odataQueryString(params) {
+    return params.toString()
+      .replace(/%24/gi, '$')
+      .replace(/\+/g, '%20')
+      .replace(/%2C/gi, ',')
+      .replace(/%28/gi, '(')
+      .replace(/%29/gi, ')')
+      .replace(/%3D/gi, '=');
+  }
+
+  // OData V4 key-as-segment for a string key with a safe literal.
+  function buildKeySegment(purchaseOrder) {
+    return 'PurchaseOrder(' + encodeURIComponent(odataStringLiteral(purchaseOrder)) + ')';
+  }
+
+  function buildPurchaseOrderListUrl(opts) {
+    var params = new URLSearchParams();
+    params.set('$select', HEADER_SELECT.join(','));
+    if (opts.expand) {
+      params.set('$expand', '_PurchaseOrderItem($select=' + EXPANDED_ITEM_SELECT.join(',') + ')');
+    }
+    params.set('$orderby', 'PurchaseOrder asc');
+    params.set('$top', String(opts.top));
+    params.set('$skip', String(opts.skip));
+    params.set('$count', 'true');
+    if (opts.filter) params.set('$filter', opts.filter);
+    return normalizeServiceRoot(opts.root) + '/PurchaseOrder?' + odataQueryString(params);
+  }
+
+  function buildPurchaseOrderItemsUrl(opts) {
+    var params = new URLSearchParams();
+    params.set('$select', ITEM_SELECT.join(','));
+    params.set('$orderby', 'PurchaseOrderItem asc');
+    params.set('$top', String(opts.top));
+    if (opts.skip) params.set('$skip', String(opts.skip));
+    return normalizeServiceRoot(opts.root) + '/' + buildKeySegment(opts.purchaseOrder) +
+      '/_PurchaseOrderItem?' + odataQueryString(params);
+  }
+
+  // A nextLink is only accepted when it resolves to the same origin as the service
+  // root, so the API key can never be sent to another host. Relative links are
+  // resolved against the request URL they came from, as OData requires.
+  function resolveNextLink(nextLink, baseUrl, allowedRoot) {
+    if (typeof nextLink !== 'string' || nextLink === '') return null;
+    var allowOrigin;
+    try { allowOrigin = new URL(normalizeServiceRoot(allowedRoot || baseUrl)).origin; } catch (e) { return null; }
+    var resolved;
+    try { resolved = new URL(nextLink, baseUrl); } catch (e) { return null; }
+    if (resolved.protocol !== 'https:' && resolved.protocol !== 'http:') return null;
+    if (resolved.origin !== allowOrigin) return null;
+    return resolved.toString();
+  }
+
+  /* -------------------------------------------------------------------------
+   * Decimal handling
+   * Amounts arrive as JSON numbers or decimal strings with a variable scale.
+   * They are summed with scaled integer arithmetic (BigInt) and formatted from
+   * the exact digits, so no floating-point rounding can creep into a total.
+   * ---------------------------------------------------------------------- */
+  function parseDecimal(raw) {
+    if (raw === null || raw === undefined) return null;
+    var s;
+    if (typeof raw === 'number') {
+      if (!isFinite(raw)) return null;
+      s = String(raw);
+    } else if (typeof raw === 'string') {
+      s = raw.trim();
+    } else {
+      return null;
+    }
+    if (s === '') return null;
+    var m = /^([+-]?)(\d*)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/.exec(s);
+    if (!m) return null;
+    var sign = m[1], intPart = m[2] || '', fracPart = m[3] === undefined ? '' : m[3];
+    var exponent = m[4] ? parseInt(m[4], 10) : 0;
+    if (!isFinite(exponent)) return null;
+    if (intPart === '' && fracPart === '') return null;
+    if (Math.abs(exponent) > 60) return null;
+    if (exponent > 0) {
+      var move = Math.min(exponent, fracPart.length);
+      intPart = (intPart || '0') + fracPart.slice(0, move);
+      fracPart = fracPart.slice(move) + new Array(exponent - move + 1).join('0');
+    } else if (exponent < 0) {
+      var shift = -exponent;
+      var take = Math.min(shift, intPart.length);
+      fracPart = intPart.slice(intPart.length - take) + fracPart;
+      intPart = intPart.slice(0, intPart.length - take) || '0';
+      fracPart = new Array(shift - take + 1).join('0') + fracPart;
+    }
+    intPart = (intPart || '0').replace(/^0+(?=\d)/, '');
+    if (intPart.length + fracPart.length > 80) return null;
+    return { neg: sign === '-', int: intPart, frac: fracPart };
+  }
+
+  // Sum a list of decimal values exactly. Returns { ok, ... } or { ok:false, reason }.
+  function sumDecimals(values) {
+    var parsed = [];
+    var scale = 0;
+    for (var i = 0; i < values.length; i++) {
+      var p = parseDecimal(values[i]);
+      if (!p) return { ok: false, reason: 'invalid' };
+      if (p.frac.length > scale) scale = p.frac.length;
+      parsed.push(p);
+    }
+    var total = BigInt(0);
+    for (var j = 0; j < parsed.length; j++) {
+      var item = parsed[j];
+      var padded = item.frac + new Array(scale - item.frac.length + 1).join('0');
+      var digits = BigInt(item.int + padded);
+      total += item.neg ? -digits : digits;
+    }
+    var negative = total < BigInt(0);
+    var magnitude = (negative ? -total : total).toString();
+    while (magnitude.length <= scale) magnitude = '0' + magnitude;
+    var intDigits = magnitude.slice(0, magnitude.length - scale);
+    var fracDigits = scale > 0 ? magnitude.slice(magnitude.length - scale) : '';
+    return {
+      ok: true,
+      negative: negative,
+      intDigits: intDigits === '' ? '0' : intDigits,
+      fracDigits: fracDigits,
+      scale: scale
+    };
+  }
+
+  function formatSum(sum, currency, minimumFractionDigits) {
+    var target = sum.scale;
+    if (currency && target < 2) target = 2;
+    if (typeof minimumFractionDigits === 'number' && target < minimumFractionDigits) {
+      target = minimumFractionDigits;
+    }
+    var frac = sum.fracDigits;
+    while (frac.length < target) frac += '0';
+    var text = (sum.negative ? '-' : '') + groupDigits(sum.intDigits);
+    if (target > 0) text += '.' + frac;
+    if (currency) text += ' ' + currency;
+    return text;
+  }
+
+  function formatSingleAmount(raw, currency) {
+    var sum = sumDecimals([raw]);
+    if (!sum.ok) return '—';
+    return formatSum(sum, currency || '', 0);
+  }
+
+  /* =========================================================================
+   * Row/item normalisation
+   * ====================================================================== */
+  function text(value) {
+    if (value === null || value === undefined) return '';
+    return String(value);
+  }
+
+  function normalizeOrder(raw) {
+    return {
+      purchaseOrder: text(raw.PurchaseOrder),          // identifiers stay strings (leading zeros)
+      supplier: text(raw.Supplier),
+      date: text(raw.PurchaseOrderDate),
+      currency: text(raw.DocumentCurrency),
+      status: text(raw.PurchasingProcessingStatus)
+    };
+  }
+
+  function normalizeItem(purchaseOrder, raw) {
+    return {
+      purchaseOrder: text(raw.PurchaseOrder) || purchaseOrder,
+      item: text(raw.PurchaseOrderItem),
+      description: text(raw.PurchaseOrderItemText),
+      quantity: raw.OrderQuantity,
+      unit: text(raw.PurchaseOrderQuantityUnit),
+      netAmount: raw.NetAmount,
+      currency: text(raw.DocumentCurrency)
+    };
+  }
+
+  /* -------------------------------------------------------------------------
+   * Item record handling and totals
+   * ---------------------------------------------------------------------- */
+  function getItemRecord(purchaseOrder) {
+    var rec = itemCache.get(purchaseOrder);
+    if (!rec) {
+      rec = { state: 'unknown', items: [], reason: '', nextLink: null, promise: null, loading: false };
+      itemCache.set(purchaseOrder, rec);
+    }
+    return rec;
+  }
+
+  function summarizeItems(items) {
+    if (!items.length) {
+      return { ok: true, empty: true, count: 0, currency: '', display: '0.00' };
+    }
+    var currencies = [];
+    var amounts = [];
+    var missingCurrency = 0;
+    for (var i = 0; i < items.length; i++) {
+      var c = text(items[i].currency).trim();
+      if (!c) missingCurrency++;
+      else if (currencies.indexOf(c) === -1) currencies.push(c);
+      amounts.push(items[i].netAmount);
+    }
+    // Fail closed: a blank or missing item currency is never inferred from the purchase order
+    // header, because that would present an unverified amount as a complete currency total.
+    if (missingCurrency > 0) {
+      return {
+        ok: false,
+        reason: (missingCurrency === 1
+          ? 'One line item has no document currency'
+          : missingCurrency + ' line items have no document currency') +
+          ', so a total cannot be shown. A missing item currency is never assumed from the purchase order.'
+      };
+    }
+    if (currencies.length > 1) {
+      return {
+        ok: false,
+        reason: 'Line items use mixed currencies (' + currencies.join(', ') +
+          '); a single purchase-order total cannot be shown.'
+      };
+    }
+    var sum = sumDecimals(amounts);
+    if (!sum.ok) {
+      return { ok: false, reason: 'One or more line items have a missing or non-numeric NetAmount.' };
+    }
+    var currency = currencies.length === 1 ? currencies[0] : '';
+    return {
+      ok: true,
+      empty: false,
+      count: items.length,
+      currency: currency,
+      display: formatSum(sum, currency, 2)
+    };
+  }
+
+  function totalPresentation(rec, headerCurrency) {
+    if (!rec || rec.state === 'unknown') {
+      return {
+        text: 'Pending', className: 'pending',
+        title: 'Line items are not loaded yet, so no total can be shown. Open the order to load them.'
+      };
+    }
+    if (rec.state === 'loading') {
+      return { text: 'Loading…', className: 'pending', title: 'Loading line items for this purchase order.' };
+    }
+    if (rec.state === 'error') {
+      return { text: 'Unavailable', className: 'unavailable', title: rec.reason || 'Line items could not be loaded.' };
+    }
+    if (rec.state === 'partial') {
+      return {
+        text: 'Partial', className: 'pending',
+        title: rec.reason || 'The line-item list is incomplete, so no total is claimed.'
+      };
+    }
+    var s = rec.summary;
+    if (!s || !s.ok) {
+      return { text: 'Unavailable', className: 'unavailable', title: (s && s.reason) || 'The total could not be computed.' };
+    }
+    if (s.empty) {
+      return {
+        text: (headerCurrency ? '0.00 ' + headerCurrency : '0.00'), className: 'muted',
+        title: 'The service returned no line items for this purchase order.'
+      };
+    }
+    return {
+      text: s.display,
+      className: '',
+      title: 'Sum of ' + s.count + ' line item net amount value' + (s.count === 1 ? '' : 's') +
+        ' in ' + (s.currency || headerCurrency || 'the document currency') + '.'
+    };
+  }
+
+  /* =========================================================================
+   * HTTP layer
+   * ====================================================================== */
+  function appError(kind, detail, extra) {
+    var err = extra || {};
+    err.kind = kind;
+    err.detail = detail || '';
+    return err;
+  }
+
+  function sanitizeMessage(message) {
+    var msg = text(message).replace(/\s+/g, ' ').trim();
+    if (state.apiKey) msg = msg.split(state.apiKey).join('[key hidden]');
+    return msg.length > 300 ? msg.slice(0, 297) + '…' : msg;
+  }
+
+  function extractServiceDetail(bodyText) {
+    if (!bodyText) return '';
+    try {
+      var parsed = JSON.parse(bodyText);
+      if (parsed && parsed.error) {
+        if (typeof parsed.error === 'string') return sanitizeMessage(parsed.error);
+        var bits = [];
+        if (parsed.error.code) bits.push(text(parsed.error.code));
+        if (parsed.error.message) bits.push(text(parsed.error.message));
+        if (!bits.length && parsed.error.details && parsed.error.details.length) {
+          bits.push(text(parsed.error.details[0].message));
+        }
+        if (bits.length) return sanitizeMessage(bits.join(' — '));
+      }
+      if (parsed && parsed.message) return sanitizeMessage(parsed.message);
+      if (parsed && parsed.error_description) return sanitizeMessage(parsed.error_description);
+      // Apigee-style gateway faults, e.g. {"fault":{"faultstring":"Invalid ApiKey"}}
+      if (parsed && parsed.fault) {
+        var faultBits = [];
+        if (parsed.fault.faultstring) faultBits.push(text(parsed.fault.faultstring));
+        if (parsed.fault.detail && parsed.fault.detail.errorcode) faultBits.push(text(parsed.fault.detail.errorcode));
+        if (faultBits.length) return sanitizeMessage(faultBits.join(' — '));
+      }
+    } catch (e) { /* not JSON */ }
+    return sanitizeMessage(bodyText);
+  }
+
+  function odataGet(url, epoch) {
+    return new Promise(function (resolve, reject) {
+      var controller = new AbortController();
+      var timedOut = false;
+      var timer = setTimeout(function () { timedOut = true; controller.abort(); }, REQUEST_TIMEOUT_MS);
+
+      fetch(url, {
+        method: 'GET',
+        headers: { 'APIKey': state.apiKey, 'Accept': 'application/json' },
+        signal: controller.signal,
+        cache: 'no-store',
+        credentials: 'omit',
+        mode: 'cors',
+        // Redirects are refused so the API key can never be replayed to another origin.
+        redirect: 'error'
+      }).then(function (response) {
+        return response.text().then(function (bodyText) {
+          return { response: response, bodyText: bodyText };
+        }, function () {
+          return { response: response, bodyText: '' };
+        });
+      }).then(function (result) {
+        clearTimeout(timer);
+        if (epoch !== state.epoch) return reject(appError('stale', 'Superseded by a newer request.'));
+        var response = result.response;
+        if (!response.ok) {
+          var detail = extractServiceDetail(result.bodyText);
+          var status = response.status;
+          if (status === 401 || status === 403) return reject(appError('auth', detail, { status: status }));
+          if (status === 429) {
+            return reject(appError('ratelimit', detail, {
+              status: status,
+              retryAfter: response.headers.get('Retry-After')
+            }));
+          }
+          if (status >= 500) return reject(appError('server', detail, { status: status }));
+          return reject(appError('http', detail, { status: status }));
+        }
+        if (!result.bodyText) {
+          return reject(appError('malformed', 'The service returned an empty response body.'));
+        }
+        var data;
+        try {
+          data = JSON.parse(result.bodyText);
+        } catch (e) {
+          return reject(appError('malformed', 'The response was not valid JSON.'));
+        }
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          return reject(appError('malformed', 'The JSON response had an unexpected shape.'));
+        }
+        resolve(data);
+      }).catch(function (err) {
+        clearTimeout(timer);
+        if (err && err.kind) return reject(err);
+        if (epoch !== state.epoch) return reject(appError('stale', 'Superseded by a newer request.'));
+        if (timedOut || (err && err.name === 'AbortError')) {
+          return reject(appError('timeout', 'The request took longer than ' + (REQUEST_TIMEOUT_MS / 1000) + ' seconds.'));
+        }
+        reject(appError('network', 'The request never reached the service.'));
+      });
+    });
+  }
+
+  function describeError(err) {
+    var kind = err && err.kind;
+    var detail = err && err.detail ? err.detail : '';
+    if (kind === 'auth') {
+      return {
+        title: 'Authentication failed',
+        message: 'The service rejected the request' + (err.status ? ' (HTTP ' + err.status + ')' : '') +
+          '. Check that the key is a current SAP Business Accelerator Hub sandbox key for this API and that it was ' +
+          'pasted without extra spaces.',
+        retry: false
+      };
+    }
+    if (kind === 'ratelimit') {
+      return {
+        title: 'Rate limit reached',
+        message: 'The sandbox returned HTTP 429. Wait ' +
+          (err.retryAfter ? err.retryAfter + ' seconds' : 'a short while') + ' and try again.',
+        retry: true
+      };
+    }
+    if (kind === 'server') {
+      return {
+        title: 'Service error',
+        message: 'The service returned HTTP ' + err.status + '.' + (detail ? ' ' + detail : '') +
+          ' This is a server-side condition; retrying later may help.',
+        retry: true
+      };
+    }
+    if (kind === 'http') {
+      return {
+        title: 'Request rejected',
+        message: 'The service returned HTTP ' + err.status + ' for this query.' + (detail ? ' ' + detail : '') +
+          ' Check the service root, supplier ID and date range.',
+        retry: false
+      };
+    }
+    if (kind === 'malformed') {
+      return {
+        title: 'Unexpected response',
+        message: (detail || 'The service response could not be interpreted as OData JSON.') +
+          ' The interface has been left in a usable state; try again or check the service root.',
+        retry: true
+      };
+    }
+    if (kind === 'timeout') {
+      return {
+        title: 'Request timed out',
+        message: (detail || '') + ' The service did not answer within ' + (REQUEST_TIMEOUT_MS / 1000) +
+          ' seconds. Check your connection and try again.',
+        retry: true
+      };
+    }
+    return {
+      title: 'Could not reach the service',
+      message: 'Possible causes: no internet connection, the sandbox blocked the browser request with a CORS policy, ' +
+        'or the service redirected the request (redirects are not followed, so that your API key is never replayed ' +
+        'to another origin).' + (detail ? ' ' + detail : ''),
+      hint: 'A missing or invalid API key can also appear here: the sandbox may refuse the request at its gateway ' +
+        'before CORS headers are attached, and a browser then reports a failed request instead of HTTP 401. ' +
+        'Re-check the key first.',
+      retry: true
+    };
+  }
+
+  /* =========================================================================
+   * Item loading (with cache, pagination and staleness guards)
+   * ====================================================================== */
+  function runItemLoad(purchaseOrder, epoch) {
+    var rec = getItemRecord(purchaseOrder);
+    var collected = [];
+    var complete = true;
+    var pages = 0;
+
+    function next(url) {
+      if (!url) return Promise.resolve();
+      pages++;
+      if (pages > MAX_ITEM_PAGES) {
+        complete = false;
+        rec.reason = 'The item list exceeded the safety limit of ' + (MAX_ITEM_PAGES * ITEM_PAGE_SIZE) +
+          ' items, so the total is not claimed to be complete.';
+        return Promise.resolve();
+      }
+      return odataGet(url, epoch).then(function (data) {
+        if (!data || !Array.isArray(data.value)) {
+          throw appError('malformed', 'The line-item response did not contain a "value" array.');
+        }
+        for (var i = 0; i < data.value.length; i++) {
+          var raw = data.value[i];
+          if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+            collected.push(normalizeItem(purchaseOrder, raw));
+          }
+        }
+        var link = data['@odata.nextLink'];
+        if (typeof link === 'string' && link !== '') {
+          var safe = resolveNextLink(link, url, state.root);
+          if (!safe) {
+            complete = false;
+            rec.nextLink = link;
+            rec.reason = 'The service offered a further item page on a different origin. It was not followed, ' +
+              'so the total may be incomplete.';
+            return;
+          }
+          return next(safe);
+        }
+      });
+    }
+
+    return next(buildPurchaseOrderItemsUrl({
+      root: state.root,
+      purchaseOrder: purchaseOrder,
+      top: ITEM_PAGE_SIZE,
+      skip: 0
+    })).then(function () {
+      if (epoch !== state.epoch) return rec;
+      rec.items = collected;
+      rec.state = complete ? 'complete' : 'partial';
+      rec.summary = summarizeItems(collected);
+      if (complete) rec.reason = '';
+      return rec;
+    }, function (err) {
+      if (epoch !== state.epoch || err.kind === 'stale') return rec;
+      var described = describeError(err);
+      rec.state = 'error';
+      rec.reason = described.title + '. ' + described.message;
+      return rec;
+    });
+  }
+
+  function ensureItems(purchaseOrder, epoch, force) {
+    var rec = getItemRecord(purchaseOrder);
+    if (!force && rec.state === 'complete') return Promise.resolve(rec);
+    if (rec.loading && rec.promise) return rec.promise;
+    if (epoch !== state.epoch) return Promise.resolve(rec);
+    rec.loading = true;
+    rec.state = 'loading';
+    rec.reason = '';
+    var work = runItemLoad(purchaseOrder, epoch);
+    rec.promise = work.then(function (result) {
+      rec.loading = false;
+      rec.promise = null;
+      return result;
+    });
+    return rec.promise;
+  }
+
+  function prefillItemsFromExpand(purchaseOrder, entry) {
+    var expanded = entry._PurchaseOrderItem;
+    if (!Array.isArray(expanded)) return;
+    var rec = getItemRecord(purchaseOrder);
+    if (rec.state === 'loading') return;
+    if (rec.state === 'complete' && rec.items.length) return;
+    var items = [];
+    for (var i = 0; i < expanded.length; i++) {
+      var raw = expanded[i];
+      if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+        items.push(normalizeItem(purchaseOrder, raw));
+      }
+    }
+    var nestedNext = entry['_PurchaseOrderItem@odata.nextLink'];
+    rec.items = items;
+    rec.summary = summarizeItems(items);
+    rec.state = typeof nestedNext === 'string' && nestedNext !== '' ? 'partial' : 'complete';
+    rec.reason = rec.state === 'partial'
+      ? 'The service paginated the expanded line-item list, so the total is not yet complete. Open the order to load every item.'
+      : '';
+    rec.nextLink = rec.state === 'partial' ? nestedNext : null;
+  }
+
+  /* =========================================================================
+   * List loading
+   * ====================================================================== */
+  function setBusy(busy) {
+    state.busy = busy;
+    $('load-btn').disabled = busy;
+    $('apply-btn').disabled = busy;
+    $('clear-filters-btn').disabled = busy;
+    $('table-wrap').setAttribute('aria-busy', busy ? 'true' : 'false');
+    if (busy) {
+      $('prev-btn').disabled = true;
+      $('next-btn').disabled = true;
+    } else {
+      renderPager();
+    }
+  }
+
+  function setStatus(message, tone) {
+    var node = $('status');
+    node.textContent = message;
+    if (tone) node.setAttribute('data-tone', tone);
+    else node.removeAttribute('data-tone');
+  }
+
+  function showAlert(spec) {
+    var box = $('alert');
+    clear(box);
+    if (!spec) { box.hidden = true; return; }
+    box.hidden = false;
+    box.setAttribute('data-tone', spec.tone || 'danger');
+    box.appendChild(el('p', { className: 'alert-title', text: spec.title }));
+    if (spec.message) box.appendChild(el('p', { text: spec.message }));
+    if (spec.retry) {
+      var actions = el('p', { className: 'alert-actions' });
+      actions.appendChild(el('button', { type: 'button', className: 'btn', text: 'Try again' }));
+      actions.firstChild.addEventListener('click', function () { loadList(); });
+      box.appendChild(actions);
+    }
+    if (spec.hint) box.appendChild(el('p', { className: 'muted', text: spec.hint }));
+  }
+
+  function clearAlert() { showAlert(null); }
+
+  function loadList() {
+    if (!state.connected) return;
+    var epoch = state.epoch;
+    var token = ++state.listToken;
+    setBusy(true);
+    setStatus('Loading purchase orders from the service…', 'busy');
+    clearAlert();
+
+    var filter = buildFilterExpression(state.filters);
+    var wantExpand = state.expandSupported !== false;
+
+    function attempt(useExpand) {
+      var url = buildPurchaseOrderListUrl({
+        root: state.root,
+        skip: state.view.skip,
+        top: state.view.pageSize,
+        filter: filter,
+        expand: useExpand
+      });
+      return odataGet(url, epoch).catch(function (err) {
+        // If the service dislikes $expand for this entity, fall back once without it.
+        if (useExpand && (err.kind === 'http' || err.kind === 'server') && (err.status === 400 || err.status === 501)) {
+          state.expandSupported = false;
+          return odataGet(buildPurchaseOrderListUrl({
+            root: state.root,
+            skip: state.view.skip,
+            top: state.view.pageSize,
+            filter: filter,
+            expand: false
+          }), epoch).then(function (data) {
+            return { data: data, expandUsed: false };
+          });
+        }
+        throw err;
+      }).then(function (result) {
+        var data = result && result.data !== undefined ? result.data : result;
+        var expandUsed = result && result.expandUsed !== undefined ? result.expandUsed : useExpand;
+        return { data: data, expandUsed: expandUsed };
+      });
+    }
+
+    attempt(wantExpand).then(function (result) {
+      if (token !== state.listToken || epoch !== state.epoch) return;
+      if (result.expandUsed) state.expandSupported = true;
+      applyListResult(result.data, result.expandUsed);
+    }).catch(function (err) {
+      if (token !== state.listToken || epoch !== state.epoch || err.kind === 'stale') return;
+      state.lastListError = err;
+      state.orders = [];
+      state.count = null;
+      state.hasNext = false;
+      state.nextLink = null;
+      renderTable();
+      renderSummary();
+      var spec = describeError(err);
+      showAlert(spec);
+      setStatus('The purchase orders could not be loaded. See the message above.');
+    }).then(function () {
+      if (token === state.listToken && epoch === state.epoch) setBusy(false);
+    });
+  }
+
+  function applyListResult(data, expandUsed) {
+    var value = data.value;
+    if (!Array.isArray(value)) {
+      throw appError('malformed', 'The response did not contain a "value" array.');
+    }
+    var orders = [];
+    for (var i = 0; i < value.length; i++) {
+      var entry = value[i];
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry) || typeof entry.PurchaseOrder !== 'string') {
+        throw appError('malformed', 'A purchase order entry was missing its PurchaseOrder identifier.');
+      }
+      orders.push(normalizeOrder(entry));
+      if (expandUsed) prefillItemsFromExpand(entry.PurchaseOrder, entry);
+    }
+
+    state.orders = orders;
+    state.count = typeof data['@odata.count'] === 'number' ? data['@odata.count'] : null;
+    state.nextLink = typeof data['@odata.nextLink'] === 'string' ? data['@odata.nextLink'] : null;
+    state.view.page = Math.floor(state.view.skip / state.view.pageSize) + 1;
+    if (state.count !== null) {
+      state.hasNext = (state.view.skip + orders.length) < state.count;
+    } else {
+      state.hasNext = orders.length >= state.view.pageSize || state.nextLink !== null;
+    }
+    state.lastListError = null;
+
+    renderTable();
+    renderSummary();
+    renderPager();
+    clearAlert();
+
+    if (!orders.length) {
+      if (state.view.skip > 0) {
+        setStatus('No rows on page ' + state.view.page + '. The previous page held the last results.');
+      } else if (isFilterActive()) {
+        setStatus('The service returned no purchase orders for this query. Adjust or clear the filters and try again.');
+      } else {
+        setStatus('The service returned no purchase orders for this service root.');
+      }
+    } else {
+      var tone = state.hasNext ? 'More results may follow on the next page.' : 'This is the last page.';
+      setStatus('Loaded ' + orders.length + ' purchase order' + (orders.length === 1 ? '' : 's') + '. ' + tone);
+      if (!expandUsed) {
+        setStatus('Loaded ' + orders.length + ' purchase order' + (orders.length === 1 ? '' : 's') +
+          '. This service did not return line items with the list, so totals are loaded when you open an order. ' + tone);
+      }
+    }
+  }
+
+  /* =========================================================================
+   * Rendering
+   * ====================================================================== */
+  function renderTable() {
+    var tbody = $('po-rows');
+    clear(tbody);
+    rowTotalCells = new Map();
+
+    if (!state.connected && !state.orders.length) {
+      tbody.appendChild(el('tr', null, [
+        el('td', { className: 'empty-cell', colspan: '6', text: 'Press Load purchase orders to retrieve data from the service.' })
+      ]));
+      return;
+    }
+    if (!state.orders.length) {
+      var emptyText;
+      if (state.lastListError) {
+        emptyText = 'No data is displayed because the request failed. See the message above the table.';
+      } else if (state.view.skip > 0) {
+        emptyText = 'No rows on this page. Use Previous to return to the last page with results.';
+      } else if (isFilterActive()) {
+        emptyText = 'No purchase orders matched this query.';
+      } else {
+        emptyText = 'The service returned no purchase orders.';
+      }
+      tbody.appendChild(el('tr', null, [
+        el('td', { className: 'empty-cell', colspan: '6', text: emptyText })
+      ]));
+      return;
+    }
+
+    state.orders.forEach(function (order) {
+      var tr = document.createElement('tr');
+
+      var poCell = document.createElement('td');
+      var poButton = el('button', {
+        type: 'button', className: 'po-btn', text: order.purchaseOrder || '(no number)',
+        'aria-label': 'Open line items for purchase order ' + (order.purchaseOrder || 'unknown')
+      });
+      poButton.addEventListener('click', function () { openDrawer(order.purchaseOrder, poButton); });
+      poCell.appendChild(poButton);
+      tr.appendChild(poCell);
+
+      tr.appendChild(el('td', { text: order.supplier || '—' }));
+      tr.appendChild(el('td', { text: formatCalendarDate(order.date) }));
+
+      var rec = itemCache.get(order.purchaseOrder);
+      var presentation = totalPresentation(rec, order.currency);
+      var totalCell = el('td', {
+        className: 'num ' + presentation.className,
+        text: presentation.text,
+        title: presentation.title
+      });
+      rowTotalCells.set(order.purchaseOrder, totalCell);
+      tr.appendChild(totalCell);
+
+      tr.appendChild(el('td', { className: 'mono', text: order.currency || '—' }));
+
+      var statusCell = el('td', { className: 'mono', text: order.status || '—' });
+      if (order.status) statusCell.setAttribute('title', 'Raw PurchasingProcessingStatus code returned by the service.');
+      tr.appendChild(statusCell);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateRowTotal(order) {
+    var cell = rowTotalCells.get(order.purchaseOrder);
+    if (!cell) return;
+    var presentation = totalPresentation(itemCache.get(order.purchaseOrder), order.currency);
+    cell.textContent = presentation.text;
+    cell.className = 'num ' + presentation.className;
+    cell.setAttribute('title', presentation.title);
+  }
+
+  function renderSummary() {
+    var summary = $('summary');
+    if (!state.connected) { summary.textContent = 'Not connected.'; return; }
+    if (state.lastListError) { summary.textContent = 'Query failed.'; return; }
+    if (!state.orders.length) { summary.textContent = 'No rows on this page.'; return; }
+    var parts = [];
+    parts.push('Page ' + state.view.page);
+    parts.push(state.orders.length + ' row' + (state.orders.length === 1 ? '' : 's') + ' on this page');
+    if (state.count !== null) parts.push(groupDigits(state.count) + ' rows match this query');
+    else parts.push('total row count not reported by the service');
+    if (!state.hasNext) parts.push('last page');
+    if (state.count === null && state.hasNext) parts.push('more pages may follow');
+    summary.textContent = parts.join(' · ');
+  }
+
+  function renderPager() {
+    var page = state.view.page;
+    $('page-label').textContent = 'Page ' + page;
+    $('prev-btn').disabled = state.busy || state.view.skip <= 0;
+    $('next-btn').disabled = state.busy || !state.hasNext || state.orders.length === 0;
+    $('page-size').value = String(state.view.pageSize);
+  }
+
+  /* =========================================================================
+   * Drawer
+   * ====================================================================== */
+  function drawerMessage(title, body) {
+    var wrap = el('div', null, [el('p', { className: 'alert-title', text: title })]);
+    if (body) wrap.appendChild(el('p', { text: body }));
+    return wrap;
+  }
+
+  function renderDrawerItems(purchaseOrder) {
+    var body = $('drawer-body');
+    clear(body);
+    var rec = getItemRecord(purchaseOrder);
+
+    if (rec.state === 'loading' || rec.state === 'unknown') {
+      body.appendChild(drawerMessage('Loading line items…', 'Retrieving the item list for purchase order ' + purchaseOrder + '.'));
+      return;
+    }
+    if (rec.state === 'error') {
+      var errBox = el('div', { className: 'alert' }, [
+        el('p', { className: 'alert-title', text: 'Line items could not be loaded' }),
+        el('p', { text: rec.reason || 'The service returned an error for this purchase order.' })
+      ]);
+      var retry = el('p', { className: 'alert-actions' }, [
+        el('button', { type: 'button', className: 'btn', text: 'Retry' })
+      ]);
+      retry.firstChild.addEventListener('click', function () {
+        loadDrawerItems(purchaseOrder, true);
+      });
+      errBox.appendChild(retry);
+      body.appendChild(errBox);
+      return;
+    }
+
+    var summary = rec.summary || summarizeItems(rec.items);
+    var header = el('div', null, []);
+    var totalText = summary.ok
+      ? (summary.empty ? 'No line items returned.' : 'Total of item net amounts: ' + summary.display)
+      : 'Total not available: ' + summary.reason;
+    header.appendChild(el('p', { className: 'summary', text: totalText }));
+    if (rec.state === 'partial') {
+      header.appendChild(el('p', { className: 'status', text: rec.reason || 'The item list is incomplete.' }));
+    }
+    body.appendChild(header);
+
+    if (!rec.items.length) {
+      body.appendChild(drawerMessage('No line items', 'The service returned an empty item list for this purchase order.'));
+      return;
+    }
+
+    var tableWrap = el('div', { className: 'table-wrap' });
+    var table = el('table', null, []);
+    table.appendChild(el('caption', { className: 'visually-hidden', text: 'Line items for purchase order ' + purchaseOrder }));
+    var thead = el('thead');
+    var headRow = el('tr', null, [
+      el('th', { scope: 'col', text: 'Item' }),
+      el('th', { scope: 'col', text: 'Description' }),
+      el('th', { scope: 'col', className: 'num', text: 'Quantity' }),
+      el('th', { scope: 'col', text: 'Unit' }),
+      el('th', { scope: 'col', className: 'num', text: 'Net amount' }),
+      el('th', { scope: 'col', text: 'Currency' })
+    ]);
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    var tbody = el('tbody', null, []);
+    rec.items.forEach(function (item) {
+      tbody.appendChild(el('tr', null, [
+        el('td', { className: 'mono', text: item.item || '—' }),
+        el('td', { text: item.description || '—' }),
+        el('td', { className: 'num', text: formatSingleAmount(item.quantity, '') }),
+        el('td', { className: 'mono', text: item.unit || '—' }),
+        el('td', { className: 'num', text: formatSingleAmount(item.netAmount, '') }),
+        el('td', { className: 'mono', text: item.currency || '—' })
+      ]));
+    });
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+    body.appendChild(tableWrap);
+    body.appendChild(el('p', {
+      className: 'footnote',
+      text: 'Net amount is the item net order value (NetAmount) in the document currency. Unit prices (NetPriceAmount) are shown nowhere and never summed. Item numbers are shown exactly as returned, including leading zeros.'
+    }));
+  }
+
+  function loadDrawerItems(purchaseOrder, force) {
+    var epoch = state.epoch;
+    var token = ++state.drawer.token;
+    if (state.drawer.po !== purchaseOrder) return;
+    renderDrawerItems(purchaseOrder);
+    ensureItems(purchaseOrder, epoch, force).then(function () {
+      if (token !== state.drawer.token || epoch !== state.epoch) return;
+      if (state.drawer.po !== purchaseOrder) return;
+      renderDrawerItems(purchaseOrder);
+      var order = null;
+      for (var i = 0; i < state.orders.length; i++) {
+        if (state.orders[i].purchaseOrder === purchaseOrder) { order = state.orders[i]; break; }
+      }
+      if (order) updateRowTotal(order);
+    });
+  }
+
+  function openDrawer(purchaseOrder, trigger) {
+    var drawer = $('drawer');
+    state.drawer.po = purchaseOrder;
+    state.drawer.token++;
+    var order = null;
+    for (var i = 0; i < state.orders.length; i++) {
+      if (state.orders[i].purchaseOrder === purchaseOrder) { order = state.orders[i]; break; }
+    }
+    $('drawer-title').textContent = 'Purchase order ' + (purchaseOrder || 'unknown');
+    $('drawer-sub').textContent = order
+      ? 'Supplier ' + (order.supplier || '—') + ' · ' + formatCalendarDate(order.date) +
+        ' · ' + (order.currency || 'no currency') + ' · status code ' + (order.status || '—')
+      : '';
+    // showModal() traps focus, and the browser restores focus to the trigger on close.
+    if (!drawer.open) {
+      if (typeof drawer.showModal === 'function') drawer.showModal();
+      else drawer.setAttribute('open', 'open');
+    }
+    loadDrawerItems(purchaseOrder, false);
+  }
+
+  function closeDrawer() {
+    var drawer = $('drawer');
+    if (typeof drawer.close === 'function' && drawer.open) drawer.close();
+    else drawer.removeAttribute('open');
+    state.drawer.po = null;
+    state.drawer.token++;
+  }
+
+  /* =========================================================================
+   * Filters and connection
+   * ====================================================================== */
+  function clearFieldErrors() {
+    ['root-error', 'key-error', 'supplier-error', 'date-error'].forEach(function (id) {
+      $(id).textContent = '';
+    });
+    $('f-from').removeAttribute('aria-invalid');
+    $('f-to').removeAttribute('aria-invalid');
+  }
+
+  function validateServiceRoot(root) {
+    var value = normalizeServiceRoot(root);
+    if (!value) return { ok: false, message: 'Enter the OData service root.' };
+    var url;
+    try { url = new URL(value); } catch (e) { return { ok: false, message: 'Enter a valid absolute URL.' }; }
+    if (url.protocol !== 'https:' && !(url.protocol === 'http:' && /^(localhost|127\.0\.0\.1)$/.test(url.hostname))) {
+      return { ok: false, message: 'Use an https:// service root (http is only allowed for localhost).' };
+    }
+    return { ok: true, value: value };
+  }
+
+  function startConnection() {
+    clearFieldErrors();
+    var rootCheck = validateServiceRoot($('root').value);
+    if (!rootCheck.ok) {
+      $('root-error').textContent = rootCheck.message;
+      $('root').setAttribute('aria-invalid', 'true');
+      setStatus('Connection not started.');
+      return;
+    }
+    var key = $('apikey').value;
+    if (!key || !key.trim()) {
+      $('key-error').textContent = 'Enter your SAP API Hub sandbox key. It is required for every request.';
+      $('apikey').setAttribute('aria-invalid', 'true');
+      setStatus('Connection not started.');
+      return;
+    }
+    key = key.trim();
+
+    var previous = state.connection;
+    var sameConnection = previous && previous.root === rootCheck.value && previous.key === key;
+    if (!sameConnection) itemCache = new Map();
+    state.connection = { root: rootCheck.value, key: key };
+    state.apiKey = key;
+    state.root = rootCheck.value;
+    state.epoch++;
+    state.connected = true;
+    state.expandSupported = null;
+    state.view.skip = 0;
+    state.view.page = 1;
+    state.lastListError = null;
+    state.orders = [];
+    state.count = null;
+    state.hasNext = false;
+    state.nextLink = null;
+    rowTotalCells = new Map();
+    renderTable();
+    renderSummary();
+    renderPager();
+    loadList();
+  }
+
+  function clearConnection() {
+    state.apiKey = '';
+    state.connected = false;
+    state.connection = null;
+    state.epoch++;
+    state.listToken++;
+    state.drawer.token++;
+    state.orders = [];
+    state.count = null;
+    state.hasNext = false;
+    state.nextLink = null;
+    state.lastListError = null;
+    state.expandSupported = null;
+    state.view.skip = 0;
+    state.view.page = 1;
+    itemCache = new Map();
+    rowTotalCells = new Map();
+    $('apikey').value = '';
+    $('apikey').removeAttribute('aria-invalid');
+    $('drawer-body').textContent = '';
+    if ($('drawer').open) closeDrawer();
+    clearAlert();
+    renderTable();
+    renderSummary();
+    renderPager();
+    setStatus('Connection cleared. The API key was removed from memory and the displayed data was discarded.');
+  }
+
+  function applyFilters() {
+    clearFieldErrors();
+    if (!state.connected) {
+      showAlert({
+        title: 'Not connected',
+        message: 'Enter the service root and your API key, then press Load purchase orders before applying filters.',
+        tone: 'warn'
+      });
+      setStatus('No active connection.');
+      return;
+    }
+    var supplier = $('f-supplier').value.trim();
+    var from = $('f-from').value;
+    var to = $('f-to').value;
+    var invalid = false;
+
+    if (from && !isValidISODate(from)) {
+      $('date-error').textContent = 'From date is not a valid calendar date.';
+      $('f-from').setAttribute('aria-invalid', 'true');
+      invalid = true;
+    }
+    if (to && !isValidISODate(to)) {
+      $('date-error').textContent = 'To date is not a valid calendar date.';
+      $('f-to').setAttribute('aria-invalid', 'true');
+      invalid = true;
+    }
+    if (!invalid && from && to && from > to) {
+      $('date-error').textContent = 'The from date is later than the to date. Reverse the range or clear one end.';
+      invalid = true;
+    }
+    if (invalid) {
+      setStatus('Filters were not applied.');
+      return;
+    }
+
+    state.filters = { supplier: supplier, from: from, to: to };
+    state.view.skip = 0;
+    state.view.page = 1;
+    loadList();
+  }
+
+  function clearFilters() {
+    clearFieldErrors();
+    $('f-supplier').value = '';
+    $('f-from').value = '';
+    $('f-to').value = '';
+    state.filters = { supplier: '', from: '', to: '' };
+    state.view.skip = 0;
+    state.view.page = 1;
+    if (state.connected) loadList();
+    else setStatus('Filters cleared. Load a connection to retrieve data.');
+  }
+
+  function goToPage(delta) {
+    if (!state.connected || state.busy) return;
+    var nextSkip = state.view.skip + delta * state.view.pageSize;
+    if (nextSkip < 0) return;
+    if (delta > 0 && !state.hasNext) return;
+    state.view.skip = nextSkip;
+    loadList();
+  }
+
+  /* =========================================================================
+   * Wiring
+   * ====================================================================== */
+  $('conn-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    startConnection();
+  });
+  $('clear-btn').addEventListener('click', clearConnection);
+  $('filter-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    applyFilters();
+  });
+  $('clear-filters-btn').addEventListener('click', clearFilters);
+  $('prev-btn').addEventListener('click', function () { goToPage(-1); });
+  $('next-btn').addEventListener('click', function () { goToPage(1); });
+  $('page-size').addEventListener('change', function () {
+    var size = parseInt($('page-size').value, 10);
+    if (PAGE_SIZES.indexOf(size) === -1) size = DEFAULT_PAGE_SIZE;
+    state.view.pageSize = size;
+    state.view.skip = 0;
+    state.view.page = 1;
+    if (state.connected) loadList();
+    else renderPager();
+  });
+  $('drawer-close').addEventListener('click', closeDrawer);
+  $('drawer').addEventListener('cancel', function () { state.drawer.po = null; });
+  $('drawer').addEventListener('close', function () {
+    state.drawer.po = null;
+    state.drawer.token++;   // invalidate in-flight item responses for the closed drawer
+  });
+  window.addEventListener('beforeunload', function () {
+    // best-effort: drop the key from memory when the page goes away
+    state.apiKey = '';
+    if (state.connection) state.connection.key = '';
+  });
+
+  renderPager();
+  renderSummary();
+
+  /* =========================================================================
+   * Verification hook
+   * The UI never calls this namespace. It exposes the pure functions so the
+   * request/query construction, filter building, date validation and decimal
+   * summation can be checked without a private API key.
+   * ====================================================================== */
+  try {
+    Object.defineProperty(window, '__polab', {
+      value: Object.freeze({
+        odataStringLiteral: odataStringLiteral,
+        buildFilterExpression: buildFilterExpression,
+        isValidISODate: isValidISODate,
+        formatCalendarDate: formatCalendarDate,
+        normalizeServiceRoot: normalizeServiceRoot,
+        buildPurchaseOrderListUrl: buildPurchaseOrderListUrl,
+        buildPurchaseOrderItemsUrl: buildPurchaseOrderItemsUrl,
+        buildKeySegment: buildKeySegment,
+        resolveNextLink: resolveNextLink,
+        parseDecimal: parseDecimal,
+        sumDecimals: sumDecimals,
+        formatSum: formatSum,
+        summarizeItems: summarizeItems
+      }),
+      writable: false,
+      configurable: false
+    });
+  } catch (e) { /* non-fatal */ }
+})();
+</script>
+</body>
+</html>

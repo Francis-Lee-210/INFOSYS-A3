@@ -13,7 +13,7 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
   the dependency this slice was authorised to build on; no other branch or worktree was modified and no history was rewritten.
 - The #9 work is committed on that base as the fix `3c48fe8`, test `5f1d12f`, F3 redaction `7fe272f` (reverted by `25ba1ed` during PR review), evidence `ce6a81c`, development record `b322c72` and line-count correction `1eb70e5` commits, plus the second-review commits — encoding fix `d9d7a3e`, test `973acac` (new code-bearing head) and the documentation commit that carries this record:
   modified `app/app.mjs`, `app/index.html`, `app/styles.css`, `app/tests/browser.mjs`, new `app/tests/issue-9.mjs`, and 29 `docs/validation/issue-9-*.png` captures.
-  The branch was published as PR #25 after the second review and awaits team approval.
+  The branch was published as PR #26 after the second review and awaits team approval.
 - Depended on, without refactoring: #7's receipt v2 lifecycle (single `planReviewSnapshot.receipt` key, exact validated schema, write-plus-read-back verification, historical
   provenance) and #8's connection/navigation recovery (generation-bound reads, explicit Retry read, bounded continuation, validated destinations).
 
@@ -43,7 +43,7 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
 4. **AC23 storage/privacy audit (read-only).** Exactly one storage write exists in shipped code — the minimal receipt with whitelisted fields; keys travel only in request
    headers, never URLs; fixtures are synthetic; the harness writes no files during tests. Findings: **F1** development scratch probes were deleted before final (confirmed
    absent); **F2** `tools/sap_api_probe_result.json` (gitignored, 61 KB) contains live-sandbox sample data — packaging must use `git archive`, never a folder copy; **F3**
-   earlier evidence files contained local machine paths — first redacted with placeholders, then reverted during PR #25 review because paths are neither credentials
+   earlier evidence files contained local machine paths — first redacted with placeholders, then reverted during PR #26 review because paths are neither credentials
    nor raw API responses (see the PR review follow-up below).
 
 ## Verification and defects found
@@ -77,7 +77,7 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
 
 ## PR review follow-up (16 October 2026)
 
-- After the second review the branch was pushed and opened as PR #25. The second review also ran a mutation check in a throwaway worktree: removing the list
+- After the second review the branch was pushed and opened as PR #26. The second review also ran a mutation check in a throwaway worktree: removing the list
   or detail stale-response guards in full, disabling Disconnect/Reset invalidation, keeping an unconfirmed intent across a new selection, or reverting any of the
   three keyboard fixes is caught by the issue 9 groups (S01/S08, S04, S03/S08, N01, K01/K02/K05). Removing a single guard layer alone is masked by the redundant
   guards, which is by design. No repository file was changed by that check.
@@ -85,10 +85,11 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
   paths are neither credentials nor raw API responses, so they fall outside the AC23 boundary, and the #7/#8 authors' evidence is restored exactly as they
   recorded it. This record and the acceptance document were updated to match. No application or test code changed, so the 145/145 result at `973acac` still applies.
 - The two PR follow-up commits were re-committed once with corrected commit messages (file content unchanged) and force-pushed with lease before any team review.
+- PR #25 was then closed and the same branch was reopened as PR #26; no commit changed.
 
 ## Scope and handoff
 
-The branch is published as PR #25 and awaits team approval; no issue or assignee state was changed, and no automatic merge is implied. This slice claims AC17/AC23/AC24
+The branch is published as PR #26 and awaits team approval; no issue or assignee state was changed, and no automatic merge is implied. This slice claims AC17/AC23/AC24
 integration evidence and the AC02–AC24 combined crosswalk only. #10 live SAP workflow, #11 comparison work and course-submission packaging (including the F2 `git archive`
 requirement) remain open. Earlier #5–#8 evidence is preserved unchanged; the F3 redaction was reverted.
 

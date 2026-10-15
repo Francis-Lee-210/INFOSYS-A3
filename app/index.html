@@ -35,12 +35,21 @@
       </div>
       <div id="status" class="status" role="status" aria-live="polite">Ready. No network request has been made.</div>
       <div id="error" class="error" role="alert" hidden></div>
+      <section id="read-recovery" class="read-recovery" aria-labelledby="read-recovery-title" hidden>
+        <h3 id="read-recovery-title" tabindex="-1">Connection / read recovery</h3>
+        <p id="read-recovery-message" role="status" aria-live="polite"></p>
+        <div class="actions">
+          <button id="retry-read" type="button">Retry read</button>
+          <button id="correct-key" type="button" class="secondary" hidden>Correct key</button>
+          <button id="abandon-read" type="button" class="secondary">Back to connection</button>
+        </div>
+      </section>
     </section>
 
     <section id="screen-list" class="screen workspace" aria-labelledby="records-title">
       <aside class="ledger-panel">
         <div class="panel-head">
-          <h2 id="records-title">Loaded billing records</h2>
+          <h2 id="records-title" tabindex="-1">Loaded billing records</h2>
           <p id="coverage" class="coverage">Loaded records, not complete history.</p>
           <p class="hint">Source API: API_BILLING_DOCUMENT_REQUEST_SRV (version 1.1.0), for the live source. The synthetic fixture has its own profile and no SAP API identity. SAP sandbox records are demonstration data; they are not Spark customer bills, payments or service-history evidence.</p>
         </div>
@@ -62,6 +71,10 @@
           </table>
         </div>
         <p id="list-meta" class="meta">No list request has returned.</p>
+        <nav class="actions page-actions" aria-label="Loaded page navigation">
+          <button id="next-page" type="button" hidden>Next page</button>
+          <button id="restart-list" type="button" class="secondary" hidden>Restart list</button>
+        </nav>
       </aside>
 
       <article class="detail-panel" aria-labelledby="detail-title">

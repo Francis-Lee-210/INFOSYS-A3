@@ -116,7 +116,8 @@ function sanitizeAdapterError(error) {
   return {
     code: error?.code || 'ERROR',
     message: error?.message || 'The request failed.',
-    retryAfter: error?.details?.retryAfter ?? null
+    retryAfter: error?.details?.retryAfter ?? null,
+    upstreamStatus: error?.details?.upstreamStatus ?? null
   };
 }
 
@@ -156,9 +157,12 @@ async function handleApi(req, res, pathname, searchParams, port, requestOrigin, 
     const modeKind = resolveDataMode(searchParams);
     if (!modeKind) { sendError(res, 400, 'INVALID_MODE', 'The requested source mode is not allowed.', requestOrigin, port); return; }
     if (!compatibleProfile(searchParams, modeKind)) { sendError(res, 400, 'INVALID_PROFILE', 'The requested source profile is not allowed for this mode.', requestOrigin, port); return; }
+    if ([...searchParams.keys()].some(name => !['mode', 'fixture', 'demo', 'profile', 'sourceProfile', 'sourceProfileId', 't', 'continuation'].includes(name) || searchParams.getAll(name).length !== 1)) {
+      sendError(res, 400, 'DESTINATION', 'Unsupported or ambiguous list query.', requestOrigin, port); return;
+    }
     const adapter = adapterFromRequest(req, modeKind, transport);
     try {
-      const result = await adapter.list();
+      const result = await adapter.list(searchParams.has('continuation') ? searchParams.get('continuation') : null);
       sendJson(res, 200, result, requestOrigin, port);
     } catch (error) {
       const sanitized = sanitizeAdapterError(error);

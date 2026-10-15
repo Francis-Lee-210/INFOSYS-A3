@@ -1,4 +1,4 @@
-import { SANDBOX_BASE_URL } from './config.js';
+import { SANDBOX_BASE_URL, INDEXED_COLLECTION_PATH, DEFAULT_TOP, MAX_SKIP, HEADER_SELECT, HEADER_ORDER } from './config.js';
 
 export const ODATA_DATE_RE = /^\/Date\((-?\d+)\)\/$/;
 
@@ -76,11 +76,20 @@ export function odataQuoteKey(key) {
 }
 
 export function validateSubContinuation(link) {
-  const raw = safeTrim(link);
-  if (raw === '') return { ok: false, reason: 'missing-link' };
+  return validateListDestination(link, true);
+}
+
+// The frozen V2 collection declares $skip, not $skiptoken/skiptoken. Support a
+// deliberately small subset: fixed projection/order and server-provided offsets.
+// Validation and the credential-bearing transport share this exact contract.
+export function validateListDestination(link, requireSkip = false) {
+  if (typeof link !== 'string' || !link || link.length > 4096) return { ok: false, reason: 'missing-or-invalid-link' };
+  const raw = link;
+  if (/[\s\\#]/.test(raw) || /%(?![a-f\d]{2})/i.test(raw) || raw.startsWith('//') ||
+      /(?:^|\/)(?:\.|%2e){1,2}(?:\/|[?]|$)/i.test(raw)) return { ok: false, reason: 'malformed-url' };
   let url;
   try {
-    url = new URL(raw);
+    url = new URL(raw, INDEXED_COLLECTION_PATH);
   } catch {
     return { ok: false, reason: 'invalid-url' };
   }
@@ -89,15 +98,34 @@ export function validateSubContinuation(link) {
   if (url.port !== '' && url.port !== '443') return { ok: false, reason: 'wrong-port' };
   const allowedPath = new URL(`${SANDBOX_BASE_URL}/A_BillingDocumentRequest`).pathname;
   if (url.pathname !== allowedPath) return { ok: false, reason: 'wrong-path' };
-  const allowedParameters = new Set(['$skiptoken', 'skiptoken', '$format', '$top', '$orderby', '$select', '$filter']);
-  for (const key of url.searchParams.keys()) {
-    if (!allowedParameters.has(key)) return { ok: false, reason: 'disallowed-query' };
+  const allowedParameters = new Set(['$skip', '$format', '$top', '$orderby', '$select']);
+  for (const name of url.searchParams.keys()) {
+    if (!allowedParameters.has(name) || url.searchParams.getAll(name).length !== 1) return { ok: false, reason: 'ambiguous-or-unsupported-query' };
   }
-  if (url.username !== '' || url.password !== '' || url.hash !== '') return { ok: false, reason: 'embedded-credentials-or-hash' };
-  return { ok: true, url: url.href };
+  if (url.username !== '' || url.password !== '' || /^[a-z]+:\/\/[^/]*@/i.test(raw)) return { ok: false, reason: 'embedded-credentials' };
+  const params = url.searchParams;
+  const skip = params.get('$skip');
+  if ((requireSkip && skip === null) || (skip !== null && (!/^(0|[1-9]\d{0,6})$/.test(skip) || Number(skip) > MAX_SKIP))) return { ok: false, reason: 'unsupported-offset' };
+  const top = params.get('$top') ?? String(DEFAULT_TOP);
+  if (!/^(?:[1-9]|10)$/.test(top)) return { ok: false, reason: 'unsupported-page-size' };
+  if ((params.has('$format') && params.get('$format') !== 'json') ||
+      (params.has('$orderby') && params.get('$orderby') !== HEADER_ORDER)) return { ok: false, reason: 'changed-query-context' };
+  if (params.has('$select')) {
+    const fields = params.get('$select').split(',');
+    if (fields.length !== new Set(fields).size || [...fields].sort().join(',') !== HEADER_SELECT.split(',').sort().join(',')) return { ok: false, reason: 'changed-projection' };
+  }
+  const canonical = new URL(INDEXED_COLLECTION_PATH);
+  canonical.searchParams.set('$top', top);
+  canonical.searchParams.set('$format', 'json');
+  canonical.searchParams.set('$select', HEADER_SELECT);
+  canonical.searchParams.set('$orderby', HEADER_ORDER);
+  // Canonicalise zero to the initial request so cycles cannot hide behind aliases.
+  if (Number(skip) > 0) canonical.searchParams.set('$skip', skip);
+  return { ok: true, url: canonical.href, top: Number(top) };
 }
 
 export function validateItemContinuation(link, key) {
+  if (typeof link !== 'string' || link.length > 4096 || /[\s\\#]/.test(link) || /%(?![a-f\d]{2})/i.test(link)) return { ok: false, reason: 'malformed-url' };
   const raw = safeTrim(link);
   if (raw === '') return { ok: false, reason: 'missing-link' };
   let url;
@@ -111,8 +139,9 @@ export function validateItemContinuation(link, key) {
   if (url.pathname !== expected.pathname) return { ok: false, reason: 'wrong-path' };
   const allowedParameters = new Set(['$skiptoken', 'skiptoken', '$format', '$top', '$orderby', '$select', '$filter', '$inlinecount']);
   for (const name of url.searchParams.keys()) {
-    if (!allowedParameters.has(name)) return { ok: false, reason: 'disallowed-query' };
+    if (!allowedParameters.has(name) || url.searchParams.getAll(name).length !== 1) return { ok: false, reason: 'disallowed-or-ambiguous-query' };
   }
+  if (url.searchParams.has('$skiptoken') && url.searchParams.has('skiptoken')) return { ok: false, reason: 'ambiguous-token' };
   return { ok: true, url: url.href };
 }
 

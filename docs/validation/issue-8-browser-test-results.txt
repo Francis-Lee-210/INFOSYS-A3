@@ -1,0 +1,388 @@
+Issue #8 — deterministic browser / HTTP validation, 15 October 2026
+No authenticated SAP requests. Fixtures, injected live-mode upstream transport, sentinel keys and controlled clocks only.
+Runtime: macOS; Node v24.20.0; Playwright 1.62.1; installed Google Chrome 155.0.8059.40, headless.
+Source specification and earlier #5/#6/#7 evidence remain unchanged.
+
+=== Independent inherited baseline BEFORE edits ===
+Starting main: 643755eeb30dacb3b548580948ee6a96d7ee8af3.
+Dependency/tested baseline: b072e151c19a1829d2cd5604d413bccdc6e5143d (PR #23 was open).
+Command: PLAYWRIGHT_MODULE_PATH=<external playwright directory> CHROME_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm test (from app/).
+Unfiltered; exit code 0. Raw output:
+
+> test
+> node tests/browser.mjs
+
+Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright /private/var/folders/gr/c764x1r91mgcd2r25jm77cn40000gn/T/opencode/receipt-review-tools/node_modules/playwright
+PASS fixture provenance and exact source labels
+PASS raw records empty unusable and mixed are distinct
+PASS malicious keys do not reach upstream transport
+PASS redirects are rejected without leaking location or raw body
+PASS invalid path keys and mismatched unusable details are rejected
+PASS optional item metadata is partial, not complete history
+PASS browser flow keeps no storage and generates observed metadata report
+PASS public browser normalizes a raw SAP header, matches detail, and clears a sentinel key
+PASS browser rejects detail with missing source, wrong provenance, or unusable data and clears stale evidence
+PASS malformed required date and currency types are rejected while valid optional context defects stay Unknown
+PASS item linkage requires validated parents and exact continuation before any success count
+PASS malformed and wrong-key item continuations are rejected before any count
+PASS missing live key leaves the current source unchanged and reports the connection error
+PASS a failed reused-key detail clears the prior selected digest and leaves evidence not-observed
+PASS a delayed first list digest cannot restore stale list rows after disconnect
+PASS synthetic fixture has its own profile and source metadata
+PASS review cost evidence preserves selection and returns to list
+PASS synthetic exact decimals are preserved for zero, negative and 0.100 plus 0.200
+PASS missing optional fields stay Unknown and are not material by themselves
+PASS linked item currency and parent conflicts are flagged material
+PASS bad required header data cannot create a cost snapshot
+PASS unknown mode or synthetic profile in live mode returns sanitized 400 with zero calls
+PASS supplement: synthetic arithmetic preserves coefficients above Number.MAX_SAFE_INTEGER and detects one-mill mismatch
+PASS supplement: missing optional tax on both profiles is explicit and cannot become zero or material inconsistency
+PASS supplement: normalized usable=true cannot bypass required date, meaning, currency, retrieval or amount validation
+PASS supplement: matching item evidence is visible while each independent source, version, provenance or parent conflict is hidden with a material reason
+PASS supplement: optional row currency and parent must be explicit; missing or malformed values never inherit the header currency
+PASS supplement: live item transport requests documented monetary fields, remains partial, and unavailable refresh does not retain old rows or create material conflict
+PASS supplement: public snapshot preserves original source provenance, clears on exit/source/reset, and synthetic B0 metadata contains no live observation
+PASS supplement: deferred real HTTP item/detail responses cannot restore stale cost or export after source/reset/Back
+PASS unknown or conflicting source profiles are rejected on list/detail/items without upstream calls
+PASS item completion refreshes cost evidence without stealing the current keyboard focus
+PASS document switching preserves each currency and exact figures on both fixture kinds
+PASS desktop and mobile cost ledger contain overflow and preserve keyboard focus on Back
+PASS issue 7: Keep confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: Review options confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: Help confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: Later confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: synthetic relation permits only Help or Later and retains material reasons
+PASS issue 7: linked currency permits only Help or Later and retains material reasons
+PASS issue 7: write failure stays unsaved and Retry preserves the original outcome
+PASS issue 7: read-back failure stays unsaved and Retry preserves the original outcome
+PASS issue 7: duplicate confirmation records one receipt identity and one storage outcome
+PASS issue 7: refresh reopens original live, fixture and synthetic historical receipts with zero API requests
+PASS issue 7: corrupt JSON shows recovery without invented history and supports reset
+PASS issue 7: unsupported version shows recovery without invented history and supports reset
+PASS issue 7: missing provenance shows recovery without invented history and supports reset
+PASS issue 7: unknown provenance shows recovery without invented history and supports reset
+PASS issue 7: cancel reset keeps the receipt; confirmed reset clears receipt, review and API key
+PASS issue 7: source, detail refresh and selection changes invalidate unconfirmed intent
+PASS issue 7: disconnect and new API results preserve the confirmed historical receipt
+PASS issue 7: a different reviewed document explains the existing receipt without changing its stored bytes
+PASS issue 7: desktop and mobile decision screens contain overflow and focus the heading on entry
+PASS issue 7 review: delayed live list success cannot relabel a historical fixture receipt
+PASS issue 7 review: delayed live list failure cannot relabel a historical fixture receipt
+PASS issue 7 review: partial coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: unavailable coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: not-checked coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: absent coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: complete coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: unknown coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: old v1 receipts remain untouched in unsupported-version recovery
+PASS issue 7 review: missing or contradictory coverage and assessment metadata cannot invent complete history
+PASS issue 7 review: removeItem throwing before deletion preserves verified receipt and session
+PASS issue 7 review: deletion followed by failed verification never claims retained or Saved history
+PASS issue 7 review: cancelling reset is non-destructive and returns focus to Reset demo
+PASS issue 7 review: normal reset clears a connected session and receipt across reload
+PASS issue 7 review: remove reset failure has a verified retry recovery
+PASS issue 7 review: verify reset failure has a verified retry recovery
+PASS issue 7 review: keyboard Enter confirmation focuses the visible saved heading then Return to list and Reset
+Connection layout 1280px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 1366px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 390px: input 320px; hint 320px × 75.375px
+PASS issue 7 review: connection input and hint remain usable with Reopen visible at 1280, 1366 and 390px
+
+All 71 tests passed.
+
+=== Intermediate checks (not substituted for final validation) ===
+Inherited suite after first implementation: 71/71 PASS; no inherited assertion edits.
+Initial targeted new-module run: 37/37 PASS (36 then-registered Issue #8 groups + fixture-server setup).
+First expanded complete run: 1/110 failed, solely the new forged-Host harness case (Fetch normalised the Host header). Raw Node HTTP now sends the intended header to the loopback socket; expected 403 and zero-upstream assertions retained. Focused rerun: 2/2 PASS.
+Integrated code-bearing head 39041271338b50bbc23c2a2c33a38e9a27bed2b3: complete unfiltered run 111/111 PASS.
+Final review expanded valid HTTP-date coverage to RFC850/asctime as well as IMF-fixdate. Focused R05 run: 5/5 PASS. Final integrated code-bearing head and complete output follow below.
+
+=== Final unfiltered integrated-branch run ===
+Integrated main: 9cb37608352738705ef39fbd1806e18d465e0b91 (#23 merged externally during implementation).
+Tested code-bearing head: 840c0e962c448a7d680266604b8c0bc0c4fea0cb.
+Command from repository root: PLAYWRIGHT_MODULE_PATH=<external playwright directory> CHROME_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' CAPTURE_ISSUE8_SCREENSHOTS=1 npm --prefix app test
+TEST_FILTER unset. Exit code 0. 71 inherited + 42 Issue #8 groups. Raw output:
+
+> test
+> node tests/browser.mjs
+
+Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright /private/var/folders/gr/c764x1r91mgcd2r25jm77cn40000gn/T/opencode/receipt-review-tools/node_modules/playwright
+PASS fixture provenance and exact source labels
+PASS raw records empty unusable and mixed are distinct
+PASS malicious keys do not reach upstream transport
+PASS redirects are rejected without leaking location or raw body
+PASS invalid path keys and mismatched unusable details are rejected
+PASS optional item metadata is partial, not complete history
+PASS browser flow keeps no storage and generates observed metadata report
+PASS public browser normalizes a raw SAP header, matches detail, and clears a sentinel key
+PASS browser rejects detail with missing source, wrong provenance, or unusable data and clears stale evidence
+PASS malformed required date and currency types are rejected while valid optional context defects stay Unknown
+PASS item linkage requires validated parents and exact continuation before any success count
+PASS malformed and wrong-key item continuations are rejected before any count
+PASS missing live key leaves the current source unchanged and reports the connection error
+PASS a failed reused-key detail clears the prior selected digest and leaves evidence not-observed
+PASS a delayed first list digest cannot restore stale list rows after disconnect
+PASS synthetic fixture has its own profile and source metadata
+PASS review cost evidence preserves selection and returns to list
+PASS synthetic exact decimals are preserved for zero, negative and 0.100 plus 0.200
+PASS missing optional fields stay Unknown and are not material by themselves
+PASS linked item currency and parent conflicts are flagged material
+PASS bad required header data cannot create a cost snapshot
+PASS unknown mode or synthetic profile in live mode returns sanitized 400 with zero calls
+PASS supplement: synthetic arithmetic preserves coefficients above Number.MAX_SAFE_INTEGER and detects one-mill mismatch
+PASS supplement: missing optional tax on both profiles is explicit and cannot become zero or material inconsistency
+PASS supplement: normalized usable=true cannot bypass required date, meaning, currency, retrieval or amount validation
+PASS supplement: matching item evidence is visible while each independent source, version, provenance or parent conflict is hidden with a material reason
+PASS supplement: optional row currency and parent must be explicit; missing or malformed values never inherit the header currency
+PASS supplement: live item transport requests documented monetary fields, remains partial, and unavailable refresh does not retain old rows or create material conflict
+PASS supplement: public snapshot preserves original source provenance, clears on exit/source/reset, and synthetic B0 metadata contains no live observation
+PASS supplement: deferred real HTTP item/detail responses cannot restore stale cost or export after source/reset/Back
+PASS unknown or conflicting source profiles are rejected on list/detail/items without upstream calls
+PASS item completion refreshes cost evidence without stealing the current keyboard focus
+PASS document switching preserves each currency and exact figures on both fixture kinds
+PASS desktop and mobile cost ledger contain overflow and preserve keyboard focus on Back
+PASS issue 7: Keep confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: Review options confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: Help confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: Later confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: synthetic relation permits only Help or Later and retains material reasons
+PASS issue 7: linked currency permits only Help or Later and retains material reasons
+PASS issue 7: write failure stays unsaved and Retry preserves the original outcome
+PASS issue 7: read-back failure stays unsaved and Retry preserves the original outcome
+PASS issue 7: duplicate confirmation records one receipt identity and one storage outcome
+PASS issue 7: refresh reopens original live, fixture and synthetic historical receipts with zero API requests
+PASS issue 7: corrupt JSON shows recovery without invented history and supports reset
+PASS issue 7: unsupported version shows recovery without invented history and supports reset
+PASS issue 7: missing provenance shows recovery without invented history and supports reset
+PASS issue 7: unknown provenance shows recovery without invented history and supports reset
+PASS issue 7: cancel reset keeps the receipt; confirmed reset clears receipt, review and API key
+PASS issue 7: source, detail refresh and selection changes invalidate unconfirmed intent
+PASS issue 7: disconnect and new API results preserve the confirmed historical receipt
+PASS issue 7: a different reviewed document explains the existing receipt without changing its stored bytes
+PASS issue 7: desktop and mobile decision screens contain overflow and focus the heading on entry
+PASS issue 7 review: delayed live list success cannot relabel a historical fixture receipt
+PASS issue 7 review: delayed live list failure cannot relabel a historical fixture receipt
+PASS issue 7 review: partial coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: unavailable coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: not-checked coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: absent coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: complete coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: unknown coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: old v1 receipts remain untouched in unsupported-version recovery
+PASS issue 7 review: missing or contradictory coverage and assessment metadata cannot invent complete history
+PASS issue 7 review: removeItem throwing before deletion preserves verified receipt and session
+PASS issue 7 review: deletion followed by failed verification never claims retained or Saved history
+PASS issue 7 review: cancelling reset is non-destructive and returns focus to Reset demo
+PASS issue 7 review: normal reset clears a connected session and receipt across reload
+PASS issue 7 review: remove reset failure has a verified retry recovery
+PASS issue 7 review: verify reset failure has a verified retry recovery
+PASS issue 7 review: keyboard Enter confirmation focuses the visible saved heading then Return to list and Reset
+Connection layout 1280px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 1366px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 390px: input 320px; hint 320px × 75.375px
+PASS issue 7 review: connection input and hint remain usable with Reopen visible at 1280, 1366 and 390px
+PASS issue 8 P01: offline fixture replaces the page, preserves exact currencies/decimals, and returns to that page
+PASS issue 8 P02 absolute: server continuation reaches a distinct page and matching by-key explanation
+PASS issue 8 P02 service-relative: server continuation reaches a distinct page and matching by-key explanation
+PASS issue 8 P02 query-relative: server continuation reaches a distinct page and matching by-key explanation
+PASS issue 8 P03 initial-exhausted: empty pages are not zero spend, preserve receipts, and expose the right next/retry actions
+PASS issue 8 P03 initial-with-next: empty pages are not zero spend, preserve receipts, and expose the right next/retry actions
+PASS issue 8 P03 subsequent-exhausted: empty pages are not zero spend, preserve receipts, and expose the right next/retry actions
+PASS issue 8 P03 subsequent-with-next: empty pages are not zero spend, preserve receipts, and expose the right next/retry actions
+PASS issue 8 P04: empty page with continuation can navigate forward rather than declaring completeness
+PASS issue 8 P05: rejected server continuation is a recoverable navigation failure, not completeness
+PASS issue 8 P06: repeated/cyclic canonical continuations and the traversal bound cannot create uncontrolled requests
+PASS issue 8 S01: HTTP continuation allowlist refuses unsafe, malformed and ambiguous destinations with zero upstream calls
+PASS issue 8 S02: supported continuation parameters share the transport contract and response/page bounds
+PASS issue 8 S03: redirects never make a second credential-bearing request and can be explicitly retried
+PASS issue 8 S08: loopback Host/Origin, GET-only and fixed static-file boundaries remain enforced
+PASS issue 8 S09: oversized streamed responses stop at the byte bound and expose only a sanitized data failure
+PASS issue 8 S10: ambiguous item continuation metadata stays unavailable and is never followed
+PASS issue 8 R01 401: authentication requires explicit key correction and fresh selection
+PASS issue 8 R01 403: authentication requires explicit key correction and fresh selection
+PASS issue 8 R02 timeout: distinct failure retries once, suppresses duplicate attempts and reaches cost evidence
+PASS issue 8 R02 network: distinct failure retries once, suppresses duplicate attempts and reaches cost evidence
+PASS issue 8 R02 service: distinct failure retries once, suppresses duplicate attempts and reaches cost evidence
+PASS issue 8 R03: a failed next-page read clears old validity and Retry requests exactly that page
+PASS issue 8 R04: malformed JSON and wrong-shape payloads remain contract/data errors, not empty lists
+PASS issue 8 R05 seconds: 429 cooldown is shared by equivalent controls, expires without auto-send and permits one Retry
+PASS issue 8 R05 http-date: 429 cooldown is shared by equivalent controls, expires without auto-send and permits one Retry
+PASS issue 8 R05 rfc850-date: 429 cooldown is shared by equivalent controls, expires without auto-send and permits one Retry
+PASS issue 8 R05 asctime-date: 429 cooldown is shared by equivalent controls, expires without auto-send and permits one Retry
+PASS issue 8 R06: missing, malformed, zero and past Retry-After are explicit and never automatic
+PASS issue 8 R07: valid long delays are not shortened, unrepresentable delays stay blocked, and source changes cancel timers
+PASS issue 8 R08: optional item service failure keeps valid header evidence and retries only the item read
+PASS issue 8 R09: detail Retry keeps the selected key/page, requires valid read-back and restores useful focus
+PASS issue 8 S04 source: superseding a delayed page cannot restore old rows, evidence or retry coordinates
+PASS issue 8 S04 key: superseding a delayed page cannot restore old rows, evidence or retry coordinates
+PASS issue 8 S04 reset: superseding a delayed page cannot restore old rows, evidence or retry coordinates
+PASS issue 8 S05 detail: a late previous-page response cannot replace the new selected snapshot
+PASS issue 8 S05 items: a late previous-page response cannot replace the new selected snapshot
+PASS issue 8 S06 successful page completion: an open historical receipt keeps its provenance and stored bytes
+PASS issue 8 S06 failed page completion: an open historical receipt keeps its provenance and stored bytes
+PASS issue 8 S07: key/source/reset during a cooldown cancels obsolete retry effects
+PASS issue 8 U01: keyboard next/retry navigation has useful visible focus without background focus theft
+PASS issue 8 U02: representative pagination/empty/auth/cooldown/retry layouts remain usable at 1280, 1366 and 390px
+
+All 113 tests passed.
+
+Final checks: all application/test JS/MJS node --check PASS; git diff --check (working changes and complete diff against current main) PASS.
+Visual inspection: pagination, empty, authentication, cooldown and retry-ready; desktop 1280/1366px and mobile 390px. 15 focused screenshots captured by final run.
+No real key, raw live-response dump, specification/resource change or earlier-evidence rewrite. No new live SAP acceptance or completion of #4/#9/#10/#11/course submission claimed.
+
+=== PR #24 item-evidence review repair — 16 October 2026 (NZDT) ===
+Original reviewed head: 8aaa0737e5f01da78512b50c1db6df285d5afd80 (remote unchanged; PR open).
+Original checkout after maintainer-completed handover: /Users/rione1/Downloads/INFOSYS 704/A3/INFOSYS-A3.
+No new worktree/clone/stash or changes to the parked branch/worktree. Existing commits preserved.
+Independent untouched pre-repair baseline: complete unfiltered 113/113 PASS, exit 0, same runtime below.
+
+Controlled reproductions BEFORE changing implementation (actual handler/adapter, USD header, item 503 then gated matching-parent EUR item):
+A, Retry from cost: pending snapshot unavailable, Continue enabled; after entering decision and releasing EUR, Keep could be saved with unavailable coverage, currencyConflict=false, materialInconsistency=false.
+B, Retry after selecting Keep on decision: decision visible and Confirm enabled while pending; after EUR response the same stale Keep/false-conflict receipt could be saved.
+Focused desired-behaviour regressions before fix: 10 of 13 tests failed (12 new groups plus fixture setup). V01 failed "Pending item evidence must block Continue"; V02 failed because the old decision remained visible. V07/V08 preservation cases and setup already passed. Existing assertions were not weakened.
+Focused after-fix run: 13/13 PASS.
+
+Tested code-bearing commit: 58063cf2c1af9f4cee853eee674a12179dbe98c1.
+Final command, from original checkout:
+PLAYWRIGHT_MODULE_PATH=<external playwright directory> CHROME_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' CAPTURE_ISSUE8_REVIEW=1 npm --prefix app test
+TEST_FILTER unset. Original screenshot capture flags unset. All original 113 groups retained, plus 12 review groups. Exit 0.
+Raw final output:
+
+> test
+> node tests/browser.mjs
+
+Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright /private/var/folders/gr/c764x1r91mgcd2r25jm77cn40000gn/T/opencode/receipt-review-tools/node_modules/playwright
+PASS fixture provenance and exact source labels
+PASS raw records empty unusable and mixed are distinct
+PASS malicious keys do not reach upstream transport
+PASS redirects are rejected without leaking location or raw body
+PASS invalid path keys and mismatched unusable details are rejected
+PASS optional item metadata is partial, not complete history
+PASS browser flow keeps no storage and generates observed metadata report
+PASS public browser normalizes a raw SAP header, matches detail, and clears a sentinel key
+PASS browser rejects detail with missing source, wrong provenance, or unusable data and clears stale evidence
+PASS malformed required date and currency types are rejected while valid optional context defects stay Unknown
+PASS item linkage requires validated parents and exact continuation before any success count
+PASS malformed and wrong-key item continuations are rejected before any count
+PASS missing live key leaves the current source unchanged and reports the connection error
+PASS a failed reused-key detail clears the prior selected digest and leaves evidence not-observed
+PASS a delayed first list digest cannot restore stale list rows after disconnect
+PASS synthetic fixture has its own profile and source metadata
+PASS review cost evidence preserves selection and returns to list
+PASS synthetic exact decimals are preserved for zero, negative and 0.100 plus 0.200
+PASS missing optional fields stay Unknown and are not material by themselves
+PASS linked item currency and parent conflicts are flagged material
+PASS bad required header data cannot create a cost snapshot
+PASS unknown mode or synthetic profile in live mode returns sanitized 400 with zero calls
+PASS supplement: synthetic arithmetic preserves coefficients above Number.MAX_SAFE_INTEGER and detects one-mill mismatch
+PASS supplement: missing optional tax on both profiles is explicit and cannot become zero or material inconsistency
+PASS supplement: normalized usable=true cannot bypass required date, meaning, currency, retrieval or amount validation
+PASS supplement: matching item evidence is visible while each independent source, version, provenance or parent conflict is hidden with a material reason
+PASS supplement: optional row currency and parent must be explicit; missing or malformed values never inherit the header currency
+PASS supplement: live item transport requests documented monetary fields, remains partial, and unavailable refresh does not retain old rows or create material conflict
+PASS supplement: public snapshot preserves original source provenance, clears on exit/source/reset, and synthetic B0 metadata contains no live observation
+PASS supplement: deferred real HTTP item/detail responses cannot restore stale cost or export after source/reset/Back
+PASS unknown or conflicting source profiles are rejected on list/detail/items without upstream calls
+PASS item completion refreshes cost evidence without stealing the current keyboard focus
+PASS document switching preserves each currency and exact figures on both fixture kinds
+PASS desktop and mobile cost ledger contain overflow and preserve keyboard focus on Back
+PASS issue 7: Keep confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: Review options confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: Help confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: Later confirms the reviewed evidence with a minimal read-back-verified receipt
+PASS issue 7: synthetic relation permits only Help or Later and retains material reasons
+PASS issue 7: linked currency permits only Help or Later and retains material reasons
+PASS issue 7: write failure stays unsaved and Retry preserves the original outcome
+PASS issue 7: read-back failure stays unsaved and Retry preserves the original outcome
+PASS issue 7: duplicate confirmation records one receipt identity and one storage outcome
+PASS issue 7: refresh reopens original live, fixture and synthetic historical receipts with zero API requests
+PASS issue 7: corrupt JSON shows recovery without invented history and supports reset
+PASS issue 7: unsupported version shows recovery without invented history and supports reset
+PASS issue 7: missing provenance shows recovery without invented history and supports reset
+PASS issue 7: unknown provenance shows recovery without invented history and supports reset
+PASS issue 7: cancel reset keeps the receipt; confirmed reset clears receipt, review and API key
+PASS issue 7: source, detail refresh and selection changes invalidate unconfirmed intent
+PASS issue 7: disconnect and new API results preserve the confirmed historical receipt
+PASS issue 7: a different reviewed document explains the existing receipt without changing its stored bytes
+PASS issue 7: desktop and mobile decision screens contain overflow and focus the heading on entry
+PASS issue 7 review: delayed live list success cannot relabel a historical fixture receipt
+PASS issue 7 review: delayed live list failure cannot relabel a historical fixture receipt
+PASS issue 7 review: partial coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: unavailable coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: not-checked coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: absent coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: complete coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: unknown coverage and assessment scope survive confirmation and refresh
+PASS issue 7 review: old v1 receipts remain untouched in unsupported-version recovery
+PASS issue 7 review: missing or contradictory coverage and assessment metadata cannot invent complete history
+PASS issue 7 review: removeItem throwing before deletion preserves verified receipt and session
+PASS issue 7 review: deletion followed by failed verification never claims retained or Saved history
+PASS issue 7 review: cancelling reset is non-destructive and returns focus to Reset demo
+PASS issue 7 review: normal reset clears a connected session and receipt across reload
+PASS issue 7 review: remove reset failure has a verified retry recovery
+PASS issue 7 review: verify reset failure has a verified retry recovery
+PASS issue 7 review: keyboard Enter confirmation focuses the visible saved heading then Return to list and Reset
+Connection layout 1280px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 1366px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 390px: input 320px; hint 320px × 75.375px
+PASS issue 7 review: connection input and hint remain usable with Reopen visible at 1280, 1366 and 390px
+PASS issue 8 P01: offline fixture replaces the page, preserves exact currencies/decimals, and returns to that page
+PASS issue 8 P02 absolute: server continuation reaches a distinct page and matching by-key explanation
+PASS issue 8 P02 service-relative: server continuation reaches a distinct page and matching by-key explanation
+PASS issue 8 P02 query-relative: server continuation reaches a distinct page and matching by-key explanation
+PASS issue 8 P03 initial-exhausted: empty pages are not zero spend, preserve receipts, and expose the right next/retry actions
+PASS issue 8 P03 initial-with-next: empty pages are not zero spend, preserve receipts, and expose the right next/retry actions
+PASS issue 8 P03 subsequent-exhausted: empty pages are not zero spend, preserve receipts, and expose the right next/retry actions
+PASS issue 8 P03 subsequent-with-next: empty pages are not zero spend, preserve receipts, and expose the right next/retry actions
+PASS issue 8 P04: empty page with continuation can navigate forward rather than declaring completeness
+PASS issue 8 P05: rejected server continuation is a recoverable navigation failure, not completeness
+PASS issue 8 P06: repeated/cyclic canonical continuations and the traversal bound cannot create uncontrolled requests
+PASS issue 8 S01: HTTP continuation allowlist refuses unsafe, malformed and ambiguous destinations with zero upstream calls
+PASS issue 8 S02: supported continuation parameters share the transport contract and response/page bounds
+PASS issue 8 S03: redirects never make a second credential-bearing request and can be explicitly retried
+PASS issue 8 S08: loopback Host/Origin, GET-only and fixed static-file boundaries remain enforced
+PASS issue 8 S09: oversized streamed responses stop at the byte bound and expose only a sanitized data failure
+PASS issue 8 S10: ambiguous item continuation metadata stays unavailable and is never followed
+PASS issue 8 R01 401: authentication requires explicit key correction and fresh selection
+PASS issue 8 R01 403: authentication requires explicit key correction and fresh selection
+PASS issue 8 R02 timeout: distinct failure retries once, suppresses duplicate attempts and reaches cost evidence
+PASS issue 8 R02 network: distinct failure retries once, suppresses duplicate attempts and reaches cost evidence
+PASS issue 8 R02 service: distinct failure retries once, suppresses duplicate attempts and reaches cost evidence
+PASS issue 8 R03: a failed next-page read clears old validity and Retry requests exactly that page
+PASS issue 8 R04: malformed JSON and wrong-shape payloads remain contract/data errors, not empty lists
+PASS issue 8 R05 seconds: 429 cooldown is shared by equivalent controls, expires without auto-send and permits one Retry
+PASS issue 8 R05 http-date: 429 cooldown is shared by equivalent controls, expires without auto-send and permits one Retry
+PASS issue 8 R05 rfc850-date: 429 cooldown is shared by equivalent controls, expires without auto-send and permits one Retry
+PASS issue 8 R05 asctime-date: 429 cooldown is shared by equivalent controls, expires without auto-send and permits one Retry
+PASS issue 8 R06: missing, malformed, zero and past Retry-After are explicit and never automatic
+PASS issue 8 R07: valid long delays are not shortened, unrepresentable delays stay blocked, and source changes cancel timers
+PASS issue 8 R08: optional item service failure keeps valid header evidence and retries only the item read
+PASS issue 8 R09: detail Retry keeps the selected key/page, requires valid read-back and restores useful focus
+PASS issue 8 S04 source: superseding a delayed page cannot restore old rows, evidence or retry coordinates
+PASS issue 8 S04 key: superseding a delayed page cannot restore old rows, evidence or retry coordinates
+PASS issue 8 S04 reset: superseding a delayed page cannot restore old rows, evidence or retry coordinates
+PASS issue 8 S05 detail: a late previous-page response cannot replace the new selected snapshot
+PASS issue 8 S05 items: a late previous-page response cannot replace the new selected snapshot
+PASS issue 8 S06 successful page completion: an open historical receipt keeps its provenance and stored bytes
+PASS issue 8 S06 failed page completion: an open historical receipt keeps its provenance and stored bytes
+PASS issue 8 S07: key/source/reset during a cooldown cancels obsolete retry effects
+PASS issue 8 U01: keyboard next/retry navigation has useful visible focus without background focus theft
+PASS issue 8 review V01: cost-view Retry suspends pending confirmation and records the returned currency conflict
+PASS issue 8 review V02 currency: decision-view Retry clears Keep and rebuilds current restrictions
+PASS issue 8 review V02 parent: decision-view Retry clears Keep and rebuilds current restrictions
+PASS issue 8 review V03: non-conflicting retry requires a new review/choice and saves updated coverage
+PASS issue 8 review V04: a repeated item failure presents current unavailable limits without losing valid header evidence
+PASS issue 8 review V05: a cached unsaved receipt and save-Retry cannot persist superseded item evidence
+PASS issue 8 review V06 page: superseded item Retry cannot restore an old assessment
+PASS issue 8 review V06 selection: superseded item Retry cannot restore an old assessment
+PASS issue 8 review V06 source: superseded item Retry cannot restore an old assessment
+PASS issue 8 review V06 reset: superseded item Retry cannot restore an old assessment
+PASS issue 8 review V07: item Retry never rewrites or relabels an existing confirmed historical receipt
+PASS issue 8 review V08: list-view item Retry is authoritative but does not bypass explicit cost review
+PASS issue 8 U02: representative pagination/empty/auth/cooldown/retry layouts remain usable at 1280, 1366 and 390px
+
+All 125 tests passed.
+
+Final review checks: all application/test JS/MJS node --check PASS; git diff --check PASS.
+Visual checks: desktop 1366px/mobile 390px pending focus/status, current restricted choices, repeated-failure limits and no page overflow PASS.
+Only injected/synthetic transport and sentinel keys. No authenticated SAP call or local SAP credential-file access. Historical evidence/screenshots retained unchanged.

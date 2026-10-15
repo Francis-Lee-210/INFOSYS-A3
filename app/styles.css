@@ -44,6 +44,11 @@ h2 { margin: 0 0 10px; font-size: 18px; }
 input { width: 100%; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 8px; font: inherit; }
 input:focus-visible, button:focus-visible, table [tabindex]:focus-visible { outline: 3px solid var(--plum); outline-offset: 2px; }
 #decision-title:focus { outline: 3px solid var(--plum); outline-offset: 4px; }
+#records-title:focus, #read-recovery-title:focus, #cost-update-status:focus { outline: 3px solid var(--plum); outline-offset: 4px; }
+.read-recovery { margin-top: 12px; padding: 12px; border: 1px solid var(--rule); border-radius: 8px; overflow-wrap: anywhere; }
+.read-recovery h3, .read-recovery p { margin: 0 0 10px; }
+.page-actions { margin-top: 12px; }
+tr.selectable[aria-disabled="true"] { opacity: .6; cursor: wait; }
 .hint, .meta, .coverage { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
 .coverage { font-weight: 700; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -72,7 +77,7 @@ tbody tr { cursor: pointer; }
 tbody tr:hover, tbody tr.selected { background: var(--paper); }
 tbody tr.unusable { opacity: 0.55; cursor: not-allowed; }
 tbody tr.unusable { opacity: 0.55; cursor: not-allowed; text-decoration: line-through; }
-td.empty { text-align: center; color: var(--muted); }
+td.empty { text-align: left; color: var(--muted); }
 
 .detail { min-height: 220px; }
 .detail.empty-detail { display: grid; place-items: center; color: var(--muted); }

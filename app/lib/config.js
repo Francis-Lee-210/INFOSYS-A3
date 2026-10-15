@@ -10,6 +10,10 @@ export const DEFAULT_TOP = 10;
 export const ITEMS_TOP = 20;
 export const REQUEST_TIMEOUT_MS = 20000;
 export const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
+export const MAX_SKIP = 1000000;
+export const HEADER_SELECT = 'BillingDocumentRequest,BillingDocumentDate,TotalNetAmount,TotalTaxAmount,TotalGrossAmount,TransactionCurrency,PayerParty,ContractAccount';
+export const HEADER_ORDER = 'BillingDocumentRequest';
+export const ITEM_SELECT = 'BillingDocumentRequest,BillingDocumentRequestItem,NetAmount,TaxAmount,GrossAmount,TransactionCurrency';
 
 export const OPENAPI = Object.freeze({
   overviewUrl: 'https://api.sap.com/api/API_BILLING_DOCUMENT_REQUEST_SRV/overview',

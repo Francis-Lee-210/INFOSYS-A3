@@ -1,5 +1,7 @@
-import { SOURCE_API_ID, SOURCE_API_VERSION, SANDBOX_BASE_URL, LIST_PATH, DEFAULT_TOP, ITEMS_TOP, REQUEST_TIMEOUT_MS, MAX_RESPONSE_BYTES, REQUEST_SOURCE_PROFILE_ID, SYNTHETIC_SOURCE_PROFILE_ID } from './config.js';
-import { normaliseODataDate, isKnownCurrency, validateDecimalString, odataQuoteKey, validateSubContinuation, validateItemContinuation } from './contracts.js';
+import { SOURCE_API_ID, SOURCE_API_VERSION, SANDBOX_BASE_URL, LIST_PATH, ITEMS_TOP, REQUEST_TIMEOUT_MS, MAX_RESPONSE_BYTES, REQUEST_SOURCE_PROFILE_ID, SYNTHETIC_SOURCE_PROFILE_ID, HEADER_SELECT, ITEM_SELECT } from './config.js';
+import { normaliseODataDate, isKnownCurrency, validateDecimalString, odataQuoteKey, validateSubContinuation, validateListDestination, validateItemContinuation } from './contracts.js';
+
+const ADAPTER_ERROR = Symbol('sanitized-adapter-error');
 
 function safeTrim(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -9,6 +11,7 @@ function makeError(code, message, details = {}) {
   const error = new Error(message);
   error.code = code;
   error.details = details;
+  error[ADAPTER_ERROR] = true;
   return error;
 }
 
@@ -20,19 +23,54 @@ function redactError(status) {
 }
 
 const UPSTREAM_STATUS = Symbol('upstream-status');
-const SELECT_HEADER = 'BillingDocumentRequest,BillingDocumentDate,TotalNetAmount,TotalTaxAmount,TotalGrossAmount,TransactionCurrency,PayerParty,ContractAccount';
+const SELECT_HEADER = HEADER_SELECT;
+
+async function boundedBody(response) {
+  const advertised = headerOf(response, 'content-length');
+  if (advertised && /^\d+$/.test(advertised) && Number(advertised) > MAX_RESPONSE_BYTES) {
+    try { await response.body?.cancel?.(); } catch {}
+    throw makeError('PAYLOAD_TOO_LARGE', 'The SAP response exceeded the read limit.');
+  }
+  if (!response.body?.getReader) {
+    const body = await response.text();
+    if (Buffer.byteLength(body) > MAX_RESPONSE_BYTES) throw makeError('PAYLOAD_TOO_LARGE', 'The SAP response exceeded the read limit.');
+    return body;
+  }
+  const reader = response.body.getReader();
+  const chunks = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > MAX_RESPONSE_BYTES) {
+        await reader.cancel();
+        throw makeError('PAYLOAD_TOO_LARGE', 'The SAP response exceeded the read limit.');
+      }
+      chunks.push(Buffer.from(value));
+    }
+    return Buffer.concat(chunks, bytes).toString('utf8');
+  } finally { reader.releaseLock(); }
+}
 
 async function fetchUpstream(url, key, transport) {
-  const target = new URL(url);
+  let target = new URL(url);
   const base = new URL(SANDBOX_BASE_URL);
   const tail = target.pathname.slice(base.pathname.length);
-  if (target.origin !== base.origin || target.username || target.password || target.hash ||
+  if (target.pathname === `${base.pathname}${LIST_PATH}`) {
+    const checked = validateListDestination(url);
+    if (!checked.ok) throw makeError('DESTINATION', 'The requested destination is outside the configured SAP read contract.');
+    target = new URL(checked.url);
+  } else if (target.origin !== base.origin || target.username || target.password || target.hash ||
       !target.pathname.startsWith(base.pathname) ||
       !/^\/A_BillingDocumentRequest(?:\('[A-Za-z0-9._-]{1,10}'\)(?:\/to_Item)?)?$/.test(tail) ||
       [...target.searchParams.keys()].some(k => !['$top', '$format', '$select'].includes(k) || target.searchParams.getAll(k).length !== 1) ||
-      target.searchParams.get('$format') !== 'json') {
+       target.searchParams.get('$format') !== 'json') {
     throw makeError('DESTINATION', 'The requested destination is outside the configured SAP read contract.');
   }
+  if (tail !== LIST_PATH && (target.searchParams.get('$select') !== (tail.endsWith('/to_Item') ? ITEM_SELECT : HEADER_SELECT) ||
+      target.searchParams.get('$top') !== (tail.endsWith('/to_Item') ? String(ITEMS_TOP) : null))) throw makeError('DESTINATION', 'The requested projection or page bound is outside the configured SAP read contract.');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
@@ -43,10 +81,9 @@ async function fetchUpstream(url, key, transport) {
     if (response.status >= 300 && response.status < 400) throw makeError('REDIRECT', 'SAP returned a redirect; no redirect was followed.');
     if (!response.ok) {
       const category = redactError(response.status);
-      throw makeError(category.code, category.message, { retryAfter: parseRetryAfter(response) });
+      throw makeError(category.code, category.message, { retryAfter: parseRetryAfter(response), upstreamStatus: response.status });
     }
-    const body = await response.text();
-    if (Buffer.byteLength(body) > MAX_RESPONSE_BYTES) throw makeError('PAYLOAD_TOO_LARGE', 'The SAP response exceeded the read limit.');
+    const body = await boundedBody(response);
     let json;
     try { json = JSON.parse(body); } catch { throw makeError('NOT_JSON', 'The SAP response was not JSON.'); }
     if (!json || typeof json !== 'object' || json.error) throw makeError('SAP_ERROR', 'The SAP response did not contain usable OData.');
@@ -54,7 +91,7 @@ async function fetchUpstream(url, key, transport) {
     return json;
   } catch (error) {
     if (error.name === 'AbortError') throw makeError('TIMEOUT', 'The SAP read timed out. Try again.');
-    if (error.code && error.details) throw error;
+    if (error[ADAPTER_ERROR]) throw error;
     throw makeError('NETWORK', 'The SAP sandbox could not be reached. Check the connection and retry.');
   } finally { clearTimeout(timer); }
 }
@@ -70,10 +107,48 @@ function headerOf(response, name) {
 
 function parseRetryAfter(response) {
   const value = headerOf(response, 'retry-after');
-  if (!value) return null;
-  const seconds = Number(value);
-  if (Number.isFinite(seconds) && seconds >= 0 && seconds <= 3600) return seconds;
-  return null;
+  if (value === null || value === undefined) return { status: 'missing', delayMs: 0 };
+  if (typeof value !== 'string') return { status: 'invalid', delayMs: 0 };
+  const raw = value.trim();
+  if (/^\d+$/.test(raw)) {
+    const digits = raw.replace(/^0+(?=\d)/, '');
+    // Never clamp a valid server delay down to a shorter timeout.
+    if (digits.length > 16 || BigInt(digits) > BigInt(Math.floor((8640000000000000 - Date.now()) / 1000))) return { status: 'unrepresentable', delayMs: null };
+    return { status: 'delay-seconds', delayMs: Number(digits) * 1000 };
+  }
+  const date = httpDate(raw);
+  if (date !== null) return { status: date <= Date.now() ? 'past' : 'http-date', delayMs: Math.max(0, date - Date.now()) };
+  return { status: 'invalid', delayMs: 0 };
+}
+
+// HTTP-date recipients also accept the two obsolete wire forms. Do not accept
+// arbitrary Date.parse input (ISO/local dates or impossible calendar values).
+function httpDate(raw) {
+  let match = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) ([A-Z][a-z]{2}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT$/.exec(raw);
+  let weekday, day, month, year, hour, minute, second;
+  if (match) [, weekday, day, month, year, hour, minute, second] = match;
+  else {
+    match = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\d{2})-([A-Z][a-z]{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}) GMT$/.exec(raw);
+    if (match) {
+      [, weekday, day, month, year, hour, minute, second] = match;
+      const currentYear = new Date().getUTCFullYear();
+      year = Math.floor(currentYear / 100) * 100 + Number(year);
+      if (year > currentYear + 50) year -= 100;
+    } else {
+      match = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) ([A-Z][a-z]{2}) ( \d|\d{2}) (\d{2}):(\d{2}):(\d{2}) (\d{4})$/.exec(raw);
+      if (!match) return null;
+      [, weekday, month, day, hour, minute, second, year] = match;
+    }
+  }
+  const monthIndex = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(month);
+  if (monthIndex < 0) return null;
+  const date = new Date(0);
+  date.setUTCFullYear(Number(year), monthIndex, Number(day));
+  date.setUTCHours(Number(hour), Number(minute), Number(second), 0);
+  if (date.getUTCFullYear() !== Number(year) || date.getUTCMonth() !== monthIndex || date.getUTCDate() !== Number(day) ||
+      date.getUTCHours() !== Number(hour) || date.getUTCMinutes() !== Number(minute) || date.getUTCSeconds() !== Number(second) ||
+      ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getUTCDay()] !== weekday.slice(0, 3)) return null;
+  return date.getTime();
 }
 
 function readEnvelope(json) {
@@ -213,8 +288,9 @@ export function createAdapter(options = {}) {
   }
 
   return {
-    async list() {
+    async list(continuation = null) {
       if (syntheticMode) {
+        if (continuation !== null) throw makeError('DESTINATION', 'The synthetic fixture has no further page.');
         const syntheticModule = await import('./syntheticFixtureData.js');
         const ctx = sourceContext('synthetic');
         const records = syntheticModule.syntheticFixtureRecords.map((record) => normaliseRecord(record, ctx));
@@ -227,6 +303,7 @@ export function createAdapter(options = {}) {
           records,
           continuation: null,
           continuationAvailable: false,
+          continuationValidation: 'none', pageCursor: 'synthetic:1', boundedComplete: true,
           loadedCount: records.length,
           usableCount: records.filter((record) => record.usable).length,
           transport: 'none (synthetic fixture)',
@@ -236,7 +313,9 @@ export function createAdapter(options = {}) {
       if (fixtureMode) {
         const ctx = sourceContext('fixture');
         const fixtureModule = await import('./fixtureData.js');
-        const records = fixtureModule.fixtureRecords.map((record) => normaliseRecord(record, ctx));
+        if (continuation !== null && continuation !== 'fixture:2') throw makeError('DESTINATION', 'Unsupported fixture page.');
+        const secondPage = continuation === 'fixture:2';
+        const records = (secondPage ? fixtureModule.fixtureNextRecords : fixtureModule.fixtureRecords).map((record) => normaliseRecord(record, ctx));
         return {
           mode: 'fixture',
           provenance: 'fixture-demonstration',
@@ -244,20 +323,24 @@ export function createAdapter(options = {}) {
           sourceApiId: SOURCE_API_ID,
           sourceApiVersion: SOURCE_API_VERSION,
           records,
-          continuation: null,
-          continuationAvailable: false,
+          continuation: secondPage ? null : 'fixture:2',
+          continuationAvailable: !secondPage,
+          continuationValidation: secondPage ? 'none' : 'available', pageCursor: secondPage ? 'fixture:2' : 'fixture:1', boundedComplete: secondPage,
           loadedCount: records.length,
           usableCount: records.filter((record) => record.usable).length,
           transport: 'none (fixture)'
         };
       }
+      const checked = continuation === null ? validateListDestination(`${SANDBOX_BASE_URL}${LIST_PATH}`) : validateSubContinuation(continuation);
+      if (!checked.ok) throw makeError('DESTINATION', 'Continuation rejected before any SAP request. Restart the list or retry the last valid page.');
       const cleanedKey = requireLiveKey();
-      const url = `${SANDBOX_BASE_URL}${LIST_PATH}?$top=${DEFAULT_TOP}&$format=json&$select=${SELECT_HEADER}`;
+      const url = checked.url;
       const json = await fetchUpstream(url, cleanedKey, transport);
       const envelope = readEnvelope(json);
       if (!Array.isArray(envelope.results)) {
         throw makeError('CONTRACT', 'The SAP list response did not contain a result array.');
       }
+      if (envelope.results.length > checked.top) throw makeError('CONTRACT', 'The SAP page exceeded the requested bounded page size.');
       const continuationPresented = envelope.continuation !== null;
       const validatedContinuation = validateSubContinuation(envelope.continuation);
       const continuationAvailable = continuationPresented && validatedContinuation.ok;
@@ -270,7 +353,7 @@ export function createAdapter(options = {}) {
         mode: 'live',
         provenance: 'live-sap-sandbox',
         records,
-        continuation: continuationAvailable ? envelope.continuation : null,
+        continuation: continuationAvailable ? validatedContinuation.url : null,
         continuationAvailable,
         continuationValidation: continuationAvailable ? 'available' : (continuationPresented ? 'rejected' : 'none'),
         loadedCount: records.length,
@@ -279,7 +362,8 @@ export function createAdapter(options = {}) {
         upstreamStatus: json[UPSTREAM_STATUS],
         sourceApiId: SOURCE_API_ID,
         sourceApiVersion: SOURCE_API_VERSION,
-        sourceProfileId: REQUEST_SOURCE_PROFILE_ID
+        sourceProfileId: REQUEST_SOURCE_PROFILE_ID,
+        pageCursor: url, boundedComplete: false
       };
     },
     async detail(key, selectedKey = null) {
@@ -293,7 +377,7 @@ export function createAdapter(options = {}) {
       }
       if (fixtureMode) {
         const fixtureModule = await import('./fixtureData.js');
-        const raw = fixtureModule.fixtureRecords.find((item) => item.BillingDocumentRequest === safeTrim(key));
+        const raw = [...fixtureModule.fixtureRecords, ...fixtureModule.fixtureNextRecords].find((item) => item.BillingDocumentRequest === safeTrim(key));
         const record = raw ? normaliseRecord(raw, sourceContext('fixture')) : null;
         if (!record) throw makeError('NOT_FOUND', 'Fixture billing request was not found.');
         if (selectedKey && safeTrim(selectedKey) !== safeTrim(key)) throw makeError('KEY_MISMATCH', 'Selected key does not match the detail key.');
@@ -343,11 +427,12 @@ export function createAdapter(options = {}) {
       if (fixtureMode) return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Item-level raw evidence is not fetched in fixture mode for this scope.' }, null);
       const liveKey = requireLiveKey();
       const quoted = odataQuoteKey(cleanedKey);
-      const url = `${SANDBOX_BASE_URL}/A_BillingDocumentRequest('${quoted}')/to_Item?$top=${ITEMS_TOP}&$format=json&$select=BillingDocumentRequest,BillingDocumentRequestItem,NetAmount,TaxAmount,GrossAmount,TransactionCurrency`;
+      const url = `${SANDBOX_BASE_URL}/A_BillingDocumentRequest('${quoted}')/to_Item?$top=${ITEMS_TOP}&$format=json&$select=${ITEM_SELECT}`;
       try {
         const json = await fetchUpstream(url, liveKey, transport);
         const envelope = readEnvelope(json);
         if (!Array.isArray(envelope.results)) return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Item navigation did not contain a recognizable result array.' }, null);
+        if (envelope.results.length > ITEMS_TOP) return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Item navigation exceeded the bounded page size.' }, null);
         const rawContinuation = envelope.continuation;
         const presented = rawContinuation !== null && rawContinuation !== undefined;
         if (presented && typeof rawContinuation !== 'string') return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Item navigation continuation was rejected before use: malformed-continuation-type.' }, false);
@@ -364,8 +449,8 @@ export function createAdapter(options = {}) {
         if (rows.length === 0) return result({ status: 'absent', count: 0, hasContinuation: false, note: 'Item navigation returned no item rows and no continuation.' });
         const extra = rows.length >= ITEMS_TOP ? ' absence of next after a full page is not proof of complete coverage.' : ' no amounts were summed.';
         return result({ status: 'partial', count: rows.length, rows, hasContinuation: false, note: 'Item navigation returned verified parent rows with bounded loaded coverage;' + extra + fieldNote });
-      } catch {
-        return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Optional item navigation could not be read; no item amounts were invented.' }, null);
+      } catch (error) {
+        return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Optional item navigation could not be read; no item amounts were invented.', recovery: { code: error.code, message: error.message, retryAfter: error.details?.retryAfter ?? null } }, null);
       }
     },
     validateContinuation(link) {

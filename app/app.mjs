@@ -18,6 +18,7 @@ const costConsistency = document.getElementById('cost-consistency');
 const costReasons = document.getElementById('cost-reasons');
 const costItems = document.getElementById('cost-items');
 const costLimits = document.getElementById('cost-limits');
+const costUpdateStatus = document.getElementById('cost-update-status');
 const apiKeyInput = document.getElementById('api-key');
 const screenDecision = document.getElementById('screen-decision');
 const receiptStatus = document.getElementById('receipt-status');
@@ -25,6 +26,12 @@ const intentOptions = document.getElementById('intent-options');
 const confirmIntentButton = document.getElementById('confirm-intent');
 const retryReceiptButton = document.getElementById('retry-receipt');
 const reopenReceiptButton = document.getElementById('reopen-receipt');
+const nextPageButton = document.getElementById('next-page');
+const restartListButton = document.getElementById('restart-list');
+const retryReadButton = document.getElementById('retry-read');
+const readRecovery = document.getElementById('read-recovery');
+const readRecoveryMessage = document.getElementById('read-recovery-message');
+const correctKeyButton = document.getElementById('correct-key');
 const RECEIPT_KEY = 'planReviewSnapshot.receipt';
 const RECEIPT_VERSION = 'issue-7-receipt-v2';
 const INTENTS = { keep: 'Keep', 'review-options': 'Review options', help: 'Help', later: 'Later' };
@@ -34,6 +41,7 @@ let receiptRecovery = false;
 let resetUncertain = false;
 let chosenIntent = '';
 let pendingReceipt = null;
+let decisionSnapshot = null;
 Object.defineProperty(window, '__issue7Receipt', { get: () => receipt ? structuredClone(receipt) : undefined });
 
 const state = {
@@ -56,6 +64,118 @@ const state = {
   costSnapshot: null,
   costToken: 0
 };
+
+// One visible page, at most 20 successful pages per traversal, no record cache or
+// financial aggregation. Retry coordinates never contain a credential.
+const reads = {
+  page: 0, cursor: null, next: null, continuation: 'none', seen: new Set(),
+  recovery: null, until: 0, blocked: false, timer: null,
+  busy: { list: false, detail: false, items: false }
+};
+
+function resetReads() {
+  clearInterval(reads.timer);
+  reads.timer = null;
+  reads.until = 0;
+  reads.blocked = false;
+  reads.recovery = null;
+  reads.page = 0;
+  reads.cursor = null;
+  reads.next = null;
+  reads.continuation = 'none';
+  reads.seen.clear();
+  reads.busy = { list: false, detail: false, items: false };
+  updateReadControls();
+}
+
+function coolingDown() { return reads.blocked || performance.now() < reads.until; }
+
+function updateReadControls() {
+  const waiting = coolingDown();
+  const busy = Object.values(reads.busy).some(Boolean);
+  const correctedKey = apiKeyInput.value.trim() && apiKeyInput.value.trim() !== state.apiKey;
+  document.getElementById('connect-live').disabled = state.requestedMode === 'live' && !correctedKey && (waiting || reads.busy.list);
+  document.getElementById('use-fixture').disabled = state.requestedMode === 'fixture' && reads.busy.list;
+  document.getElementById('use-synthetic').disabled = state.requestedMode === 'synthetic' && reads.busy.list;
+  nextPageButton.hidden = !reads.page;
+  nextPageButton.disabled = !reads.next || reads.busy.list || waiting;
+  restartListButton.hidden = !reads.page;
+  restartListButton.disabled = reads.busy.list || waiting || (state.requestedMode === 'live' && !state.apiKey);
+  document.getElementById('reload-detail').disabled = reads.busy.detail || waiting;
+  document.getElementById('check-items').disabled = reads.busy.items || waiting;
+  for (const row of recordsBody.querySelectorAll('tr.selectable')) {
+    if (waiting) row.setAttribute('aria-disabled', 'true'); else row.removeAttribute('aria-disabled');
+  }
+  const recovery = reads.recovery;
+  readRecovery.hidden = !recovery;
+  if (!recovery) return;
+  correctKeyButton.hidden = recovery.code !== 'AUTH';
+  retryReadButton.hidden = recovery.code === 'AUTH';
+  retryReadButton.disabled = waiting || busy || recovery.generation !== state.connectionToken;
+  const delay = reads.blocked
+    ? 'The server delay exceeds the supported clock range. Retry remains unavailable; abandon this connection or supply a different key/source.'
+    : (waiting ? `Wait ${Math.ceil((reads.until - performance.now()) / 1000)} seconds before retrying. No request will be sent automatically.` : 'Retry read is available. No request is sent automatically.');
+  readRecoveryMessage.textContent = `${recovery.message} ${recovery.code === 'AUTH' ? 'Correct the session key and explicitly reconnect; the old selection will not be restored.' : delay}`;
+  if (!waiting && reads.timer) { clearInterval(reads.timer); reads.timer = null; }
+}
+
+function allowRead() {
+  if (coolingDown()) { updateReadControls(); return false; }
+  if (state.requestedMode === 'live' && !state.apiKey) return false;
+  return true;
+}
+
+function clearReadRecovery() {
+  reads.recovery = null;
+  updateReadControls();
+}
+
+function readFailure(caught, operation) {
+  const code = caught?.code || 'CONTRACT';
+  const labels = { AUTH: 'Authentication / key problem', TIMEOUT: 'Read timed out', NETWORK: 'Network failure', RATE_LIMIT: 'Rate limited', SERVER: 'Service failure', REDIRECT: 'Redirect refused', DESTINATION: 'Continuation rejected', EMPTY: 'Empty page', NAVIGATION: 'Navigation stopped' };
+  const label = labels[code] || 'Contract / data failure';
+  const message = `${label}. ${caught?.message || 'This read could not be validated.'}`;
+  reads.recovery = { ...operation, code, message, generation: state.connectionToken };
+  if (code === 'AUTH') {
+    state.apiKey = '';
+    apiKeyInput.value = '';
+    // Other operations in the rejected credential generation must not restore
+    // validity. The already reviewed header is not fabricated into an item set.
+    state.connectionToken += 1;
+    state.listRequestId += 1; state.detailRequestId += 1; state.itemRequestId += 1;
+    reads.busy = { list: false, detail: false, items: false };
+    reads.recovery.generation = state.connectionToken;
+  }
+  const retry = caught?.retryAfter;
+  if (retry?.status === 'unrepresentable') reads.blocked = true;
+  const delay = Number.isSafeInteger(retry?.delayMs) && retry.delayMs >= 0 ? retry.delayMs : 0;
+  // A missing/invalid 429 header gets an explicit one-second local debounce,
+  // never a guessed replacement for a valid (possibly much longer) server delay.
+  const waitMs = delay || (code === 'RATE_LIMIT' && !['past', 'delay-seconds', 'http-date'].includes(retry?.status) ? 1000 : 0);
+  if (waitMs > 0) reads.until = Math.max(reads.until, Math.ceil(performance.now()) + waitMs);
+  if (code === 'RATE_LIMIT' && ['missing', 'invalid'].includes(retry?.status)) reads.recovery.message += ' No valid Retry-After was supplied; a one-second local wait applies.';
+  if (retry?.status === 'past') reads.recovery.message += ' The Retry-After date has already passed.';
+  if (coolingDown() && !reads.timer) reads.timer = setInterval(updateReadControls, 1000);
+  updateReadControls();
+  return message;
+}
+
+async function readJSON(path, mode) {
+  const headers = {};
+  if (mode === 'live') headers['X-SAP-APIKey'] = state.apiKey;
+  let response;
+  try { response = await fetch(path, { method: 'GET', headers }); }
+  catch { throw Object.assign(new Error('The local read connection failed. Check the connection and retry.'), { code: 'NETWORK' }); }
+  let json;
+  try { json = await response.json(); }
+  catch { throw Object.assign(new Error('The read returned malformed JSON.'), { code: 'NOT_JSON' }); }
+  if (!response.ok) throw Object.assign(new Error(json?.error?.message || 'The read failed.'), { code: json?.error?.code || 'HTTP', retryAfter: json?.error?.retryAfter });
+  return { response, json };
+}
+
+function focusReadOutcome(anchor, target) {
+  if (screenDecision.hidden && target.checkVisibility() && (document.activeElement === anchor || document.activeElement === document.body)) target.focus();
+}
 
 function setStatus(text) { status.textContent = text; }
 function showError(text) {
@@ -114,6 +234,8 @@ function resetSession() {
   if (screenCost) screenCost.hidden = true;
   if (screenList) screenList.hidden = false;
   setMode('none');
+  state.requestedMode = 'none';
+  resetReads();
   clearError();
   setStatus('Disconnected. Session key and loaded records were cleared.');
 }
@@ -136,8 +258,34 @@ async function loadList(mode) {
     return;
   }
 
+  if (mode === 'live' && suppliedKey === state.apiKey && coolingDown()) return;
+  if (mode === 'live' && suppliedKey === state.apiKey && reads.busy.list) return;
+  if (mode !== 'live' && mode === state.requestedMode && reads.busy.list) return;
+  state.connectionToken += 1;
+  state.requestedMode = mode;
+  state.apiKey = mode === 'live' ? suppliedKey : '';
+  apiKeyInput.value = '';
+  resetReads();
+  return loadPage({ kind: 'list', mode, cursor: null, page: 1 });
+}
+
+async function loadPage(operation, moveFocus = false) {
+  if (!allowRead() || reads.busy.list) return;
+  const { mode, cursor, page } = operation;
+  const generation = state.connectionToken;
+  const anchor = document.activeElement;
+  clearReadRecovery();
+  clearError();
+  reads.page = page;
+  reads.cursor = cursor;
+  reads.next = null;
+  reads.continuation = 'none';
+  reads.busy.list = true;
+  reads.busy.detail = false; reads.busy.items = false;
+  updateReadControls();
+
   const listToken = ++state.listRequestId;
-  const detailToken = ++state.detailRequestId;
+  state.detailRequestId += 1;
   state.selectedKey = '';
   state.itemsCoverage = null;
   state.observedList = null;
@@ -150,8 +298,9 @@ async function loadList(mode) {
   try { window.__issue6CostSnapshot = undefined; } catch {}
   state.itemRequestId += 1;
   state.records = [];
+  state.loadedMeta = null;
   recordsBody.innerHTML = '<tr><td colspan="6" class="empty">Loading...</td></tr>';
-  listMeta.textContent = 'Waiting for list response.';
+  listMeta.textContent = `Loading page ${page}. Previous page rows and selection are cleared.`;
   detail.className = 'detail empty-detail';
   detail.innerHTML = '<p>Select a document to load its detail.</p>';
   detailActions.hidden = true;
@@ -165,30 +314,15 @@ async function loadList(mode) {
   state.requestedMode = mode === 'live' ? 'live' : (mode === 'synthetic' ? 'synthetic' : 'fixture');
   setMode(state.requestedMode);
 
-  if (mode === 'live') {
-    state.apiKey = suppliedKey;
-    apiKeyInput.value = '';
-  } else {
-    state.apiKey = '';
-    apiKeyInput.value = '';
-  }
-
   const path = appendQuery('/api/billing-requests', [
     ['mode', mode === 'synthetic' ? 'synthetic' : (mode === 'fixture' ? 'fixture' : 'live')],
-    ['t', String(Date.now())]
+    ['t', String(Date.now())], ['continuation', cursor]
   ]);
 
   setStatus(mode === 'live' ? 'Connecting to the allowlisted live SAP sandbox...' : 'Loading labelled fixture records...');
   try {
-    const headers = {};
-    if (mode === 'live') headers['X-SAP-APIKey'] = state.apiKey;
-    const response = await fetch(path, { method: 'GET', headers });
-    const json = await response.json().catch(() => ({}));
-    if (listToken !== state.listRequestId) return;
-    if (!response.ok) {
-      const message = json?.error?.message || `List request failed with HTTP ${response.status}.`;
-      throw Object.assign(new Error(message), { code: json?.error?.code || 'HTTP' });
-    }
+    const { response, json } = await readJSON(path, mode);
+    if (generation !== state.connectionToken || listToken !== state.listRequestId) return;
 
     if (state.requestedMode !== 'synthetic' && (json.sourceApiId !== 'API_BILLING_DOCUMENT_REQUEST_SRV' || json.sourceApiVersion !== '1.1.0' || json.sourceProfileId !== 'billing-document-request-v1')) {
       throw new Error('The response came from the wrong allowlisted source or version.');
@@ -212,6 +346,14 @@ async function loadList(mode) {
     const usableKeys = records.filter((item) => item.usable).map((item) => item.key);
     const listDigest = usableKeys[0] ? await digestHex(`issue-5:${usableKeys[0]}`) : null;
     if (listToken !== state.listRequestId) return;
+    const pageIdentity = json.pageCursor || cursor || `${mode}:initial`;
+    reads.seen.add(pageIdentity);
+    reads.next = json.continuationAvailable && typeof json.continuation === 'string' ? json.continuation : null;
+    reads.continuation = json.continuationValidation || (reads.next ? 'available' : 'none');
+    if (reads.next && (reads.seen.has(reads.next) || reads.seen.size >= 20)) {
+      reads.next = null;
+      reads.continuation = 'rejected-cycle-or-limit';
+    }
     state.observedList = {
       observedAt: new Date().toISOString(),
       httpStatus: response.status,
@@ -232,8 +374,10 @@ async function loadList(mode) {
 
     if (records.length === 0) {
       recordsBody.innerHTML = '<tr><td colspan="6" class="empty">No records loaded.</td></tr>';
-      listMeta.textContent = `${json.loadedCount || 0} loaded, ${json.usableCount || 0} usable. No usable record can become cost evidence.`;
+      renderPageMeta(json);
+      readFailure(Object.assign(new Error('No records on this page. This is not zero spending. Retry this page, use Next page if available, or restart the list.'), { code: 'EMPTY' }), operation);
       setStatus('No usable billing request was found. This is not a zero-spend result.');
+      if (moveFocus) focusReadOutcome(anchor, document.getElementById('records-title'));
       return;
     }
 
@@ -266,16 +410,32 @@ async function loadList(mode) {
       });
       recordsBody.appendChild(row);
     }
-    listMeta.textContent = `${json.loadedCount || records.length} loaded, ${json.usableCount || records.filter((item) => item.usable).length} usable; ${json.loadedCount || records.length} of possibly more. ${json.continuationAvailable ? 'A continuation is present but is not followed in this scope.' : 'No continuation reported.'} Loaded records, not complete history.`;
+    renderPageMeta(json);
     setStatus(`Loaded ${records.length} record(s). Select one to load its separate detail.`);
+    if (reads.continuation.startsWith('rejected')) readFailure(Object.assign(new Error('The continuation was rejected or repeated, or the 20-page traversal limit was reached. This is not proof of completeness. Retry this page or restart the list.'), { code: 'NAVIGATION' }), operation);
+    if (moveFocus) focusReadOutcome(anchor, document.getElementById('records-title'));
   } catch (caught) {
-    if (listToken !== state.listRequestId) return;
-    recordsBody.innerHTML = '<tr><td colspan="6" class="empty">No records loaded.</td></tr>';
-    const message = caught?.message || 'The request failed.';
+    if (generation !== state.connectionToken || listToken !== state.listRequestId) return;
+    state.records = [];
+    state.loadedMeta = null;
+    recordsBody.innerHTML = '<tr><td colspan="6" class="empty">Page unavailable — read failed.</td></tr>';
+    listMeta.textContent = `Page ${page} read failed. No previous page is shown as this page. ${caught?.code === 'AUTH' ? 'Correct the key and reconnect before selecting a record.' : 'Retry the failed page or restart the list.'}`;
+    const message = readFailure(caught, operation);
     showError(message);
-    setStatus('Connection failed. Correct the cause and try again.');
+    setStatus(`Connection failed. ${message}`);
     setMode('none');
+    if (moveFocus) focusReadOutcome(anchor, document.getElementById('read-recovery-title'));
+  } finally {
+    if (generation === state.connectionToken && listToken === state.listRequestId) reads.busy.list = false;
+    updateReadControls();
   }
+}
+
+function renderPageMeta(json) {
+  const coverage = reads.continuation.startsWith('rejected')
+    ? 'Continuation rejected / navigation stopped; coverage remains unknown, not complete.'
+    : (reads.next ? 'Partial coverage; a supported continuation is available.' : (state.mode !== 'live' && json.boundedComplete === true ? 'Explicitly bounded fixture coverage exhausted; not SAP account history.' : 'Continuation exhausted (none reported); complete account history is not established.'));
+  listMeta.textContent = `Page ${reads.page}: ${json.records.length} loaded, ${json.usableCount ?? json.records.filter(item => item.usable).length} usable on this page only. ${coverage} Loaded records, not complete history. No annual coverage or combined financial total.`;
 }
 
 function formatAmount(record) {
@@ -289,7 +449,13 @@ function formatBasis(record) {
   return 'Unknown';
 }
 
-async function selectRecord(key) {
+async function selectRecord(key, moveFocus = false) {
+  if (!allowRead() || (reads.busy.detail && state.selectedKey === key)) return;
+  const generation = state.connectionToken;
+  const anchor = document.activeElement;
+  const mode = state.mode;
+  const operation = { kind: 'detail', mode, key, page: reads.page, cursor: reads.cursor };
+  clearReadRecovery();
   clearError();
   if (!state.records.some(record => record.key === key && record.usable === true)) { showError('Select a usable record from the current list.'); return; }
   state.observedDetail = null;
@@ -301,6 +467,9 @@ async function selectRecord(key) {
   state.itemsCoverage = null;
   if (state.observedList) delete state.observedList.selectedKeyDigestSha256;
   state.itemRequestId += 1;
+  reads.busy.detail = true;
+  reads.busy.items = false;
+  updateReadControls();
   const requestToken = ++state.detailRequestId;
   state.selectedKey = key;
   highlightSelected(key);
@@ -315,17 +484,9 @@ async function selectRecord(key) {
     ['mode', state.mode === 'synthetic' ? 'synthetic' : (state.mode === 'fixture' ? 'fixture' : 'live')],
     ['selected', key]
   ]);
-  const headers = {};
-  if (state.mode === 'live' && state.apiKey) headers['X-SAP-APIKey'] = state.apiKey;
-
   try {
-    const response = await fetch(path, { method: 'GET', headers });
-    const json = await response.json().catch(() => ({}));
-    if (requestToken !== state.detailRequestId || key !== state.selectedKey) return;
-    if (!response.ok) {
-      const message = json?.error?.message || `Detail request failed with HTTP ${response.status}.`;
-      throw Object.assign(new Error(message), { code: json?.error?.code || 'HTTP' });
-    }
+    const { response, json } = await readJSON(path, mode);
+    if (generation !== state.connectionToken || requestToken !== state.detailRequestId || key !== state.selectedKey) return;
     const record = json.record;
     const expectedProvenance = state.mode === 'fixture' ? 'fixture-demonstration' : (state.mode === 'synthetic' ? 'synthetic-fixture' : 'live-sap-sandbox');
     if (state.mode === 'synthetic') {
@@ -375,13 +536,18 @@ async function selectRecord(key) {
     detailActions.hidden = false;
     reviewCostButton.disabled = false;
     setStatus(`Detail loaded for document ${key}. Selection and detail keys match.`);
+    if (moveFocus) focusReadOutcome(anchor, reviewCostButton);
   } catch (caught) {
-    if (requestToken !== state.detailRequestId || key !== state.selectedKey) return;
+    if (generation !== state.connectionToken || requestToken !== state.detailRequestId || key !== state.selectedKey) return;
     detail.className = 'detail';
     detail.innerHTML = `<p>Detail load failed: ${escapeHtml(caught?.message || 'Unknown error.')}</p>`;
     detailActions.hidden = false;
-    showError(caught?.message || 'Detail load failed.');
+    showError(readFailure(caught, operation));
     setStatus('Detail request failed.');
+    if (moveFocus) focusReadOutcome(anchor, document.getElementById('read-recovery-title'));
+  } finally {
+    if (generation === state.connectionToken && requestToken === state.detailRequestId) reads.busy.detail = false;
+    updateReadControls();
   }
 }
 
@@ -422,45 +588,80 @@ function highlightSelected(key) {
   }
 }
 
-async function loadOptionalItems() {
-  if (!state.selectedKey || state.mode === 'none') return;
+async function loadOptionalItems(moveFocus = false) {
+  if (!state.selectedKey || !state.verifiedDetail || state.mode === 'none' || !allowRead() || reads.busy.items) return;
+  const generation = state.connectionToken;
+  const anchor = document.activeElement;
+  clearReadRecovery();
+  reads.busy.items = true;
+  updateReadControls();
   const expectedSelection = state.selectedKey;
   const expectedMode = state.mode;
+  const operation = { kind: 'items', mode: expectedMode, key: expectedSelection, page: reads.page, cursor: reads.cursor };
   const token = ++state.itemRequestId;
   clearError();
   const sourceRecord = state.verifiedDetail;
   state.itemsCoverage = { status: 'checking', count: 0, rows: [], hasContinuation: false, complete: false, sourceApiId: sourceRecord?.sourceApiId, sourceApiVersion: sourceRecord?.sourceApiVersion, sourceProfileId: sourceRecord?.sourceProfileId, provenance: sourceRecord?.provenance, parentKey: expectedSelection, parentVerified: null, note: 'Optional item request is pending; no breakdown has been verified.' };
+  const historicalView = !screenDecision.hidden && (receipt || receiptRecovery);
+  const pendingDecisionView = !screenDecision.hidden && !historicalView;
+  // Even a retry of the same header supersedes the evidence behind a choice or
+  // an unsaved receipt. Do not hide or rewrite a confirmed historical receipt.
+  clearPendingDecision(historicalView);
+  state.costToken += 1;
+  state.costSnapshot = null;
+  window.__issue6CostSnapshot = undefined;
+  document.getElementById('continue-decision').disabled = true;
+  if (pendingDecisionView) { screenList.hidden = true; screenCost.hidden = false; }
+  refreshItemAssessment();
+  if (moveFocus && !screenCost.hidden) costUpdateStatus.focus();
+  else if (moveFocus && historicalView) document.getElementById('decision-title').focus();
   setStatus(`Checking optional item coverage for ${expectedSelection}...`);
   const path = appendQuery(`/api/billing-requests/${encodeURIComponent(expectedSelection)}/items`, [
     ['mode', expectedMode === 'synthetic' ? 'synthetic' : (expectedMode === 'fixture' ? 'fixture' : 'live')]
   ]);
-  const controller = new AbortController();
-  const headers = {};
-  if (expectedMode === 'live' && state.apiKey) headers['X-SAP-APIKey'] = state.apiKey;
   try {
-    const response = await fetch(path, { method: 'GET', headers, signal: controller.signal });
-    const json = await response.json().catch(() => ({}));
-    if (token !== state.itemRequestId || expectedSelection !== state.selectedKey || expectedMode !== state.mode) return;
-    if (!response.ok) throw Object.assign(new Error(json?.error?.message || `Item request failed with HTTP ${response.status}.`), { code: json?.error?.code || 'HTTP' });
+    const { json } = await readJSON(path, expectedMode);
+    if (generation !== state.connectionToken || token !== state.itemRequestId || expectedSelection !== state.selectedKey || expectedMode !== state.mode) return;
     state.itemsCoverage = json;
-    if (!screenCost.hidden) await reviewCost();
+    refreshItemAssessment();
     const note = document.createElement('p');
     note.className = 'warning';
     note.textContent = `Optional items: ${json?.status || 'unknown'}${json?.count ? ` (${json.count} rows)` : ''}. ${json?.note || ''}`;
     detail.appendChild(note);
     setStatus(`Optional item coverage: ${json?.status || 'unknown'}.`);
+    if (json.recovery) showError(readFailure(Object.assign(new Error(json.recovery.message), json.recovery), operation));
+    if (moveFocus) focusReadOutcome(anchor, json.recovery ? document.getElementById('read-recovery-title') : (screenCost.hidden ? reviewCostButton : backToListButton));
   } catch (caught) {
-    if (token !== state.itemRequestId || expectedSelection !== state.selectedKey || expectedMode !== state.mode) return;
+    if (generation !== state.connectionToken || token !== state.itemRequestId || expectedSelection !== state.selectedKey || expectedMode !== state.mode) return;
     const note = document.createElement('p');
     note.className = 'warning';
     const unavailableNote = caught?.message || 'Item coverage could not be loaded; no amounts were invented.';
     const record = state.verifiedDetail;
     state.itemsCoverage = { status: 'unavailable', count: 0, rows: [], hasContinuation: false, complete: false, note: unavailableNote, sourceApiId: record?.sourceApiId, sourceApiVersion: record?.sourceApiVersion, sourceProfileId: record?.sourceProfileId, provenance: record?.provenance, parentKey: expectedSelection, parentVerified: null };
-    if (!screenCost.hidden) await reviewCost();
+    refreshItemAssessment();
     note.textContent = `Optional items: unavailable. ${unavailableNote}`;
     detail.appendChild(note);
     setStatus('Optional item coverage unavailable.');
+    showError(readFailure(caught, operation));
+    if (moveFocus) focusReadOutcome(anchor, document.getElementById('read-recovery-title'));
+  } finally {
+    if (generation === state.connectionToken && token === state.itemRequestId) reads.busy.items = false;
+    updateReadControls();
   }
+}
+
+function refreshItemAssessment() {
+  // Authoritative state follows the matching response, not screen visibility.
+  // Rendering/exporting the cost view remains separate from historical display.
+  state.costSnapshot = buildCostSnapshot(state.verifiedDetail, state.mode);
+  if (!screenCost.hidden) renderCost(state.costSnapshot);
+  costUpdateStatus.hidden = false;
+  const status = state.costSnapshot.linkedDetail.status;
+  costUpdateStatus.textContent = status === 'checking'
+    ? 'Checking updated item evidence. The previous intention and save retry were cleared. Continue is unavailable until this read finishes.'
+    : (status === 'unavailable'
+      ? 'Updated item evidence is unavailable. Header figures remain valid. Review these limitations and any conflict before choosing a new intention.'
+      : 'Updated item evidence is ready. Review the current coverage and conflict flags, then continue and choose a new intention.');
 }
 
 
@@ -548,6 +749,8 @@ function validateRequiredDetail(record, mode) {
 
 function clearCostView() {
   clearPendingDecision();
+  costUpdateStatus.hidden = true;
+  costUpdateStatus.textContent = '';
   state.costSnapshot = null;
   window.__issue6CostSnapshot = undefined;
   for (const element of [costSummary, costAmounts, costFields, costConsistency, costReasons, costItems, costLimits]) element?.replaceChildren();
@@ -816,6 +1019,8 @@ function renderCost(snapshot) {
 function backToList() {
   state.costToken += 1;
   state.itemRequestId += 1;
+  reads.busy.items = false;
+  updateReadControls();
   if (state.itemsCoverage?.status === 'checking') state.itemsCoverage = null;
   clearCostView();
   if (screenCost) screenCost.hidden = true;
@@ -835,8 +1040,27 @@ document.getElementById('disconnect').addEventListener('click', resetSession);
 document.getElementById('reload-detail').addEventListener('click', () => {
   if (state.selectedKey) selectRecord(state.selectedKey);
 });
-document.getElementById('check-items').addEventListener('click', loadOptionalItems);
+document.getElementById('check-items').addEventListener('click', () => loadOptionalItems());
 document.getElementById('check-evidence').addEventListener('click', loadEvidence);
+apiKeyInput.addEventListener('input', updateReadControls);
+nextPageButton.addEventListener('click', () => {
+  if (!reads.next || !allowRead() || reads.busy.list) return;
+  loadPage({ kind: 'list', mode: state.requestedMode, cursor: reads.next, page: reads.page + 1 }, true);
+});
+restartListButton.addEventListener('click', () => {
+  if (!allowRead() || reads.busy.list) return;
+  reads.seen.clear();
+  loadPage({ kind: 'list', mode: state.requestedMode, cursor: null, page: 1 }, true);
+});
+retryReadButton.addEventListener('click', () => {
+  const op = reads.recovery;
+  if (!op || op.code === 'AUTH' || op.generation !== state.connectionToken || !allowRead() || Object.values(reads.busy).some(Boolean)) return;
+  if (op.kind === 'list') loadPage(op, true);
+  else if (op.kind === 'detail' && state.selectedKey === op.key) selectRecord(op.key, true);
+  else if (op.kind === 'items' && state.selectedKey === op.key) loadOptionalItems(true);
+});
+correctKeyButton.addEventListener('click', () => apiKeyInput.focus());
+document.getElementById('abandon-read').addEventListener('click', () => { resetSession(); apiKeyInput.focus(); });
 
 // Identity uses the immutable review coordinates, never the selected intent or a retry time.
 function reviewIdentity(document) {
@@ -942,11 +1166,18 @@ function validateReceipt(value) {
   return value;
 }
 
-function clearPendingDecision() {
+function clearPendingDecision(preserveHistoricalView = false) {
   chosenIntent = '';
   pendingReceipt = null;
-  screenDecision.hidden = true;
-  document.getElementById('reset-confirmation').hidden = true;
+  decisionSnapshot = null;
+  if (!preserveHistoricalView) {
+    screenDecision.hidden = true;
+    document.getElementById('reset-confirmation').hidden = true;
+  }
+  if (!receipt && !receiptRecovery) {
+    confirmIntentButton.disabled = true;
+    retryReceiptButton.hidden = true;
+  }
   for (const input of intentOptions.querySelectorAll('input')) input.checked = false;
 }
 
@@ -1010,14 +1241,27 @@ function renderDecision() {
 }
 
 function openDecision() {
-  if (!receipt && !receiptRecovery && (!state.costSnapshot || state.costSnapshot.linkedDetail.status === 'checking')) return;
+  if (!receipt && !receiptRecovery) {
+    if (screenCost.hidden || !currentCostEvidenceReady()) return;
+    decisionSnapshot = state.costSnapshot;
+  }
   renderDecision();
   if (receipt) setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
   showDecision();
 }
 
+function currentCostEvidenceReady() {
+  return state.costSnapshot && !reads.busy.items && state.itemsCoverage?.status !== 'checking' &&
+    state.costSnapshot.linkedDetail.status !== 'checking' && state.verifiedDetailKey === state.selectedKey &&
+    state.costSnapshot.document.key === state.selectedKey;
+}
+
+function currentDecisionEvidence() {
+  return !screenDecision.hidden && decisionSnapshot === state.costSnapshot && currentCostEvidenceReady();
+}
+
 function saveReceipt() {
-  if (receipt || receiptRecovery || !state.costSnapshot || !Object.hasOwn(INTENTS, chosenIntent)) return;
+  if (receipt || receiptRecovery || !currentDecisionEvidence() || !Object.hasOwn(INTENTS, chosenIntent)) return;
   if (state.costSnapshot.materialInconsistency && !['help', 'later'].includes(chosenIntent)) return;
   pendingReceipt ||= receiptFromSnapshot(state.costSnapshot, chosenIntent);
   try {
@@ -1054,6 +1298,7 @@ function reopenStoredReceipt() {
 document.getElementById('continue-decision').addEventListener('click', openDecision);
 reopenReceiptButton.addEventListener('click', openDecision);
 intentOptions.addEventListener('change', event => {
+  if (!currentDecisionEvidence()) { event.target.checked = false; return; }
   if (!Object.hasOwn(INTENTS, event.target.value)) return;
   chosenIntent = event.target.value;
   pendingReceipt = null;

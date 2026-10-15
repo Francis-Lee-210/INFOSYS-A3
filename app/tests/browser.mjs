@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { fileURLToPath } from 'node:url';
+import { registerIssue8Tests } from './issue-8.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = path.resolve(__dirname, '..');
@@ -2146,6 +2147,8 @@ test('issue 7 review: connection input and hint remain usable with Reopen visibl
     } finally { await context.close(); }
   }
 });
+
+registerIssue8Tests({ test, browser: () => browser, startInjectedServer, injectedServers, TEST_PORT });
 
 async function main() {
   let failures = [];

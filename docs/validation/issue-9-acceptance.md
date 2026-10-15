@@ -11,7 +11,7 @@
 | Base / dependency | `7a368f529b60edae730afe2b8b1a0f9513d65e5e` — merged #8 review head, PR #24 (16 October 2026) |
 | Inherited baseline at that base | 125/125 PASS (all #5–#8 scenarios including the review groups) |
 | Tested head | `5f1d12f` (fix + test commits on base `7a368f5`) — rework re-run of 16 October 2026; K02 now asserts the missing-key focus |
-| New module | `app/tests/issue-9.mjs` (761 lines, 19 groups), registered by `app/tests/browser.mjs` |
+| New module | `app/tests/issue-9.mjs` (769 lines, 19 groups), registered by `app/tests/browser.mjs` |
 | Evidence | 29 `issue-9-*.png` captures; [browser test results](issue-9-browser-test-results.txt) (final unfiltered run) |
 
 All #9 changes are committed locally on the branch as the fix (`3c48fe8`), test (`5f1d12f`), redaction and evidence commits: `app/app.mjs`, `app/index.html`, `app/styles.css`, `app/tests/browser.mjs` modified; `app/tests/issue-9.mjs` and the screenshots added. Nothing was pushed and no #9 PR exists; the commits await team review. Original #5–#8 commits, evidence and screenshots are preserved, except that three earlier evidence files carry one redaction note each from the AC23 cleanup (section below). No history was rewritten.

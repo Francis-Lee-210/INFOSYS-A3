@@ -80,9 +80,9 @@ PASS issue 7 review: normal reset clears a connected session and receipt across 
 PASS issue 7 review: remove reset failure has a verified retry recovery
 PASS issue 7 review: verify reset failure has a verified retry recovery
 PASS issue 7 review: keyboard Enter confirmation focuses the visible saved heading then Return to list and Reset
-Connection layout 1280px: input 450.390625px; hint 450.390625px 脳 37.6875px
-Connection layout 1366px: input 450.390625px; hint 450.390625px 脳 37.6875px
-Connection layout 390px: input 320px; hint 320px 脳 75.375px
+Connection layout 1280px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 1366px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 390px: input 320px; hint 320px × 75.375px
 PASS issue 7 review: connection input and hint remain usable with Reopen visible at 1280, 1366 and 390px
 PASS issue 8 P01: offline fixture replaces the page, preserves exact currencies/decimals, and returns to that page
 PASS issue 8 P02 absolute: server continuation reaches a distinct page and matching by-key explanation
@@ -220,9 +220,9 @@ PASS issue 7 review: normal reset clears a connected session and receipt across 
 PASS issue 7 review: remove reset failure has a verified retry recovery
 PASS issue 7 review: verify reset failure has a verified retry recovery
 PASS issue 7 review: keyboard Enter confirmation focuses the visible saved heading then Return to list and Reset
-Connection layout 1280px: input 450.390625px; hint 450.390625px 脳 37.6875px
-Connection layout 1366px: input 450.390625px; hint 450.390625px 脳 37.6875px
-Connection layout 390px: input 320px; hint 320px 脳 75.375px
+Connection layout 1280px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 1366px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 390px: input 320px; hint 320px × 75.375px
 PASS issue 7 review: connection input and hint remain usable with Reopen visible at 1280, 1366 and 390px
 PASS issue 8 P01: offline fixture replaces the page, preserves exact currencies/decimals, and returns to that page
 PASS issue 8 P02 absolute: server continuation reaches a distinct page and matching by-key explanation
@@ -294,7 +294,7 @@ PASS issue 9 N01: Back preserves same-evidence context; new page, refresh, selec
 PASS issue 9 N02: reload recovers only the stored receipt and Return to list clears the unsaved session
 PASS issue 9 F01: failed Next page navigation recovers by keyboard and completes to a saved receipt
 PASS issue 9 F02: a failure during navigation with an open historical receipt keeps it and keyboard recovery restores the list
-PASS issue 9 T01: exactly three screens provide one uninterrupted list鈫抍ost鈫抎ecision flow
+PASS issue 9 T01: exactly three screens provide one uninterrupted list→cost→decision flow
 PASS issue 9 T02: after journeys only the minimal receipt with provenance is persisted
 PASS issue 9 T03: the synthetic journey with complete item coverage reaches a consistent receipt
 
@@ -326,7 +326,7 @@ PASS issue 9 N01: Back preserves same-evidence context; new page, refresh, selec
 PASS issue 9 N02: reload recovers only the stored receipt and Return to list clears the unsaved session
 PASS issue 9 F01: failed Next page navigation recovers by keyboard and completes to a saved receipt
 PASS issue 9 F02: a failure during navigation with an open historical receipt keeps it and keyboard recovery restores the list
-PASS issue 9 T01: exactly three screens provide one uninterrupted list鈫抍ost鈫抎ecision flow
+PASS issue 9 T01: exactly three screens provide one uninterrupted list→cost→decision flow
 PASS issue 9 T02: after journeys only the minimal receipt with provenance is persisted
 PASS issue 9 T03: the synthetic journey with complete item coverage reaches a consistent receipt
 
@@ -414,9 +414,9 @@ PASS issue 7 review: normal reset clears a connected session and receipt across 
 PASS issue 7 review: remove reset failure has a verified retry recovery
 PASS issue 7 review: verify reset failure has a verified retry recovery
 PASS issue 7 review: keyboard Enter confirmation focuses the visible saved heading then Return to list and Reset
-Connection layout 1280px: input 450.390625px; hint 450.390625px 脳 37.6875px
-Connection layout 1366px: input 450.390625px; hint 450.390625px 脳 37.6875px
-Connection layout 390px: input 320px; hint 320px 脳 75.375px
+Connection layout 1280px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 1366px: input 450.390625px; hint 450.390625px × 37.6875px
+Connection layout 390px: input 320px; hint 320px × 75.375px
 PASS issue 7 review: connection input and hint remain usable with Reopen visible at 1280, 1366 and 390px
 PASS issue 8 P01: offline fixture replaces the page, preserves exact currencies/decimals, and returns to that page
 PASS issue 8 P02 absolute: server continuation reaches a distinct page and matching by-key explanation
@@ -488,8 +488,9 @@ PASS issue 9 N01: Back preserves same-evidence context; new page, refresh, selec
 PASS issue 9 N02: reload recovers only the stored receipt and Return to list clears the unsaved session
 PASS issue 9 F01: failed Next page navigation recovers by keyboard and completes to a saved receipt
 PASS issue 9 F02: a failure during navigation with an open historical receipt keeps it and keyboard recovery restores the list
-PASS issue 9 T01: exactly three screens provide one uninterrupted list鈫抍ost鈫抎ecision flow
+PASS issue 9 T01: exactly three screens provide one uninterrupted list→cost→decision flow
 PASS issue 9 T02: after journeys only the minimal receipt with provenance is persisted
 PASS issue 9 T03: the synthetic journey with complete item coverage reaches a consistent receipt
 
 All 144 tests passed.
+Encoding note (second review rework): three console-encoding artifacts in the T01 test name were restored to "list→cost→decision"; no results, counts or conclusions changed.

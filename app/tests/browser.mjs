@@ -1269,6 +1269,10 @@ test('supplement: deferred real HTTP item/detail responses cannot restore stale 
       } else {
         await issue6RegressionReview(p); // Item HTTP request is still held.
         await p.locator('#back-to-list').click();
+        const reopened = await issue6RegressionReview(p);
+        assert.equal(reopened.linkedDetail.status, 'not-checked');
+        assert.equal(reopened.materialInconsistency, false);
+        await p.locator('#back-to-list').click();
       }
       release();
       await (await responseArrived).finished();
@@ -1286,6 +1290,10 @@ test('supplement: deferred real HTTP item/detail responses cannot restore stale 
         assert.equal(await p.locator('#detail-actions').isVisible(), false);
       } else {
         assert.equal(await p.locator('#records-body tr.selected').getAttribute('data-key'), profile.key);
+        const afterDiscard = await issue6RegressionReview(p);
+        assert.equal(afterDiscard.linkedDetail.status, 'not-checked');
+        assert.equal(afterDiscard.materialInconsistency, false);
+        await p.locator('#back-to-list').click();
       }
     } finally {
       release();

@@ -791,6 +791,7 @@ function renderCost(snapshot) {
 function backToList() {
   state.costToken += 1;
   state.itemRequestId += 1;
+  if (state.itemsCoverage?.status === 'checking') state.itemsCoverage = null;
   clearCostView();
   if (screenCost) screenCost.hidden = true;
   if (screenList) screenList.hidden = false;

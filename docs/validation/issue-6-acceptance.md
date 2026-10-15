@@ -38,7 +38,7 @@ Independent read-only requirements audit completed before implementation. Execut
 
 ## Executed acceptance, 15 October 2026
 
-The coordinator independently ran the final public browser suite at 05:33 UTC,
+The coordinator independently ran the final public browser suite at 05:43 UTC,
 using Node 26.0.0 and Chromium through Playwright 1.62.1. Exit code **0**,
 **34/34 groups PASS**, including the unchanged 15-group #5 prefix.
 [Captured command output](issue-6-browser-test-results.txt).
@@ -63,6 +63,8 @@ or supply the local PLAYWRIGHT_MODULE_PATH and PLAYWRIGHT_BROWSERS_PATH.
 Additional #6 criteria passed: Screen1 → cost explanation → Back; selected-row
 focus restoration; typed consistency handoff; pending item response refresh while
 cost is open; invalidation after Back/source/reset; strict mode/profile rejection.
+The deferred Back case also reopens before and after the discarded response:
+coverage is not-checked, rather than permanently checking, in both instances.
 
 ## Machine contract and consistency scope
 

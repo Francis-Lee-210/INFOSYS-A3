@@ -33,6 +33,8 @@ Francis要求“PR 已经合并，继续做 #6”，沿用明确授权的本机O
   明确结构或已知币种冲突才设置material flag。
 - 修复独立审查发现的异步缺陷：items返回时若金额页已打开，同步重建可见/导出快照；
   若已Back、换源或reset，过期响应不能恢复旧结果。增加HTTP response gate回归。
+- Back使pending请求失效时清除checking状态；重新进入不会永久显示读取中。
+  回归同时检查过期响应返回前/后的重新进入，已完成的coverage仍保留。
 - 补齐两种kind的USD→NZD同会话切换，明确#7 rule scope：
   synthetic consistent只指header声明关系，linked monetary reconciliation始终not-assessed。
 - 修复390px页面溢出，金额表内部可横向滚动，日期/来源换行；Back焦点可用。

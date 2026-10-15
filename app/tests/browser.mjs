@@ -1472,12 +1472,14 @@ for (const [intent, label] of issue7Intents) {
       await issue7Confirm(p, label);
       const saved = await issue7Saved(p);
       assert.equal(saved.intent, intent);
-      assert.equal(saved.version, 'issue-7-receipt-v1');
+      assert.equal(saved.version, 'issue-7-receipt-v2');
       for (const field of ['kind', 'key', 'provenance', 'sourceProfileId', 'sourceApiId', 'sourceApiVersion', 'retrievedAt']) assert.equal(saved.document[field], snapshot.document[field]);
       assert.deepEqual(saved.date, snapshot.date);
       assert.deepEqual(saved.amounts, snapshot.amounts);
       assert.deepEqual(saved.context, snapshot.context);
       assert.equal(saved.assessmentStatus, snapshot.assessmentStatus);
+      assert.deepEqual(saved.assessmentScope, { scope: snapshot.rule.scope, linkedMonetaryReconciliation: 'not-assessed' });
+      assert.deepEqual(saved.coverage, { status: 'not-checked', complete: false, hasContinuation: false });
       assert.equal(saved.materialInconsistency, false);
       assert.deepEqual(saved.reasons, []);
       assert.equal(new Date(saved.confirmedAt).toISOString(), saved.confirmedAt);
@@ -1486,7 +1488,7 @@ for (const [intent, label] of issue7Intents) {
       await expectText(p, '#decision-summary', saved.receiptId);
       assert.doesNotMatch(await p.locator('#decision-summary').innerText(), /receipt:\[/);
       await expectText(p, '#decision-summary', 'None — no material inconsistency recorded.');
-      assert.deepEqual(Object.keys(saved).sort(), ['version', 'reviewId', 'receiptId', 'document', 'date', 'amounts', 'context', 'assessmentStatus', 'materialInconsistency', 'reasons', 'missing', 'intent', 'confirmedAt'].sort());
+      assert.deepEqual(Object.keys(saved).sort(), ['version', 'reviewId', 'receiptId', 'document', 'date', 'amounts', 'context', 'assessmentStatus', 'assessmentScope', 'coverage', 'materialInconsistency', 'reasons', 'missing', 'intent', 'confirmedAt'].sort());
       assert.doesNotMatch(JSON.stringify(saved), /SENTINEL|apiKey|rawResponse|PayerParty|ContractAccount|contact|name/);
       await expectText(p, '#decision-summary', snapshot.document.key);
       await expectText(p, '#decision-summary', snapshot.document.retrievedAt);
@@ -1810,12 +1812,349 @@ test('issue 7: desktop and mobile decision screens contain overflow and focus th
   }
 });
 
+// PR #21 review regressions: browser-boundary injections only; no external SAP calls.
+async function issue7Bytes(p) {
+  return p.evaluate(key => localStorage.getItem(key), issue7ReceiptKey);
+}
+
+async function issue7Screenshot(p, name) {
+  if (process.env.CAPTURE_RECEIPT_EVIDENCE === '1') {
+    await p.screenshot({ path: path.join(APP_ROOT, '..', 'docs', 'validation', `issue-7-review-${name}.png`), fullPage: true });
+  }
+}
+
+for (const outcome of ['success', 'failure']) {
+  test(`issue 7 review: delayed live list ${outcome} cannot relabel a historical fixture receipt`, async () => {
+    const context = await browser.newContext(); const p = await context.newPage();
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    try {
+      await issue7Decision(p);
+      await issue7Confirm(p, 'Keep');
+      const saved = await issue7Saved(p);
+      const bytes = await issue7Bytes(p);
+      // Seed a normalized response from the local fixture, never the SAP transport.
+      const payload = await fetch(`${BASE_URL}/api/billing-requests?mode=fixture`).then(r => r.json());
+      payload.mode = 'live'; payload.provenance = 'live-sap-sandbox';
+      const requested = p.waitForRequest(r => new URL(r.url()).searchParams.get('mode') === 'live');
+      await p.route(url => url.pathname === '/api/billing-requests' && url.searchParams.get('mode') === 'live', async route => {
+        assert.equal(route.request().headers()['x-sap-apikey'], 'SENTINEL-RECEIPT-ASYNC');
+        await gate;
+        await route.fulfill({ status: outcome === 'success' ? 200 : 503, contentType: 'application/json', body: JSON.stringify(outcome === 'success' ? payload : { error: { message: 'Injected list unavailable' } }) });
+      });
+      await p.locator('#api-key').fill('SENTINEL-RECEIPT-ASYNC');
+      await p.locator('#connect-live').click();
+      await requested;
+      await p.locator('#reopen-receipt').click();
+      await expectText(p, '#provenance', 'Fixture demonstration');
+      await expectText(p, '#decision-summary', saved.receiptId);
+      await p.locator('#api-key').focus();
+      release();
+      await p.waitForFunction(expected => document.querySelector('#status').textContent.includes(expected), outcome === 'success' ? 'Loaded 2' : 'Connection failed');
+      assert.equal(await p.locator('#screen-decision').isVisible(), true);
+      assert.equal(await p.locator('#screen-list').isVisible(), false);
+      assert.equal(await p.locator('#provenance').innerText(), 'Fixture demonstration');
+      await expectText(p, '#decision-summary', 'Fixture demonstration');
+      await expectText(p, '#decision-summary', saved.receiptId);
+      assert.deepEqual(await p.evaluate(() => window.__issue7Receipt), saved);
+      assert.equal(await issue7Bytes(p), bytes);
+      assert.equal(await p.locator('#api-key').evaluate(e => e === document.activeElement), true);
+      await p.locator('#decision-return-to-list').click();
+      assert.equal(await p.locator('#provenance').innerText(), outcome === 'success' ? 'Live SAP sandbox' : 'Not connected');
+      assert.equal(await issue7Bytes(p), bytes);
+    } finally { release(); await context.close(); }
+  });
+}
+
+for (const coverageKind of ['partial', 'unavailable', 'not-checked', 'absent', 'complete', 'unknown']) {
+  test(`issue 7 review: ${coverageKind} coverage and assessment scope survive confirmation and refresh`, async () => {
+    for (const profile of issue6RegressionProfiles) {
+      const context = await browser.newContext({ viewport: { width: 1366, height: 844 } }); const p = await context.newPage();
+      try {
+        const seed = await issue6RegressionSeed(profile);
+        await issue6RegressionOpen(p, profile);
+        if (coverageKind !== 'not-checked') {
+          const coverage = issue6RegressionCoverage(seed, `RECEIPT-${coverageKind}`);
+          coverage.status = coverageKind;
+          coverage.hasContinuation = coverageKind === 'partial';
+          coverage.complete = coverageKind === 'complete';
+          if (['unavailable', 'absent', 'unknown'].includes(coverageKind)) { coverage.rows = []; coverage.count = 0; }
+          if (coverageKind === 'unknown') { delete coverage.status; delete coverage.complete; delete coverage.hasContinuation; }
+          await issue6RegressionItems(p, profile, coverage);
+        }
+        const snapshot = await issue6RegressionReview(p);
+        const expectedStatus = coverageKind === 'complete' && profile.mode !== 'synthetic' ? 'partial' : coverageKind;
+        await p.locator('#continue-decision').click();
+        await expectText(p, '#decision-summary', `Coverage: ${expectedStatus}`);
+        await expectText(p, '#decision-summary', `continuation: ${coverageKind === 'partial' ? 'present' : (coverageKind === 'unknown' ? 'unknown' : 'not reported')}`);
+        await expectText(p, '#decision-summary', 'Linked monetary reconciliation: not assessed');
+        if (coverageKind === 'partial' && profile.mode === 'fixture') await issue7Screenshot(p, 'confirmation');
+        await issue7Confirm(p, 'Later');
+        const saved = await issue7Saved(p);
+        assert.deepEqual(saved.coverage, { status: expectedStatus, complete: expectedStatus === 'complete', hasContinuation: coverageKind === 'unknown' ? null : coverageKind === 'partial' });
+        assert.deepEqual(saved.assessmentScope, { scope: snapshot.rule.scope, linkedMonetaryReconciliation: 'not-assessed' });
+        assert.equal(saved.missing.incompleteRows, false, 'Row validity must remain distinct from coverage');
+        assert.deepEqual(Object.keys(saved.coverage).sort(), ['complete', 'hasContinuation', 'status']);
+        assert.deepEqual(saved.reasons, snapshot.materialInconsistency ? snapshot.reasons : []);
+        assert.doesNotMatch(JSON.stringify(saved), /RECEIPT-partial|000010|11\.125|rows|rawResponse|SENTINEL/);
+        const bytes = await issue7Bytes(p);
+        await p.reload();
+        await p.locator('#screen-decision').waitFor({ state: 'visible' });
+        assert.deepEqual(await issue7Saved(p), saved);
+        assert.equal(await issue7Bytes(p), bytes);
+        await expectText(p, '#decision-summary', `Coverage: ${expectedStatus}`);
+        await expectText(p, '#decision-summary', 'Linked monetary reconciliation: not assessed');
+        await expectText(p, '#decision-summary', profile.mode === 'synthetic' ? 'Synthetic header net + tax = gross only' : 'No verified universal item-to-header equation or rounding tolerance');
+        if (coverageKind === 'partial') {
+          await expectText(p, '#decision-summary', 'continuation: present');
+          if (profile.mode === 'fixture') await issue7Screenshot(p, 'historical');
+        }
+      } finally { await context.close(); }
+    }
+  });
+}
+
+test('issue 7 review: old v1 receipts remain untouched in unsupported-version recovery', async () => {
+  const context = await browser.newContext(); const p = await context.newPage();
+  try {
+    await issue7Decision(p); await issue7Confirm(p, 'Help');
+    const old = await issue7Saved(p);
+    old.version = 'issue-7-receipt-v1'; delete old.coverage; delete old.assessmentScope;
+    const bytes = JSON.stringify(old);
+    await p.evaluate(({ key, bytes }) => localStorage.setItem(key, bytes), { key: issue7ReceiptKey, bytes });
+    await p.reload();
+    await expectText(p, '#receipt-status', 'Stored receipt could not be recovered');
+    assert.equal(await p.locator('#decision-summary').innerText(), '');
+    assert.equal(await issue7Bytes(p), bytes);
+    await p.locator('#reset-demo').click(); await p.locator('#cancel-reset').click();
+    assert.equal(await issue7Bytes(p), bytes);
+  } finally { await context.close(); }
+});
+
+test('issue 7 review: missing or contradictory coverage and assessment metadata cannot invent complete history', async () => {
+  const context = await browser.newContext(); const p = await context.newPage();
+  try {
+    await issue7Decision(p); await issue7Confirm(p, 'Keep');
+    const saved = await issue7Saved(p);
+    for (const mutate of [v => { delete v.coverage; }, v => { delete v.coverage.hasContinuation; }, v => { v.coverage = { status: 'complete', complete: true, hasContinuation: true }; }, v => { v.assessmentScope.scope = 'items-reconciled'; }]) {
+      const value = structuredClone(saved); mutate(value);
+      const bytes = JSON.stringify(value);
+      await p.evaluate(({ key, bytes }) => localStorage.setItem(key, bytes), { key: issue7ReceiptKey, bytes });
+      await p.reload();
+      await expectText(p, '#receipt-status', 'Stored receipt could not be recovered');
+      assert.equal(await p.evaluate(() => window.__issue7Receipt), undefined);
+      assert.equal(await issue7Bytes(p), bytes);
+    }
+  } finally { await context.close(); }
+});
+
+async function issue7ResetFailure(p, failure) {
+  await p.evaluate(({ key, failure }) => {
+    const remove = Storage.prototype.removeItem;
+    const get = Storage.prototype.getItem;
+    window.__resetGate = { fail: true, removed: false, originalGet: () => get.call(localStorage, key) };
+    Storage.prototype.removeItem = function(k) {
+      if (this === localStorage && k === key && window.__resetGate.fail && failure === 'remove') throw new Error('Injected remove failure');
+      const result = remove.call(this, k);
+      if (this === localStorage && k === key) window.__resetGate.removed = true;
+      return result;
+    };
+    Storage.prototype.getItem = function(k) {
+      if (this === localStorage && k === key && window.__resetGate.fail && window.__resetGate.removed && failure === 'verify') throw new Error('Injected verification failure');
+      return get.call(this, k);
+    };
+  }, { key: issue7ReceiptKey, failure });
+  await p.locator('#reset-demo').click(); await p.locator('#confirm-reset').click();
+}
+
+test('issue 7 review: removeItem throwing before deletion preserves verified receipt and session', async () => {
+  const context = await browser.newContext(); const p = await context.newPage();
+  try {
+    await issue7Decision(p); await issue7Confirm(p, 'Keep');
+    const saved = await issue7Saved(p); const bytes = await issue7Bytes(p);
+    await p.locator('#api-key').fill('SENTINEL-REMOVE-FAILURE');
+    await issue7ResetFailure(p, 'remove');
+    await expectText(p, '#receipt-status', 'could not delete');
+    await expectText(p, '#receipt-status', 'receipt is still stored');
+    assert.deepEqual(await issue7Saved(p), saved);
+    assert.equal(await issue7Bytes(p), bytes);
+    assert.equal(await p.locator('#api-key').inputValue(), 'SENTINEL-REMOVE-FAILURE');
+    await issue7Screenshot(p, 'reset-remove-failure');
+    await p.locator('#cancel-reset').click();
+    assert.equal(await p.locator('#reset-demo').evaluate(e => e === document.activeElement), true);
+    await p.reload(); assert.deepEqual(await issue7Saved(p), saved);
+  } finally { await context.close(); }
+});
+
+test('issue 7 review: deletion followed by failed verification never claims retained or Saved history', async () => {
+  const context = await browser.newContext(); const p = await context.newPage();
+  try {
+    await issue7Decision(p); await issue7Confirm(p, 'Keep');
+    await issue7ResetFailure(p, 'verify');
+    await expectText(p, '#receipt-status', 'Deletion could not be verified');
+    await expectText(p, '#receipt-status', 'may already be deleted');
+    assert.doesNotMatch(await p.locator('#receipt-status').innerText(), /Saved|were kept/);
+    assert.equal(await p.evaluate(() => window.__resetGate.originalGet()), null);
+    assert.equal(await p.evaluate(() => window.__issue7Receipt), undefined);
+    assert.equal(await p.locator('#decision-summary').innerText(), '');
+    assert.equal(await p.locator('#confirm-intent').isVisible(), false);
+    await issue7Screenshot(p, 'reset-verification-failure');
+    await p.locator('#cancel-reset').click();
+    await p.locator('#decision-return-to-list').click();
+    await p.locator('#reopen-receipt').click();
+    await expectText(p, '#receipt-status', 'Deletion could not be verified');
+    await p.reload();
+    assert.equal(await p.locator('#screen-list').isVisible(), true);
+    assert.equal(await issue7Bytes(p), null);
+  } finally { await context.close(); }
+});
+
+test('issue 7 review: cancelling reset is non-destructive and returns focus to Reset demo', async () => {
+  const context = await browser.newContext(); const p = await context.newPage();
+  try {
+    await issue7Decision(p); await issue7Confirm(p, 'Help');
+    const saved = await issue7Saved(p); const bytes = await issue7Bytes(p);
+    await p.evaluate(() => {
+      window.__removeAttempts = 0;
+      const remove = Storage.prototype.removeItem;
+      Storage.prototype.removeItem = function(key) { window.__removeAttempts++; return remove.call(this, key); };
+    });
+    await p.locator('#api-key').fill('SENTINEL-CANCEL-RESET');
+    await p.locator('#reset-demo').click(); await p.locator('#cancel-reset').click();
+    assert.equal(await p.evaluate(() => window.__removeAttempts), 0);
+    assert.equal(await issue7Bytes(p), bytes);
+    assert.deepEqual(await issue7Saved(p), saved);
+    assert.equal(await p.locator('#api-key').inputValue(), 'SENTINEL-CANCEL-RESET');
+    assert.equal(await p.locator('#reset-demo').evaluate(e => e === document.activeElement), true);
+  } finally { await context.close(); }
+});
+
+test('issue 7 review: normal reset clears a connected session and receipt across reload', async () => {
+  const port = TEST_PORT + 160;
+  const calls = [];
+  const transport = async (url, options) => {
+    calls.push(options);
+    return { status: 200, ok: true, headers: { get: () => null }, text: async () => JSON.stringify(String(url).includes("A_BillingDocumentRequest('") ? { d: validRawRecord('RESET7') } : rawOData([validRawRecord('RESET7')])) };
+  };
+  injectedServers.push(await startInjectedServer(port, transport));
+  const context = await browser.newContext(); const p = await context.newPage();
+  try {
+    await p.goto(`http://127.0.0.1:${port}`);
+    await p.locator('#api-key').fill('SENTINEL-RESET-CONNECTED');
+    await p.locator('#connect-live').click();
+    await p.locator('#records-body tr.selectable').waitFor();
+    await issue6RegressionSelect(p, 'RESET7');
+    await issue6RegressionReview(p); await p.locator('#continue-decision').click();
+    await issue7Confirm(p, 'Keep'); await issue7Saved(p);
+    assert.equal(calls.length, 2);
+    await p.locator('#reset-demo').click(); await p.locator('#confirm-reset').click();
+    assert.equal(await p.evaluate(() => localStorage.length), 0);
+    assert.equal(await p.evaluate(() => window.__issue7Receipt), undefined);
+    assert.equal(await p.evaluate(() => window.__issue6CostSnapshot), undefined);
+    assert.equal(await p.locator('#api-key').inputValue(), '');
+    assert.equal(await p.locator('#screen-list').isVisible(), true);
+    assert.equal(await p.locator('#use-fixture').evaluate(e => e === document.activeElement), true);
+    await expectText(p, '#provenance', 'Not connected');
+    await expectText(p, '#records-body', 'No records loaded');
+    await p.locator('#connect-live').click();
+    await expectText(p, '#error', 'Enter an API key');
+    assert.equal(calls.length, 2, 'Reset cannot reuse the session key');
+    await p.reload({ waitUntil: 'networkidle' });
+    assert.equal(await issue7Bytes(p), null);
+    assert.equal(await p.locator('#screen-decision').isVisible(), false);
+    assert.equal(await p.locator('#screen-list').isVisible(), true);
+    assert.equal(calls.length, 2, 'Reload must not reconnect');
+  } finally { await context.close(); }
+});
+
+for (const failure of ['remove', 'verify']) {
+  test(`issue 7 review: ${failure} reset failure has a verified retry recovery`, async () => {
+    const context = await browser.newContext(); const p = await context.newPage();
+    try {
+      await issue7Decision(p); await issue7Confirm(p, 'Later');
+      await p.locator('#api-key').fill('SENTINEL-RESET-RETRY');
+      await issue7ResetFailure(p, failure);
+      await p.evaluate(() => { window.__resetGate.fail = false; });
+      await p.locator('#confirm-reset').click();
+      assert.equal(await issue7Bytes(p), null);
+      assert.equal(await p.locator('#screen-list').isVisible(), true);
+      assert.equal(await p.locator('#api-key').inputValue(), '');
+      assert.equal(await p.evaluate(() => window.__issue7Receipt), undefined);
+      assert.equal(await p.evaluate(() => window.__issue6CostSnapshot), undefined);
+      assert.equal(await p.locator('#use-fixture').evaluate(e => e === document.activeElement), true);
+      await p.reload();
+      assert.equal(await issue7Bytes(p), null);
+      assert.equal(await p.locator('#screen-decision').isVisible(), false);
+    } finally { await context.close(); }
+  });
+}
+
+test('issue 7 review: keyboard Enter confirmation focuses the visible saved heading then Return to list and Reset', async () => {
+  const context = await browser.newContext(); const p = await context.newPage();
+  try {
+    // Entire journey uses Tab, arrow keys and Enter, not scripted focus/click/check.
+    await p.goto(BASE_URL);
+    const tabTo = async id => {
+      for (let i = 0; i < 30; i++) {
+        if (await p.evaluate(id => document.activeElement?.id === id, id)) return;
+        await p.keyboard.press('Tab');
+      }
+      assert.fail(`Could not tab to ${id}`);
+    };
+    await tabTo('use-fixture'); await p.keyboard.press('Enter');
+    await p.locator('#records-body tr.selectable').first().waitFor();
+    for (let i = 0; i < 20; i++) {
+      await p.keyboard.press('Tab');
+      if (await p.evaluate(() => document.activeElement.matches('#records-body tr.selectable'))) break;
+    }
+    assert.equal(await p.evaluate(() => document.activeElement.matches('#records-body tr.selectable')), true);
+    await p.keyboard.press('Enter');
+    await p.waitForFunction(() => document.querySelector('#status').textContent.includes('Detail loaded'));
+    await tabTo('review-cost-evidence'); await p.keyboard.press('Enter');
+    await tabTo('continue-decision'); await p.keyboard.press('Enter');
+    await p.keyboard.press('Tab'); await p.keyboard.press('Space');
+    assert.equal(await p.getByRole('radio', { name: 'Keep', exact: true }).isChecked(), true);
+    await tabTo('confirm-intent'); await p.keyboard.press('Enter');
+    await issue7Saved(p);
+    assert.equal(await p.locator('#decision-title').evaluate(e => e === document.activeElement && e.checkVisibility()), true);
+    await p.keyboard.press('Tab');
+    assert.equal(await p.locator('#decision-return-to-list').evaluate(e => e === document.activeElement), true);
+    await p.keyboard.press('Tab');
+    assert.equal(await p.locator('#reset-demo').evaluate(e => e === document.activeElement), true);
+  } finally { await context.close(); }
+});
+
+test('issue 7 review: connection input and hint remain usable with Reopen visible at 1280, 1366 and 390px', async () => {
+  for (const width of [1280, 1366, 390]) {
+    const context = await browser.newContext({ viewport: { width, height: 844 } }); const p = await context.newPage();
+    try {
+      await issue7Decision(p); await issue7Confirm(p, 'Help');
+      assert.equal(await p.locator('#reopen-receipt').isVisible(), true);
+      const input = await p.locator('#api-key').boundingBox();
+      const hint = await p.locator('.connection-panel .hint').boundingBox();
+      console.log(`Connection layout ${width}px: input ${input.width}px; hint ${hint.width}px × ${hint.height}px`);
+      assert.ok(input.width >= (width === 390 ? 280 : 340), `${width}px key field squeezed to ${input.width}`);
+      assert.ok(hint.width >= (width === 390 ? 280 : 340), `${width}px hint squeezed`);
+      assert.ok(hint.height <= 100, `${width}px hint became a tall column`);
+      assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      const buttons = await p.locator('.connection-grid .actions button:visible').all();
+      for (const button of buttons) {
+        const box = await button.boundingBox();
+        assert.ok(box.x >= 0 && box.x + box.width <= width);
+      }
+      await issue7Screenshot(p, `layout-${width}`);
+    } finally { await context.close(); }
+  }
+});
+
 async function main() {
   let failures = [];
+  const selectedTests = tests.filter(({ name }, index) => !process.env.TEST_FILTER || index === 0 || name.includes(process.env.TEST_FILTER));
   try {
     const playwright = await loadPlaywright();
-    browser = await playwright.chromium.launch({ headless: true });
-    for (const { name, fn } of tests) {
+    browser = await playwright.chromium.launch({ headless: true, ...(process.env.CHROME_EXECUTABLE_PATH ? { executablePath: process.env.CHROME_EXECUTABLE_PATH } : {}) });
+    console.log(`Runtime: ${process.version}; browser: Chromium/Chrome ${browser.version()}; Playwright ${process.env.PLAYWRIGHT_MODULE_PATH || 'local dependency'}`);
+    for (const { name, fn } of selectedTests) {
       try {
         await fn();
         console.log(`PASS ${name}`);
@@ -1832,10 +2171,10 @@ async function main() {
     }
   }
   if (failures.length > 0) {
-    console.error(`\n${failures.length} of ${tests.length} tests failed.`);
+    console.error(`\n${failures.length} of ${selectedTests.length} tests failed.`);
     process.exit(1);
   }
-  console.log(`\nAll ${tests.length} tests passed.`);
+  console.log(`\nAll ${selectedTests.length} tests passed.`);
   process.exit(0);
 }
 

@@ -37,10 +37,13 @@ h2 { margin: 0 0 10px; font-size: 18px; }
 .ledger-panel { min-width: 0; }
 .detail-panel { position: sticky; top: 16px; }
 
-.connection-grid { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; }
+.connection-grid { display: grid; grid-template-columns: minmax(340px, 2fr) minmax(0, 3fr); gap: 16px; align-items: start; }
+.connection-grid .field, .connection-grid .actions { min-width: 0; }
+.connection-grid .actions button { max-width: 100%; }
 .field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
 input { width: 100%; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 8px; font: inherit; }
 input:focus-visible, button:focus-visible, table [tabindex]:focus-visible { outline: 3px solid var(--plum); outline-offset: 2px; }
+#decision-title:focus { outline: 3px solid var(--plum); outline-offset: 4px; }
 .hint, .meta, .coverage { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
 .coverage { font-weight: 700; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; }

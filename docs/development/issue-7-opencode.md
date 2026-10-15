@@ -35,3 +35,24 @@
 ## 审查
 
 15 October 2026：Rae 审查了代码改动、桌面/手机截图与验收矩阵，确认提交 PR。
+
+## PR #21 review follow-up — 15 October 2026
+
+The earlier Rae development/review record above is preserved. This follow-up was performed in OpenCode by GPT-6.1 Sol (`openai/gpt-6.1-sol`), session `ses_ec13d22feffd4d4LYSG4lIUe6g`, in the isolated `INFOSYS-A3-receipt-review` worktree on the existing `issue-7-intent-receipt` branch. No subagents were used. No existing commits were rewritten; Issue #11 files and unrelated worktrees were not edited.
+
+- Fetched PR #21 at `498e15d2fcfd22e26f50c99d3d864258c63da599`; it had not advanced. Read current #7 and parent #4 requirements. No applicable `AGENTS.md` was present.
+- Reproduced the five findings before implementation changes: gated source-response provenance mismatch; lost partial/continuation/scope metadata after reload; deleted storage described as kept after a read-back exception; BODY focus after Enter; 103px key field at 1280px. The original 53 tests passed on this checkout. One initial success-gate expected-count typo was corrected and the targeted provenance failure reproduced again before fixing application code.
+- Kept the existing receipt journey and idempotent write/read-back design. The badge now follows the active view while connection state remains independent. Receipt v2 adds only structured coverage and assessment scope; older v1 bytes stay untouched in unsupported-version recovery. Read-back uncertainty clears the cached Saved history rather than pretending deletion failed or was rolled back.
+- Successful explicit confirmation/retry focuses the saved heading. The connection grid keeps a useful input/hint width and lets controls wrap. Visual review of the reset-uncertainty screenshot also identified and removed the misleading “choose an intention” recovery instruction.
+- Added deterministic browser regressions using page-routed responses, injected transport and storage faults. Keyboard confirmation uses Tab/Space/Enter rather than scripted focus or mouse input. Existing schema assertions were expanded for v2, not relaxed. `CHROME_EXECUTABLE_PATH` supports installed Chrome; default Playwright Chromium behaviour is unchanged. `CAPTURE_RECEIPT_EVIDENCE=1` captures only the new review screenshots. `TEST_FILTER` is an optional local diagnostic substring filter (always retains the existing fixture-server setup test); the final run is unfiltered.
+- Environment: macOS, Node v24.20.0, Playwright 1.62.1, installed Chrome 155.0.8059.40 in headless mode. Playwright was installed in OpenCode's approved temporary directory, outside the repository. No real SAP key or authenticated SAP call was used.
+- Final unfiltered run: **71/71 PASS** (53 retained scenarios + 18 review regressions); all application/test JS/MJS `node --check` checks and `git diff --check` pass. Confirmation/historical/reset-failure screenshots and layouts at 1280px, 1366px and 390px were visually inspected. The original 53-test log and screenshots remain unchanged historical evidence; the new results are appended and the review screenshots use separate filenames.
+- Implementation and regression tests committed as `3a9c2a2` (`fix: preserve receipt evidence and truthful recovery state`); validation documentation/screenshots are a separate follow-up commit. Push targets the existing shared branch, without force or history rewriting.
+
+See the appended [acceptance follow-up](../validation/issue-7-acceptance.md#pr-21-review-validation--15-october-2026), appended [test output](../validation/issue-7-browser-test-results.txt) and new `issue-7-review-*.png` screenshots for validation. The original results/screenshots are historical evidence, not replaced. No completion of #8, #9, #10 or #11 is claimed.
+
+### Concurrent merge discovered during final remote verification
+
+The implementation/test and evidence commits pushed successfully to the original branch. The subsequent GitHub API/diff check revealed that `wanyan2333` had merged PR #21 during this work at **2026-10-15 09:04:24 UTC**, using old head `498e15d2fcfd22e26f50c99d3d864258c63da599`, merge `643755eeb30dacb3b548580948ee6a96d7ee8af3`. No merge/close operation was performed by this agent.
+
+Verified the actual frozen PR diff: nine original files, no receipt-v2 fixes. Verified the shared remote branch at `dd11be75de322a1c7d9b1fac64febd81dea6dfd0` before this documentation-only status note; `main` does not contain the fix commits. The post-merge branch diff is limited to the four application/test files, three Issue #7 records and seven new review screenshots. Updated the existing PR's title/body as requested, with an explicit prominent warning that the tested follow-up is on the branch, **not in the merged PR diff**. Did not attempt to reopen/replace the merged PR, merge the fixes, close issues, rewrite history or force-push. Further integration requires maintainer direction.

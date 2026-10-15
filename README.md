@@ -2,19 +2,19 @@
 
 小组的A3候选比较、SAP API参考、技术练习和后续应用开发资料。
 
-**当前平台：OpenCode.ai + SAP APIs。** [Billing Review Lite应用](app/README.md)已实现连接、选单、按key详情及金额解释/返回。#5已合并并保留真实B0证据；#6的34组浏览器验收通过，等待PR审核/合并。两个fixture kind明确标记，第二kind无SAP API身份；本轮未新增live验收。完整receipt、分页、用户测试和课程交付仍有后续任务。四份候选已收集，真实团队最终决定仍以选题工作表为准。
+**当前平台：OpenCode.ai + SAP APIs。** [Billing Review Lite应用](app/README.md)已实现连接、选单、按key详情及金额解释/返回。15 October核对main已合并#5/#6；#5保留历史真实B0证据，#6的34组受控浏览器验收不是新live SAP验收。#7 receipt的PR #21尚未合并，#8分页/恢复仍开放（两票由Rae负责）；用户测试、完整流程与课程交付另待完成。**选题状态：Proposed by Francis; pending confirmation by the full team.** 见[四方案比较/矩阵/API v4评估](decisions/A3_Candidate_Comparison.md)及[中文决策记录](decisions/A3_选题工作表.md)。
 
 ## 从哪里开始
 
 1. 阅读[作业要求与评分crosswalk](作业要求.md)及[官方V3规格](Specification-and-Rubric.docx)。
 2. 阅读[Staff澄清](docs/requirements/A3_Staff_Clarifications.md)，特别是API适配与MCP教学范围。
-3. 比较下列候选，在[选题工作表](decisions/A3_选题工作表.md)记录API适配、理由和真实团队决定。
+3. 审阅[四方案比较、矩阵及来源索引](decisions/A3_Candidate_Comparison.md)，在[选题工作表](decisions/A3_选题工作表.md)补充真实团队确认；当前仅为Francis提议继续Billing Review Lite，Xuan Knowledge Handover为首选fallback。
 4. 查看[应用运行说明](app/README.md)、[当前#6验收矩阵](docs/validation/issue-6-acceptance.md)及[OpenCode开发记录](docs/development/issue-6-opencode.md)。
 
 | 文件标签 | 候选业务方向 | 方案 |
 |---|---|---|
 | Francis | Strategic/Competitive | [PlanFit Navigator Core](candidates/A3_App_Candidate_Options-Francis.md) |
-| Kevin | Organisational | [Verified Knowledge Handover](candidates/A3_App_Candidate_Options-Kevin.md) |
+| Kevin（Xuan Zeng） | Organisational | [Verified Knowledge Handover](candidates/A3_App_Candidate_Options-Kevin.md) |
 | Rae | Financial | [Plan Review Snapshot](candidates/A3_App_Candidate_Options-Rae.md) |
 | Ryan | Operational | [Fibre Handoff Desk](candidates/A3_App_Candidate_Options-Ryan.md) |
 
@@ -25,7 +25,7 @@
 ```text
 candidates/               四份个人候选方案
 app/                      Billing Review Lite源码、fixture与浏览器测试
-decisions/                选题工作表和组员Agent提示词
+decisions/                四方案比较、矩阵、中文决策工作表和组员Agent提示词
 docs/requirements/        A3相关Staff原文摘录
 docs/platform-history/    23 September旧平台研究
 docs/validation/          字段契约、B0与逐票验收证据

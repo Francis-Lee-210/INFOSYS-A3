@@ -4,6 +4,8 @@
 
 **当前平台：OpenCode.ai + SAP APIs。** [Billing Review Lite应用](app/README.md)已实现连接、选单、按key详情及金额解释/返回。15 October核对main已合并#5/#6；#5保留历史真实B0证据，#6的34组受控浏览器验收不是新live SAP验收。#7 receipt的PR #21尚未合并，#8分页/恢复仍开放（两票由Rae负责）；用户测试、完整流程与课程交付另待完成。**选题状态：Proposed by Francis; pending confirmation by the full team.** 见[四方案比较/矩阵/API v4评估](decisions/A3_Candidate_Comparison.md)及[中文决策记录](decisions/A3_选题工作表.md)。
 
+> **16 October 2026 design checkpoint:** the paragraph above retains the earlier 15 October baseline. Four genuine #11 confirmations are now [recorded with conditions](decisions/A3_Candidate_Comparison.md#11-dated-confirmation-update--16-october-2026-nzdt); main `7a368f5` includes receipts/pagination and their review corrections. Open the standalone [Issue #12 design simulation](docs/design/issue-12-wireframes.html), [source-grounded rationale](docs/design/issue-12-design-rationale.md), [model handoff](docs/design/issue-12-model-handoff.md) and [ready-to-run human walkthrough](docs/validation/issue-12-walkthrough.md). Human results/Signavio evidence and final #15 ratification remain pending; this is not new app/live acceptance.
+
 ## 从哪里开始
 
 1. 阅读[作业要求与评分crosswalk](作业要求.md)及[官方V3规格](Specification-and-Rubric.docx)。

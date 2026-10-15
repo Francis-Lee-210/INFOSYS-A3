@@ -1,0 +1,9 @@
+Issue #12 artifact checks — 16 October 2026 NZDT
+Starting main: 7a368f529b60edae730afe2b8b1a0f9513d65e5e.
+Design artifacts only. No application suite, SAP request, Signavio operation or human walkthrough.
+
+Initial browser iteration: failed "Selection must leave useful focus, not BODY". Wireframe corrected to focus Review cost evidence after explicit selection; assertion retained.
+Second iteration: scenario/keyboard/contrast checks passed; SVG full-page capture timed out. Corrected the capture method to use the entire SVG canvas viewport, without relaxing bounds checks or changing the diagram.
+Focused complete SVG viewport capture in Chrome succeeded.
+
+Final reproducible source/link and browser runs are recorded below after validation. Human results remain Pending — not yet conducted; automated results are not human observations.

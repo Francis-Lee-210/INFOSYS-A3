@@ -1,5 +1,7 @@
 # A3 four-candidate comparison and proposed selection
 
+**Dated status update:** the four actual #11 confirmations are now recorded in [§11](#11-dated-confirmation-update--16-october-2026-nzdt). Proposal/baseline entries below remain historical; final #15 API-fit/route ratification and the new #12 human walkthrough are not implied by those confirmations.
+
 **Proposal date:** 2026-10-15 (Pacific/Auckland). **Selection status: Proposed by Francis; pending confirmation by the full team.** This is not a team meeting record, vote or Staff endorsement. The date records Francis's confirmation of this proposal in the current discussion, not full-team confirmation.
 
 **Recommendation:** continue **Billing Review Lite**, a bounded adaptation of Rae Huang's Financial-domain evidence-first review; retain **Xuan Zeng's Knowledge Handover** as the preferred fallback. This is an A3 delivery recommendation, not a claim that Rae's original enterprise proposal has the greatest business value.
@@ -233,3 +235,18 @@ This is AI-assisted source synthesis and documentation/Git work executed in Open
 - Scope/security review is limited to the seven intended changed files: comparison, SVG, worksheet, v4 workbook, resource manifest/README and root README. No app, candidate, reference, archived evidence/specification or individual workspace changes. No credentials/raw SAP records or personal local paths added to the text/manifest; unchanged workbook metadata is explicitly noted. `git diff --check` passes after removing new trailing whitespace. No repository documentation-specific suite was found; unrelated application tests were not rerun and no documentation-mirroring tests were added.
 
 Remaining evidence limits: no new SAP authentication/request; official field review is bounded; no new browser application/live receipt acceptance; no independent reproduction of PR #21; no final design/models, ZIP, slides, recording or Canvas receipt. Full-team confirmation remains an explicit open Issue #11 criterion.
+
+## 11. Dated confirmation update — 16 October 2026 NZDT
+
+The proposal/history above is preserved, not rewritten as an earlier team decision. Rechecked actual #11 comments on 16 October NZDT: **four posted confirmations of Billing Review Lite as scoped in PR #22 are present**. This is asynchronous confirmation, not evidence of a team meeting, attendance or a recorded vote on every matrix judgement.
+
+| Posted account / signed participant | Actual posted UTC time | Direct confirmation and conditions |
+|---|---|---|
+| `Francis-Lee-210` / Francis | 2026-10-15 08:59:24Z | [Comment](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/11#issuecomment-6188389540): agrees with one-record amounts/evidence/gaps → intended next action; explicitly his own confirmation, final API fit subject to #15. |
+| `Rae404` / Rae | 2026-10-15 10:06:21Z | [Comment](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/11#issuecomment-6189567067): confirms Billing Review Lite, Xuan fallback; **narrowed adaptation must not present her A2 projected benefits as prototype results**. |
+| `wanyan2333` / Xuan (Kevin) | 2026-10-15 10:10:22Z | [Comment](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/11#issuecomment-6189638526): confirms Lite and own Knowledge Handover fallback. His employment-API statement is self-reported evidence, not an independently rerun fallback gate here. |
+| `RIOne1` / signed Ryan Li | 2026-10-15 13:59:04Z | [Comment](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/11#issuecomment-6193873105): confirms one billing-request record → reported amount/source/limits → intention/minimal receipt, Xuan fallback, Rae benefit caveat and final Option 2/API-fit ratification in #15. |
+
+Completion of the four-comment set is **15 October 2026 UTC / 16 October 2026 NZDT** (last comment 02:59:04 NZDT). Participants are identified by the actual posted accounts/signatures; no proxy approval is posted by this task. No dissent is present in these four comments; that is not evidence of a separate disagreement-resolution meeting. Confirmed scope: one-record financial evidence explanation and local intention/receipt; no annual fit/compliance, real Spark account or achieved-benefit claim. **Option 2 remains a working classification, not Staff approval; #15 final ratification is pending.**
+
+This updates the *confirmation-record* dependency in §8 criterion 5, not every remaining #11/assessment gate or the external Live Master. The comments predate the new [Issue #12 design artifacts](../docs/design/issue-12-design-rationale.md) and are **not** a human walkthrough or approval of those artifacts. Current baseline `7a368f5` includes merged #7/#8 and the item-retry correction; those implementation results remain controlled evidence separate from historical #5 live B0. #9/#10 integration/live/package work and #12's real walkthrough/model-export dependencies remain separate. No issue closure or assignee change is performed here.

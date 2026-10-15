@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Billing Review Lite — synthetic design simulation</title>
+  <style>
+    :root { color-scheme: light; --ink:#292237; --muted:#5d536e; --plum:#542c83; --accent:#a21464; --paper:#f5f3fa; --line:#d9d1e5; --warning:#6c3c00; --error:#8c1837; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.55 system-ui,sans-serif; }
+    .shell { max-width:1080px; margin:auto; padding:24px 20px 48px; }
+    h1 { font-size:clamp(1.65rem,4vw,2.25rem); line-height:1.2; margin:8px 0 14px; }
+    h2 { font-size:1.5rem; margin:0 0 14px; } h3 { font-size:1.13rem; margin:18px 0 8px; }
+    p { margin:8px 0 14px; } .muted { color:var(--muted); }
+    .eyebrow { color:var(--accent); font-size:.85rem; font-weight:750; letter-spacing:.05em; }
+    .notice,.status { padding:12px 16px; border-radius:8px; background:#efeaf6; border:1px solid var(--line); }
+    .notice strong { display:block; } .source { padding:12px 0 20px; overflow-wrap:anywhere; }
+    .badge { display:inline-block; border:1px solid var(--plum); border-radius:18px; padding:4px 12px; font-size:.9rem; font-weight:700; color:var(--plum); background:white; }
+    section.screen { background:white; border:1px solid var(--line); border-radius:12px; padding:24px; margin:16px 0; }
+    .steps { display:flex; gap:12px; flex-wrap:wrap; margin:20px 0 4px; padding:0; list-style:none; color:var(--muted); }
+    .steps [aria-current] { color:var(--plum); font-weight:800; }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin:18px 0 8px; align-items:center; }
+    button,select { font:inherit; max-width:100%; border-radius:7px; }
+    button { padding:10px 15px; background:var(--plum); color:white; border:1px solid var(--plum); cursor:pointer; min-height:44px; }
+    button.secondary { background:white; color:var(--plum); }
+    button:disabled { background:#e5dfed; color:#51445f; border-color:#bcb1c9; cursor:not-allowed; }
+    :focus-visible,h2:focus,.status:focus { outline:3px solid var(--plum); outline-offset:4px; }
+    input[type=radio] { accent-color:var(--plum); width:20px; height:20px; flex-shrink:0; }
+    fieldset { border:1px solid var(--line); border-radius:8px; margin:16px 0; padding:12px 16px; }
+    legend { font-weight:700; padding:0 6px; }
+    label.option { display:flex; align-items:flex-start; gap:10px; border-bottom:1px solid var(--line); padding:14px 0; }
+    label.option:last-child { border-bottom:0; }
+    label.option small { display:block; color:var(--muted); font-size:.95rem; }
+    .amounts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .amount { padding:16px; background:var(--paper); border:1px solid var(--line); border-radius:8px; }
+    .amount strong { display:block; font-size:1.25rem; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+    .amount span { display:block; color:var(--muted); font-size:.92rem; }
+    dl { display:grid; grid-template-columns:190px minmax(0,1fr); gap:10px 16px; }
+    dt { font-weight:750; } dd { margin:0; overflow-wrap:anywhere; }
+    .warning { color:var(--warning); border:1px solid #b9904c; background:#fff8e7; padding:12px 16px; border-radius:8px; }
+    .error { color:var(--error); border:1px solid #bd7e8e; background:#fff1f4; padding:12px 16px; border-radius:8px; }
+    .meanings { padding-left:22px; } .meanings li { margin:6px 0; }
+    .setup { margin-top:32px; padding:18px; border:2px dashed #93849e; border-radius:10px; background:white; }
+    .setup summary { cursor:pointer; font-weight:700; } .setup label { display:block; margin-top:14px; }
+    select { display:block; padding:9px; border:1px solid #887792; background:white; color:var(--ink); width:min(100%,560px); }
+    a { color:var(--plum); } [hidden] { display:none!important; }
+    @media(max-width:650px) { .shell { padding:16px 12px 30px; } section.screen { padding:18px; } .amounts,dl { grid-template-columns:1fr; } dd { margin-bottom:6px; } button { overflow-wrap:anywhere; } }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="eyebrow">Spark NZ Financial context · design study</div>
+    <h1>Understand one billing request</h1>
+    <div class="notice"><strong>Synthetic design simulation — not the application</strong>No SAP connection, real key, customer account or external service. All records and actions below are illustrations. Nothing is sent or changed.</div>
+    <div class="source"><span id="provenance" class="badge">Synthetic examples · no live connection</span><p class="muted">Illustrated source: API_BILLING_DOCUMENT_REQUEST_SRV v1.1.0. A billing request is not a paid bill or Spark customer history.</p><button id="reopen" class="secondary" type="button" hidden>Reopen illustrative receipt</button></div>
+    <ol class="steps" aria-label="Three-screen journey"><li id="step-1" aria-current="step">1 · Select</li><li id="step-2">2 · Understand</li><li id="step-3">3 · Intend / receipt</li></ol>
+  </header>
+  <main>
+    <section id="screen-1" class="screen" aria-labelledby="title-1">
+      <h2 id="title-1" tabindex="-1">1. Load examples and select one record</h2>
+      <p>Choose one record to inspect. Loaded records are a bounded example, not an annual review or complete account history.</p>
+      <button id="load" type="button">Load synthetic examples</button>
+      <p id="read-status" class="status" role="status">No example read yet.</p>
+      <div id="read-failure" class="error" role="alert" hidden></div>
+      <div id="empty" class="warning" hidden>No records in this illustrated result. This does not mean zero spending. You can retry or return to connection.</div>
+      <div id="read-actions" class="actions" hidden><button id="retry" type="button">Retry illustrated read</button><button id="connection" type="button" class="secondary">Back to connection</button></div>
+      <fieldset id="record-options" hidden><legend>Select a billing request</legend></fieldset>
+      <button id="explain" type="button" disabled>Review cost evidence</button>
+    </section>
+    <section id="screen-2" class="screen" aria-labelledby="title-2" hidden>
+      <h2 id="title-2" tabindex="-1">2. Understand the reported amount</h2>
+      <p id="update-status" class="status" role="status" tabindex="-1" hidden></p>
+      <p id="explanation"></p>
+      <h3>Reported document amounts</h3><div id="amounts" class="amounts"></div>
+      <h3>Source and date context</h3><dl id="context"></dl>
+      <h3>Evidence limitations</h3><p id="coverage" class="warning"></p>
+      <p id="conflict" class="error" role="alert" hidden></p>
+      <p>No verified item-to-header reconciliation. No payment, annual usage, allowance fit, service-period coverage or savings conclusion.</p>
+      <div class="actions"><button id="back-list" type="button" class="secondary">Back to list</button><button id="refresh-cost" type="button" class="secondary">Check optional detail (simulation)</button><button id="continue" type="button">Continue to decision</button></div>
+    </section>
+    <section id="screen-3" class="screen" aria-labelledby="title-3" hidden>
+      <h2 id="title-3" tabindex="-1">3. Review and confirm an intention</h2>
+      <p id="receipt-notice" class="status" role="status"></p>
+      <dl id="summary"></dl>
+      <ul class="meanings"><li><strong>Keep:</strong> an intention, not a plan-suitability verdict.</li><li><strong>Review options:</strong> a future comparison intention, not an account switch.</li><li><strong>Help:</strong> an intention to seek help, not a submitted support ticket.</li><li><strong>Later:</strong> postponement, not a scheduled reminder.</li></ul>
+      <p id="restriction" class="error" hidden>Material evidence conflict: only Help or Later can be confirmed. The limitation stays with the illustrative receipt.</p>
+      <fieldset id="intent-options"><legend>Choose an intention</legend>
+        <label class="option"><input type="radio" name="intent" value="keep"><span>Keep</span></label>
+        <label class="option"><input type="radio" name="intent" value="review"><span>Review options</span></label>
+        <label class="option"><input type="radio" name="intent" value="help"><span>Help</span></label>
+        <label class="option"><input type="radio" name="intent" value="later"><span>Later</span></label>
+      </fieldset>
+      <div class="actions"><button id="back-cost" type="button" class="secondary">Back to evidence</button><button id="refresh-decision" type="button" class="secondary">Review updated evidence</button><button id="confirm" type="button" disabled>Confirm intention (simulation)</button><button id="return-list" type="button" class="secondary" hidden>Return to list</button></div>
+      <button id="reset" type="button" class="secondary">Reset design simulation</button>
+      <fieldset id="reset-check" hidden><legend>Delete this in-memory illustration and start again?</legend><p>This is not an account or application reset.</p><div class="actions"><button id="confirm-reset" type="button">Confirm reset</button><button id="cancel-reset" type="button" class="secondary">Cancel</button></div></fieldset>
+    </section>
+  </main>
+  <aside class="setup" aria-label="Design simulation controls, outside the product flow">
+    <details id="setup"><summary>Design simulation setup — not a product screen</summary>
+      <p>For the walkthrough moderator or artifact reviewer. These controls stage synthetic alternatives; they do not configure or test the actual app. Changing a scenario resets the pending review, not an existing illustrative receipt.</p>
+      <label for="scenario">Example state</label><select id="scenario">
+        <option value="partial">Available records · partial optional detail</option><option value="not-checked">Optional detail not checked</option><option value="unavailable">Optional detail unavailable</option><option value="absent">Optional detail absent</option><option value="complete">Explicitly bounded complete synthetic detail</option><option value="conflict">Material item-currency conflict</option><option value="pending">Pending evidence refresh</option><option value="empty">Valid empty result</option><option value="failed">Connection / read failed</option><option value="invalid">Required header data invalid</option>
+      </select>
+      <label for="resolution">Resolve a pending simulated check as</label><select id="resolution"><option value="partial">Matching detail, partial coverage</option><option value="conflict">Conflicting item currency</option><option value="unavailable">Another unavailable read</option></select>
+      <button id="resolve" type="button" class="secondary">Resolve simulated check</button><p id="setup-status" class="muted" role="status">No external calls or browser storage are used. Reloading clears every illustration.</p>
+    </details>
+  </aside>
+  <footer><p class="muted">Design artifact v1.0 · 16 October 2026 NZDT. Human walkthrough results are not recorded here. <a href="issue-12-design-rationale.md">Design rationale and evidence limits</a>.</p></footer>
+</div>
+<script>
+  'use strict';
+  const byId = id => document.getElementById(id);
+  const records = Object.freeze([
+    Object.freeze({ key:'DEMO0001', net:'250.000', tax:'37.500', gross:'287.500', currency:'USD', date:'2024-10-15' }),
+    Object.freeze({ key:'DEMO0002', net:'-18.750', tax:'0.000', gross:'-18.750', currency:'EUR', date:'2024-11-01' })
+  ]);
+  const meaning = 'Date on which the subsequent billing document is processed and booked for accounting purposes. Not a payment or service-coverage date.';
+  const intents = {keep:'Keep',review:'Review options',help:'Help',later:'Later'};
+  const initial = () => ({ screen:1, loaded:false, scenario:'partial', selected:null, evidence:'partial', pending:false, choice:'', revision:0, reviewedRevision:-1, receipt:null, receiptView:false, update:'' });
+  let state = initial();
+  function putFields(id, entries) {
+    byId(id).replaceChildren();
+    for (const [label,text] of entries) { const dt=document.createElement('dt'), dd=document.createElement('dd');dt.textContent=label;dd.textContent=text;byId(id).append(dt,dd); }
+  }
+  function permitted() { return state.evidence==='conflict' ? ['help','later'] : Object.keys(intents); }
+  function coverage(evidence, record) {
+    return {
+      'not-checked':'Optional detail: not checked. The header does not establish a breakdown.',
+      unavailable:'Optional detail: unavailable. Valid header figures remain; no zero or complete breakdown is invented.',
+      absent:'Optional detail: absent in this bounded synthetic read. Not proof of complete account history.',
+      partial:`Optional detail: partial. One linked ${record.currency} example row; a continuation is present and more rows may be missing. Row validity is not dataset completeness.`,
+      complete:'Optional detail: explicitly bounded complete only within this declared one-item synthetic example. Not SAP history or monetary reconciliation.',
+      conflict:`Optional detail: partial, with a known currency conflict against the ${record.currency} header. Do not combine the item and header.`,
+      checking:'Optional detail: checking. No decision can be confirmed from the previous evidence.'
+    }[evidence];
+  }
+  function commonFields(record,evidence) {
+    return [['Document','Billing request / '+record.key],['Provenance','Synthetic design example — never a live SAP or Spark customer record'],['Illustrated source','API_BILLING_DOCUMENT_REQUEST_SRV v1.1.0'],['Processing / booking date',record.date+' — '+meaning],['Net amount',record.net+' '+record.currency+' — TotalNetAmount, net excluding sales tax, including surcharges/discounts'],['Tax amount',record.tax+' '+record.currency+' — TotalTaxAmount, document-currency tax'],['Gross amount',record.gross+' '+record.currency+' — TotalGrossAmount, independently reported gross'],['Payer / account / service period / payment','Unknown / Not available'],['Evidence limits',coverage(evidence,record)],['Assessment scope','Source/linkage only; linked monetary reconciliation not assessed. No annual or plan-fit assessment.']];
+  }
+  function render() {
+    for(let n=1;n<=3;n++){ byId('screen-'+n).hidden=state.screen!==n;byId('step-'+n).removeAttribute('aria-current'); }
+    byId('step-'+state.screen).setAttribute('aria-current','step');
+    byId('provenance').textContent=state.receiptView ? 'Historical illustration · original synthetic provenance' : 'Synthetic examples · no live connection';
+    byId('reopen').hidden=!state.receipt;
+    byId('load').hidden=state.loaded;
+    const failure=state.loaded && ['failed','invalid'].includes(state.scenario), empty=state.loaded && state.scenario==='empty';
+    byId('read-failure').hidden=!failure;
+    byId('read-failure').textContent=state.scenario==='invalid' ? 'Required header data invalid (simulation): no valid amount/date/currency contract. Do not create a financial snapshot. Correct the read before reviewing.' : 'Connection / read failed (simulation). This is not an empty result. Retry or return to connection; no fixture is substituted for live data because this entire artifact is synthetic.';
+    byId('empty').hidden=!empty;byId('read-actions').hidden=!failure&&!empty;
+    const usable=state.loaded&&!failure&&!empty;
+    byId('read-status').textContent=!state.loaded ? 'No example read yet.' : failure ? 'Illustrated read failed; no usable rows.' : empty ? 'Valid illustrated response: no records. Not zero spending.' : '2 loaded synthetic records in this bounded example; not complete account or annual history. Select one explicitly.';
+    byId('record-options').hidden=!usable;
+    byId('record-options').replaceChildren(Object.assign(document.createElement('legend'),{textContent:'Select a billing request'}));
+    for(const record of records){
+      const label=document.createElement('label');label.className='option';
+      const input=document.createElement('input');input.type='radio';input.name='record';input.value=record.key;input.checked=state.selected?.key===record.key;
+      const words=document.createElement('span'), strong=document.createElement('strong'), small=document.createElement('small');
+      strong.textContent='Billing request '+record.key;small.textContent=record.net+' '+record.currency+' · Net basis · Processing date '+record.date;
+      words.append(strong,small);label.append(input,words);byId('record-options').append(label);
+    }
+    byId('explain').disabled=!usable||!state.selected;
+    if(state.selected){
+      const record=state.selected;
+      byId('explanation').textContent=`This example billing request reports net ${record.net}, tax ${record.tax} and gross ${record.gross} in ${record.currency}. These are independent reported figures, not an annual total or proof of payment.`;
+      byId('amounts').replaceChildren();
+      for(const [field,name] of [['net','Net'],['tax','Tax'],['gross','Gross']]){ const card=document.createElement('div');card.className='amount';const label=document.createElement('span'),value=document.createElement('strong'),basis=document.createElement('span');label.textContent=name+' amount';value.textContent=record[field]+' '+record.currency;basis.textContent='Reported '+field+' basis';card.append(label,value,basis);byId('amounts').append(card); }
+      putFields('context',commonFields(record,state.evidence).filter(([name])=>!['Net amount','Tax amount','Gross amount','Evidence limits'].includes(name)));
+      byId('coverage').textContent=coverage(state.evidence,record);byId('conflict').hidden=state.evidence!=='conflict';
+      byId('conflict').textContent=`Known conflict: item currency ${record.currency==='USD'?'EUR':'USD'} differs from header ${record.currency}. Only Help or Later can be confirmed; the flag/reason stays with the illustrative receipt.`;
+    }
+    byId('update-status').hidden=!state.update;byId('update-status').textContent=state.update;
+    byId('continue').disabled=state.pending||!state.selected;
+    byId('refresh-cost').disabled=state.pending;
+    const saved=state.receiptView&&state.receipt, value=saved||{record:state.selected,evidence:state.evidence};
+    byId('title-3').textContent=saved?'Historical receipt (simulation)':'3. Review and confirm an intention';
+    byId('receipt-notice').textContent=saved ? 'Saved / reopened illustration only. Held in this page’s memory, not application persistence. Historical evidence retains its original source and limits; it is not a newly refreshed bill. Reloading this file clears it.' : 'Review the same record and evidence, correct the choice if needed, then confirm. No real action or storage operation occurs.';
+    if(saved&&state.selected&&saved.record.key!==state.selected.key)byId('receipt-notice').textContent+=` The current selection ${state.selected.key} is NOT recorded. Reset before recording a different intention.`;
+    if(value.record)putFields('summary',[...commonFields(value.record,value.evidence),...(saved?[['Chosen intention',intents[saved.choice]],['Illustrated receipt identity','DEMO-RECEIPT-01'],['Illustrated confirmation time','2026-10-16T04:05:00.000Z (synthetic timestamp)']]:[])]);
+    byId('intent-options').hidden=!!saved;byId('restriction').hidden=!!saved||state.evidence!=='conflict';
+    for(const input of byId('intent-options').querySelectorAll('input')){input.disabled=state.pending||!permitted().includes(input.value);input.checked=state.choice===input.value;}
+    byId('confirm').hidden=!!saved;byId('confirm').disabled=state.pending||!state.choice||!permitted().includes(state.choice)||state.reviewedRevision!==state.revision;
+    byId('back-cost').hidden=!!saved;byId('refresh-decision').hidden=!!saved;byId('return-list').hidden=!saved;
+  }
+  function show(n,focus='title-'+n){state.screen=n;render();byId(focus).focus();}
+  function invalidate(){state.choice='';state.reviewedRevision=-1;state.revision++;state.pending=false;state.update='';state.receiptView=false;byId('reset-check').hidden=true;}
+  function load(){invalidate();state.loaded=true;state.selected=null;state.evidence=['empty','failed','invalid','pending'].includes(state.scenario)?'partial':state.scenario;show(1);}
+  function startRefresh(){if(!state.selected||state.receiptView)return;invalidate();state.pending=true;state.evidence='checking';state.update='Checking updated evidence. The previous intention was cleared. Continue and confirmation are unavailable until a current result is reviewed.';show(2,'update-status');}
+  byId('load').addEventListener('click',load);
+  byId('retry').addEventListener('click',()=>{state.scenario='partial';byId('scenario').value='partial';load();});
+  byId('connection').addEventListener('click',()=>{invalidate();state.loaded=false;state.selected=null;show(1,'load');});
+  byId('record-options').addEventListener('change',event=>{const selected=records.find(r=>r.key===event.target.value);if(!selected)return;invalidate();state.selected=selected;state.evidence=['pending','empty','failed','invalid'].includes(state.scenario)?'partial':state.scenario;render();byId('explain').focus();});
+  byId('explain').addEventListener('click',()=>{if(!state.selected||!state.loaded||['failed','invalid','empty'].includes(state.scenario))return;if(state.scenario==='pending')startRefresh();else show(2);});
+  byId('back-list').addEventListener('click',()=>{invalidate();show(1);});
+  byId('refresh-cost').addEventListener('click',startRefresh);byId('refresh-decision').addEventListener('click',startRefresh);
+  byId('continue').addEventListener('click',()=>{if(state.screen!==2||state.pending||!state.selected)return;state.reviewedRevision=state.revision;if(state.receipt){state.receiptView=true;state.choice='';}show(3);});
+  byId('intent-options').addEventListener('change',event=>{if(state.screen!==3||state.receiptView||state.pending||state.reviewedRevision!==state.revision||!permitted().includes(event.target.value)){event.target.checked=false;return;}state.choice=event.target.value;render();});
+  byId('confirm').addEventListener('click',()=>{if(state.screen!==3||state.receiptView||state.receipt||state.pending||state.reviewedRevision!==state.revision||!state.selected||!permitted().includes(state.choice))return;state.receipt=structuredClone({record:state.selected,evidence:state.evidence,choice:state.choice});state.receiptView=true;state.choice='';show(3);});
+  byId('back-cost').addEventListener('click',()=>{if(!state.receiptView)show(2);});
+  byId('return-list').addEventListener('click',()=>{invalidate();show(1);});
+  byId('reopen').addEventListener('click',()=>{if(!state.receipt)return;state.receiptView=true;show(3);});
+  byId('reset').addEventListener('click',()=>{byId('reset-check').hidden=false;byId('confirm-reset').focus();});
+  byId('cancel-reset').addEventListener('click',()=>{byId('reset-check').hidden=true;byId('reset').focus();});
+  byId('confirm-reset').addEventListener('click',()=>{state=initial();byId('scenario').value='partial';byId('reset-check').hidden=true;show(1,'load');});
+  byId('scenario').addEventListener('change',event=>{invalidate();state.scenario=event.target.value;state.loaded=false;state.selected=null;state.evidence='partial';show(1,'load');});
+  byId('resolve').addEventListener('click',()=>{if(!state.pending){byId('setup-status').textContent='No check is pending. Open evidence and start a simulated optional-detail check first.';return;}state.pending=false;state.evidence=byId('resolution').value;state.update=state.evidence==='unavailable'?'Updated optional detail is unavailable. Valid header figures remain. Review these limits and choose a new intention.':'Updated evidence is ready. Review its current limits or conflict before choosing a new intention.';show(2,'update-status');});
+  render();
+</script>
+</body>
+</html>

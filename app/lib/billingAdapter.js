@@ -116,11 +116,39 @@ function parseRetryAfter(response) {
     if (digits.length > 16 || BigInt(digits) > BigInt(Math.floor((8640000000000000 - Date.now()) / 1000))) return { status: 'unrepresentable', delayMs: null };
     return { status: 'delay-seconds', delayMs: Number(digits) * 1000 };
   }
-  if (/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/.test(raw)) {
-    const date = Date.parse(raw);
-    if (Number.isFinite(date) && new Date(date).toUTCString() === raw) return { status: date <= Date.now() ? 'past' : 'http-date', delayMs: Math.max(0, date - Date.now()) };
-  }
+  const date = httpDate(raw);
+  if (date !== null) return { status: date <= Date.now() ? 'past' : 'http-date', delayMs: Math.max(0, date - Date.now()) };
   return { status: 'invalid', delayMs: 0 };
+}
+
+// HTTP-date recipients also accept the two obsolete wire forms. Do not accept
+// arbitrary Date.parse input (ISO/local dates or impossible calendar values).
+function httpDate(raw) {
+  let match = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) ([A-Z][a-z]{2}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT$/.exec(raw);
+  let weekday, day, month, year, hour, minute, second;
+  if (match) [, weekday, day, month, year, hour, minute, second] = match;
+  else {
+    match = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\d{2})-([A-Z][a-z]{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}) GMT$/.exec(raw);
+    if (match) {
+      [, weekday, day, month, year, hour, minute, second] = match;
+      const currentYear = new Date().getUTCFullYear();
+      year = Math.floor(currentYear / 100) * 100 + Number(year);
+      if (year > currentYear + 50) year -= 100;
+    } else {
+      match = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) ([A-Z][a-z]{2}) ( \d|\d{2}) (\d{2}):(\d{2}):(\d{2}) (\d{4})$/.exec(raw);
+      if (!match) return null;
+      [, weekday, month, day, hour, minute, second, year] = match;
+    }
+  }
+  const monthIndex = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(month);
+  if (monthIndex < 0) return null;
+  const date = new Date(0);
+  date.setUTCFullYear(Number(year), monthIndex, Number(day));
+  date.setUTCHours(Number(hour), Number(minute), Number(second), 0);
+  if (date.getUTCFullYear() !== Number(year) || date.getUTCMonth() !== monthIndex || date.getUTCDate() !== Number(day) ||
+      date.getUTCHours() !== Number(hour) || date.getUTCMinutes() !== Number(minute) || date.getUTCSeconds() !== Number(second) ||
+      ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getUTCDay()] !== weekday.slice(0, 3)) return null;
+  return date.getTime();
 }
 
 function readEnvelope(json) {

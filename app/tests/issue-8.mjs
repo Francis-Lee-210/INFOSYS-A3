@@ -425,10 +425,17 @@ export function registerIssue8Tests({ test, browser, startInjectedServer, inject
     }
   });
 
-  for (const kind of ['seconds', 'http-date']) {
+  for (const kind of ['seconds', 'http-date', 'rfc850-date', 'asctime-date']) {
     test(`issue 8 R05 ${kind}: 429 cooldown is shared by equivalent controls, expires without auto-send and permits one Retry`, async () => {
       let fail = true;
-      await scenario(() => fail ? response({}, 429, kind === 'seconds' ? '5' : new Date(Date.now() + 6000).toUTCString()) : response(envelope([rawRecord('RATEGOOD')])), async ({ p, calls }) => {
+      await scenario(() => {
+        const date = new Date(Date.now() + 6000);
+        const parts = date.toUTCString().split(' ');
+        const header = kind === 'seconds' ? '5' : kind === 'rfc850-date'
+          ? `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getUTCDay()]}, ${parts[1]}-${parts[2]}-${parts[3].slice(-2)} ${parts[4]} GMT`
+          : kind === 'asctime-date' ? `${parts[0].slice(0, 3)} ${parts[2]} ${String(date.getUTCDate()).padStart(2, ' ')} ${parts[4]} ${parts[3]}` : date.toUTCString();
+        return fail ? response({}, 429, header) : response(envelope([rawRecord('RATEGOOD')]));
+      }, async ({ p, calls }) => {
         await p.clock.install({ time: Date.now() });
         await connect(p); await recovered(p, /Rate limited.*Wait/);
         await p.locator('#api-key').fill(KEY);
@@ -447,12 +454,12 @@ export function registerIssue8Tests({ test, browser, startInjectedServer, inject
   }
 
   test('issue 8 R06: missing, malformed, zero and past Retry-After are explicit and never automatic', async () => {
-    for (const value of [null, 'not-a-date', '-1', '1.5', '0', 'Wed, 01 Jan 2020 00:00:00 GMT']) {
+    for (const value of [null, 'not-a-date', '-1', '1.5', '0', 'Wed, 01 Jan 2020 00:00:00 GMT', 'Wednesday, 01-Jan-20 00:00:00 GMT', 'Wed Jan  1 00:00:00 2020']) {
       let fail = true;
       await scenario(() => fail ? response({}, 429, value) : response(envelope([rawRecord('RATEGOOD')])), async ({ p, calls }) => {
         await p.clock.install({ time: Date.now() });
         await connect(p); await recovered(p, /Rate limited/);
-        if (value === '0' || value?.includes('2020')) assert.equal(await p.locator('#retry-read').isEnabled(), true);
+        if (value === '0' || value?.startsWith('Wed')) assert.equal(await p.locator('#retry-read').isEnabled(), true);
         else {
           await text(p, '#read-recovery-message', /No valid Retry-After.*one-second local wait/);
           assert.equal(await p.locator('#retry-read').isDisabled(), true);

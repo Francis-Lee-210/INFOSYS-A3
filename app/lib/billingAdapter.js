@@ -1,4 +1,4 @@
-import { SOURCE_API_ID, SOURCE_API_VERSION, SANDBOX_BASE_URL, LIST_PATH, DEFAULT_TOP, ITEMS_TOP, REQUEST_TIMEOUT_MS, MAX_RESPONSE_BYTES } from './config.js';
+import { SOURCE_API_ID, SOURCE_API_VERSION, SANDBOX_BASE_URL, LIST_PATH, DEFAULT_TOP, ITEMS_TOP, REQUEST_TIMEOUT_MS, MAX_RESPONSE_BYTES, REQUEST_SOURCE_PROFILE_ID, SYNTHETIC_SOURCE_PROFILE_ID } from './config.js';
 import { normaliseODataDate, isKnownCurrency, validateDecimalString, odataQuoteKey, validateSubContinuation, validateItemContinuation } from './contracts.js';
 
 function safeTrim(value) {
@@ -90,6 +90,32 @@ function property(record, name) {
   return Object.prototype.hasOwnProperty.call(record || {}, name) ? record[name] : null;
 }
 
+function sourceContext(mode) {
+  if (mode === 'synthetic') {
+    return {
+      provenance: 'synthetic-fixture',
+      mode: 'synthetic',
+      sourceApiId: null,
+      sourceApiVersion: null,
+      sourceProfileId: SYNTHETIC_SOURCE_PROFILE_ID,
+      documentKind: 'synthetic billing document',
+      sourceLabel: 'Synthetic fixture',
+      transport: 'none (synthetic fixture)'
+    };
+  }
+  const requestFixture = mode === 'fixture';
+  return {
+    provenance: requestFixture ? 'fixture-demonstration' : 'live-sap-sandbox',
+    mode: requestFixture ? 'fixture' : 'live',
+    sourceApiId: SOURCE_API_ID,
+    sourceApiVersion: SOURCE_API_VERSION,
+    sourceProfileId: REQUEST_SOURCE_PROFILE_ID,
+    documentKind: 'billing request',
+    sourceLabel: requestFixture ? 'Fixture demonstration' : 'Live SAP sandbox',
+    transport: requestFixture ? 'none (fixture)' : 'https GET-only'
+  };
+}
+
 function normaliseContext(record) {
   const payer = property(record, 'PayerParty');
   const account = property(record, 'ContractAccount');
@@ -125,7 +151,11 @@ function normaliseAmounts(record, issues) {
   return { amounts: result, basis };
 }
 
-function normaliseRecord(record, provenance) {
+function normaliseRecord(record, context = 'live-sap-sandbox') {
+  const ctx = typeof context === 'string'
+    ? (context.includes('synthetic') ? sourceContext('synthetic') :
+       context.includes('fixture') ? sourceContext('fixture') : sourceContext('live'))
+    : context;
   const issues = [];
   const rawKey = property(record, 'BillingDocumentRequest');
   const key = typeof rawKey === 'string' ? rawKey.trim() : '';
@@ -143,15 +173,18 @@ function normaliseRecord(record, provenance) {
   if (!hasFiniteAmount) issues.push('No finite document-level amount is available.');
   const usable = key !== '' && key.length <= 10 && date.valid && currencyValid && hasFiniteAmount && issues.length === 0;
   return {
-    sourceApiId: SOURCE_API_ID,
-    sourceApiVersion: SOURCE_API_VERSION,
-    provenance,
-    documentKind: 'billing request',
+    sourceApiId: ctx.sourceApiId,
+    sourceApiVersion: ctx.sourceApiVersion,
+    sourceProfileId: ctx.sourceProfileId,
+    configuredSourceLabel: ctx.sourceLabel,
+    provenance: ctx.provenance,
+    profileMode: ctx.mode,
+    documentKind: ctx.documentKind,
     key,
     dateRaw: date.raw,
     dateNormalized: date.value,
     dateValid: date.valid,
-    dateMeaning: 'Date on which the subsequent billing document is processed and booked for accounting purposes. Not a payment or service-coverage date.',
+    dateMeaning: ctx.mode === 'synthetic' ? 'Synthetic processing date supplied by the fixture; not a payment or service-coverage date.' : 'Date on which the subsequent billing document is processed and booked for accounting purposes. Not a payment or service-coverage date.',
     amounts,
     amountBasis: basis,
     currency: currencyValid ? currencyRaw.toUpperCase() : currencyRaw || null,
@@ -164,8 +197,12 @@ function normaliseRecord(record, provenance) {
   };
 }
 
+
+
 export function createAdapter(options = {}) {
   const fixtureMode = options.fixtureMode === true;
+  const syntheticMode = options.syntheticMode === true;
+  if (fixtureMode && syntheticMode) throw makeError('INVALID_PROFILE', 'Fixture source profiles are mutually exclusive.');
   const apiKey = safeTrim(options.apiKey || '');
   const transport = options.transport || null;
 
@@ -177,20 +214,41 @@ export function createAdapter(options = {}) {
 
   return {
     async list() {
-      if (fixtureMode) {
-        const fixtureModule = await import('./fixtureData.js');
-        const records = fixtureModule.fixtureRecords.map((record) => normaliseRecord(record, 'fixture-demonstration'));
+      if (syntheticMode) {
+        const syntheticModule = await import('./syntheticFixtureData.js');
+        const ctx = sourceContext('synthetic');
+        const records = syntheticModule.syntheticFixtureRecords.map((record) => normaliseRecord(record, ctx));
         return {
-          mode: 'fixture',
-          provenance: 'fixture-demonstration',
+          mode: 'synthetic',
+          provenance: 'synthetic-fixture',
+          sourceProfileId: SYNTHETIC_SOURCE_PROFILE_ID,
+          sourceApiId: null,
+          sourceApiVersion: null,
           records,
           continuation: null,
           continuationAvailable: false,
           loadedCount: records.length,
           usableCount: records.filter((record) => record.usable).length,
-          transport: 'none (fixture)',
+          transport: 'none (synthetic fixture)',
+          synthetic: true
+        };
+      }
+      if (fixtureMode) {
+        const ctx = sourceContext('fixture');
+        const fixtureModule = await import('./fixtureData.js');
+        const records = fixtureModule.fixtureRecords.map((record) => normaliseRecord(record, ctx));
+        return {
+          mode: 'fixture',
+          provenance: 'fixture-demonstration',
+          sourceProfileId: REQUEST_SOURCE_PROFILE_ID,
           sourceApiId: SOURCE_API_ID,
-          sourceApiVersion: SOURCE_API_VERSION
+          sourceApiVersion: SOURCE_API_VERSION,
+          records,
+          continuation: null,
+          continuationAvailable: false,
+          loadedCount: records.length,
+          usableCount: records.filter((record) => record.usable).length,
+          transport: 'none (fixture)'
         };
       }
       const cleanedKey = requireLiveKey();
@@ -220,17 +278,26 @@ export function createAdapter(options = {}) {
         transport: 'https GET-only',
         upstreamStatus: json[UPSTREAM_STATUS],
         sourceApiId: SOURCE_API_ID,
-        sourceApiVersion: SOURCE_API_VERSION
+        sourceApiVersion: SOURCE_API_VERSION,
+        sourceProfileId: REQUEST_SOURCE_PROFILE_ID
       };
     },
     async detail(key, selectedKey = null) {
+      if (syntheticMode) {
+        const syntheticModule = await import('./syntheticFixtureData.js');
+        const raw = syntheticModule.syntheticFixtureRecords.find((item) => item.BillingDocumentRequest === safeTrim(key));
+        const record = raw ? normaliseRecord(raw, sourceContext('synthetic')) : null;
+        if (!record) throw makeError('NOT_FOUND', 'Synthetic billing document was not found.');
+        if (selectedKey && safeTrim(selectedKey) !== safeTrim(key)) throw makeError('KEY_MISMATCH', 'Selected key does not match the detail key.');
+        return { provenance: 'synthetic-fixture', sourceProfileId: SYNTHETIC_SOURCE_PROFILE_ID, sourceApiId: null, sourceApiVersion: null, record: { ...record }, keyConsistent: true };
+      }
       if (fixtureMode) {
         const fixtureModule = await import('./fixtureData.js');
         const raw = fixtureModule.fixtureRecords.find((item) => item.BillingDocumentRequest === safeTrim(key));
-        const record = raw ? normaliseRecord(raw, 'fixture-demonstration') : null;
+        const record = raw ? normaliseRecord(raw, sourceContext('fixture')) : null;
         if (!record) throw makeError('NOT_FOUND', 'Fixture billing request was not found.');
         if (selectedKey && safeTrim(selectedKey) !== safeTrim(key)) throw makeError('KEY_MISMATCH', 'Selected key does not match the detail key.');
-        return { provenance: 'fixture-demonstration', record: { ...record }, keyConsistent: true };
+        return { provenance: 'fixture-demonstration', sourceProfileId: REQUEST_SOURCE_PROFILE_ID, sourceApiId: SOURCE_API_ID, sourceApiVersion: SOURCE_API_VERSION, record: { ...record }, keyConsistent: true };
       }
       const cleanedKey = requireLiveKey();
       if (selectedKey && safeTrim(selectedKey) !== safeTrim(key)) throw makeError('KEY_MISMATCH', 'Selected key does not match the detail key.');
@@ -246,57 +313,59 @@ export function createAdapter(options = {}) {
       const record = normaliseRecord(header, 'live-sap-sandbox');
       if (safeTrim(record.key) !== safeTrim(key)) throw makeError('KEY_MISMATCH', 'The detail key does not match the requested billing request.');
       if (!record.usable) throw makeError('NO_USABLE_RECORDS', 'Detail response did not satisfy the minimum usable contract.');
-      return { provenance: 'live-sap-sandbox', record, keyConsistent: true, upstreamStatus: json[UPSTREAM_STATUS] };
+      return { provenance: 'live-sap-sandbox', sourceProfileId: REQUEST_SOURCE_PROFILE_ID, sourceApiId: SOURCE_API_ID, sourceApiVersion: SOURCE_API_VERSION, record, keyConsistent: true, upstreamStatus: json[UPSTREAM_STATUS] };
     },
     async items(key) {
       const cleanedKey = safeTrim(key);
-      if (cleanedKey === '') throw makeError('INVALID_KEY', 'A billing request key is required for item navigation.');
-      if (fixtureMode) {
-        return { status: 'unavailable', count: 0, hasContinuation: false, note: 'Item-level raw evidence is not fetched in fixture mode for this scope.' };
+      if (!/^[A-Za-z0-9._-]{1,10}$/.test(cleanedKey)) throw makeError('INVALID_KEY', 'A valid document key is required for item navigation.');
+      const ctx = sourceContext(syntheticMode ? 'synthetic' : (fixtureMode ? 'fixture' : 'live'));
+      const result = (value, parentVerified = true) => ({
+        ...value, rows: value.rows || [], complete: value.complete === true,
+        sourceApiId: ctx.sourceApiId, sourceApiVersion: ctx.sourceApiVersion,
+        sourceProfileId: ctx.sourceProfileId, provenance: ctx.provenance,
+        parentKey: cleanedKey, parentVerified
+      });
+      const normalizeRows = rows => rows.map(item => ({
+        parentKey: item.BillingDocumentRequest,
+        itemKey: typeof item.BillingDocumentRequestItem === 'string' && /^[A-Za-z0-9._-]{1,6}$/.test(item.BillingDocumentRequestItem.trim()) ? item.BillingDocumentRequestItem.trim() : null,
+        netAmount: validateDecimalString(item.NetAmount, { precision: 16, scale: 3 }).value,
+        taxAmount: validateDecimalString(item.TaxAmount, { precision: 14, scale: 3 }).value,
+        grossAmount: validateDecimalString(item.GrossAmount, { precision: 16, scale: 3 }).value,
+        currency: isKnownCurrency(item.TransactionCurrency) ? item.TransactionCurrency.trim().toUpperCase() : null
+      }));
+      if (syntheticMode) {
+        const syntheticModule = await import('./syntheticFixtureData.js');
+        if (!syntheticModule.syntheticFixtureRecords.some(record => record.BillingDocumentRequest === cleanedKey)) throw makeError('NOT_FOUND', 'Synthetic billing document was not found.');
+        const rows = syntheticModule.syntheticItemRows[cleanedKey] || [];
+        if (!rows.every(row => row?.BillingDocumentRequest === cleanedKey)) return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Synthetic item parent linkage could not be verified.' }, false);
+        return result({ status: rows.length ? 'complete' : 'absent', count: rows.length, rows: normalizeRows(rows), hasContinuation: false, complete: true, note: 'Synthetic fixture explicitly declares bounded complete item coverage. Fixture-only semantics, not SAP history.' });
       }
+      if (fixtureMode) return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Item-level raw evidence is not fetched in fixture mode for this scope.' }, null);
       const liveKey = requireLiveKey();
       const quoted = odataQuoteKey(cleanedKey);
-      const url = `${SANDBOX_BASE_URL}/A_BillingDocumentRequest('${quoted}')/to_Item?$top=${ITEMS_TOP}&$format=json&$select=BillingDocumentRequest,BillingDocumentRequestItem`;
+      const url = `${SANDBOX_BASE_URL}/A_BillingDocumentRequest('${quoted}')/to_Item?$top=${ITEMS_TOP}&$format=json&$select=BillingDocumentRequest,BillingDocumentRequestItem,NetAmount,TaxAmount,GrossAmount,TransactionCurrency`;
       try {
         const json = await fetchUpstream(url, liveKey, transport);
         const envelope = readEnvelope(json);
-        if (!Array.isArray(envelope.results)) {
-          return { status: 'unavailable', count: 0, hasContinuation: false, note: 'Item navigation did not contain a recognizable result array.' };
-        }
+        if (!Array.isArray(envelope.results)) return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Item navigation did not contain a recognizable result array.' }, null);
         const rawContinuation = envelope.continuation;
         const presented = rawContinuation !== null && rawContinuation !== undefined;
-        if (presented && typeof rawContinuation !== 'string') {
-          return { status: 'unavailable', count: 0, hasContinuation: false, note: 'Item navigation continuation was rejected before use: malformed-continuation-type.' };
-        }
+        if (presented && typeof rawContinuation !== 'string') return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Item navigation continuation was rejected before use: malformed-continuation-type.' }, false);
         const continuation = presented ? safeTrim(rawContinuation) : '';
         const continuationCheck = presented ? validateItemContinuation(continuation, cleanedKey) : { ok: true };
-        if (!continuationCheck.ok) {
-          return { status: 'unavailable', count: 0, hasContinuation: false, note: `Item navigation continuation was rejected before use: ${continuationCheck.reason}.` };
-        }
+        if (!continuationCheck.ok) return result({ status: 'unavailable', count: 0, hasContinuation: false, note: `Item navigation continuation was rejected before use: ${continuationCheck.reason}.` }, false);
         const hasContinuation = Boolean(continuation);
-        const parentsVerified = envelope.results.length === 0 || envelope.results.every((item) =>
-          typeof item === 'object' && item !== null &&
-          typeof item.BillingDocumentRequest === 'string' &&
-          item.BillingDocumentRequest === cleanedKey
-        );
-        if (envelope.results.length > 0 && !parentsVerified) {
-          return { status: 'unavailable', count: 0, hasContinuation: false, note: 'Item parent linkage could not be verified before any result was counted.' };
-        }
-        if (hasContinuation) {
-          if (envelope.results.length === 0) {
-            return { status: 'partial', count: 0, hasContinuation: true, note: 'Item navigation returned no rows but provided a continuation; coverage remains partial and was not declared absent or complete.' };
-          }
-          return { status: 'partial', count: envelope.results.length, hasContinuation: true, note: 'Item navigation returned rows and a verified continuation; coverage is partial only and was not summed.' };
-        }
-        if (envelope.results.length === 0) {
-          return { status: 'absent', count: 0, hasContinuation: false, note: 'Item navigation returned no item rows and no continuation.' };
-        }
-        const extra = envelope.results.length >= ITEMS_TOP
-          ? ' absence of next after a full page is not proof of complete coverage.'
-          : ' no amounts were summed.';
-        return { status: 'partial', count: envelope.results.length, hasContinuation: false, note: 'Item navigation returned verified parent rows with bounded loaded coverage;' + extra };
+        const parentsVerified = envelope.results.every(item => item && typeof item === 'object' && item.BillingDocumentRequest === cleanedKey);
+        if (!parentsVerified) return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Item parent linkage could not be verified before any result was counted.' }, false);
+        const rows = normalizeRows(envelope.results);
+        const unavailableFields = rows.some(row => !row.itemKey || !row.currency) || envelope.results.some(item => [['NetAmount', 16], ['TaxAmount', 14], ['GrossAmount', 16]].some(([field, precision]) => { const checked = validateDecimalString(item[field], { precision, scale: 3 }); return !checked.valid && !checked.missing; }));
+        const fieldNote = unavailableFields ? ' Missing or invalid optional item fields remain Unknown / Not available; header currency is never inherited.' : '';
+        if (hasContinuation) return result({ status: 'partial', count: rows.length, rows, hasContinuation: true, note: (rows.length ? 'Item navigation returned rows and a verified continuation; coverage is partial only and was not summed.' : 'Item navigation returned no rows but provided a continuation; coverage remains partial and was not declared absent or complete.') + fieldNote });
+        if (rows.length === 0) return result({ status: 'absent', count: 0, hasContinuation: false, note: 'Item navigation returned no item rows and no continuation.' });
+        const extra = rows.length >= ITEMS_TOP ? ' absence of next after a full page is not proof of complete coverage.' : ' no amounts were summed.';
+        return result({ status: 'partial', count: rows.length, rows, hasContinuation: false, note: 'Item navigation returned verified parent rows with bounded loaded coverage;' + extra + fieldNote });
       } catch {
-        return { status: 'unavailable', count: 0, hasContinuation: false, note: 'Optional item navigation could not be read; no item amounts were invented.' };
+        return result({ status: 'unavailable', count: 0, hasContinuation: false, note: 'Optional item navigation could not be read; no item amounts were invented.' }, null);
       }
     },
     validateContinuation(link) {

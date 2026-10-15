@@ -72,9 +72,19 @@ function getApiKey(req) {
   return '';
 }
 
-function isFixtureRequest(searchParams) {
-  const mode = safeParam(searchParams, 'mode');
-  return mode === 'fixture' || mode === 'demo' || safeParam(searchParams, 'fixture') === '1' || safeParam(searchParams, 'demo') === 'true';
+function resolveDataMode(searchParams) {
+  if (searchParams.getAll('mode').length > 1) return null;
+  const mode = safeParam(searchParams, 'mode').toLowerCase();
+  if (['synthetic', 'synthetic-fixture', 'contract', 'contract-fixture', 'synthetic-contract', 'synthetic-billing-document'].includes(mode)) return 'synthetic';
+  if (mode === 'fixture' || mode === 'demo') return 'fixture';
+  if (mode === 'live') return 'live';
+  if (mode !== '') return null;
+  return safeParam(searchParams, 'fixture') === '1' || safeParam(searchParams, 'demo') === 'true' ? 'fixture' : 'live';
+}
+
+function compatibleProfile(params, mode) {
+  const expected = mode === 'synthetic' ? 'synthetic-billing-document-v1' : 'billing-document-request-v1';
+  return ['profile', 'sourceProfile', 'sourceProfileId'].every(name => params.getAll(name).length <= 1 && (!params.has(name) || safeParam(params, name) === expected));
 }
 
 function safeParam(params, name) {
@@ -110,9 +120,11 @@ function sanitizeAdapterError(error) {
   };
 }
 
-function adapterFromRequest(req, fixture, transport) {
-  const apiKey = fixture ? '' : getApiKey(req);
-  return createAdapter({ fixtureMode: fixture, apiKey, transport: transport || null });
+function adapterFromRequest(req, modeKind, transport) {
+  const synthetic = modeKind === 'synthetic';
+  const fixture = modeKind === 'fixture';
+  const apiKey = (fixture || synthetic) ? '' : getApiKey(req);
+  return createAdapter({ fixtureMode: fixture, syntheticMode: synthetic, apiKey, transport: transport || null });
 }
 
 async function handleApi(req, res, pathname, searchParams, port, requestOrigin, transport) {
@@ -141,8 +153,10 @@ async function handleApi(req, res, pathname, searchParams, port, requestOrigin, 
     return;
   }
   if (pathname === '/api/billing-requests' || pathname === '/api/billingRequests') {
-    const fixture = isFixtureRequest(searchParams);
-    const adapter = adapterFromRequest(req, fixture, transport);
+    const modeKind = resolveDataMode(searchParams);
+    if (!modeKind) { sendError(res, 400, 'INVALID_MODE', 'The requested source mode is not allowed.', requestOrigin, port); return; }
+    if (!compatibleProfile(searchParams, modeKind)) { sendError(res, 400, 'INVALID_PROFILE', 'The requested source profile is not allowed for this mode.', requestOrigin, port); return; }
+    const adapter = adapterFromRequest(req, modeKind, transport);
     try {
       const result = await adapter.list();
       sendJson(res, 200, result, requestOrigin, port);
@@ -159,9 +173,11 @@ async function handleApi(req, res, pathname, searchParams, port, requestOrigin, 
       sendError(res, 400, 'INVALID_KEY', 'Invalid billing request key.', requestOrigin, port);
       return;
     }
-    const fixture = isFixtureRequest(searchParams);
+    const modeKind = resolveDataMode(searchParams);
+    if (!modeKind) { sendError(res, 400, 'INVALID_MODE', 'The requested source mode is not allowed.', requestOrigin, port); return; }
+    if (!compatibleProfile(searchParams, modeKind)) { sendError(res, 400, 'INVALID_PROFILE', 'The requested source profile is not allowed for this mode.', requestOrigin, port); return; }
     const selected = safeParam(searchParams, 'selected');
-    const adapter = adapterFromRequest(req, fixture, transport);
+    const adapter = adapterFromRequest(req, modeKind, transport);
     try {
       const result = await adapter.detail(key, selected || key);
       sendJson(res, 200, result, requestOrigin, port);
@@ -178,8 +194,10 @@ async function handleApi(req, res, pathname, searchParams, port, requestOrigin, 
       sendError(res, 400, 'INVALID_KEY', 'Invalid billing request key.', requestOrigin, port);
       return;
     }
-    const fixture = isFixtureRequest(searchParams);
-    const adapter = adapterFromRequest(req, fixture, transport);
+    const modeKind = resolveDataMode(searchParams);
+    if (!modeKind) { sendError(res, 400, 'INVALID_MODE', 'The requested source mode is not allowed.', requestOrigin, port); return; }
+    if (!compatibleProfile(searchParams, modeKind)) { sendError(res, 400, 'INVALID_PROFILE', 'The requested source profile is not allowed for this mode.', requestOrigin, port); return; }
+    const adapter = adapterFromRequest(req, modeKind, transport);
     try {
       const result = await adapter.items(key);
       sendJson(res, 200, result, requestOrigin, port);

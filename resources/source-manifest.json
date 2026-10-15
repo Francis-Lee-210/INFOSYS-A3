@@ -1,5 +1,6 @@
 {
   "prepared_on": "2026-10-14",
+  "updated_on": "2026-10-15",
   "timezone": "Pacific/Auckland",
   "files": [
     {
@@ -15,6 +16,18 @@
       "sha256": "dcf0200ba136a1eb0e5001f50d8523859dc17cac740ab3495285f6e90559e711",
       "bytes": 12514,
       "operation": "copy"
+    },
+    {
+      "source_file_label": "SAP API Pool v4.xlsx (user-supplied local course file)",
+      "course_source_locator": "https://canvas.auckland.ac.nz/courses/143335/files/19105396?wrap=1",
+      "repository_path": "resources/api/SAP API Pool v4.xlsx",
+      "copied_on": "2026-10-15",
+      "source_sha256": "4b18c4c7e41e0113febafd2d26a2208a51ec30b70603df0c15337dc0a6d414ce",
+      "repository_sha256": "4b18c4c7e41e0113febafd2d26a2208a51ec30b70603df0c15337dc0a6d414ce",
+      "source_bytes": 12514,
+      "repository_bytes": 12514,
+      "operation": "copy unchanged; verified source and destination bytes and SHA-256",
+      "limitations": "Course locator supplied for provenance; local file inspected, not downloaded in this task. Original Office metadata retained in unchanged workbook. Listing is not sandbox validation."
     },
     {
       "source_in_course_workspace": "0-Canvas Exported/viewer/files/Assignment resources/Assignment Specifications/Groupwork Management Slide.pptx",

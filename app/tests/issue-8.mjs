@@ -673,6 +673,237 @@ export function registerIssue8Tests({ test, browser, startInjectedServer, inject
     });
   });
 
+  // PR #24 follow-up: item Retry is global, including cost/decision/history views.
+  async function itemRetryCase(run, { outcome = 'currency', width = 1366, historical = false } = {}) {
+    const pending = gate();
+    let attempts = 0;
+    await scenario(async ({ url }) => {
+      if (url.pathname.endsWith('/to_Item')) {
+        attempts++;
+        if (attempts === 1) return response({}, 503);
+        await pending.promise;
+        if (outcome === 'failure') return response({}, 503);
+        return response(envelope([{
+          BillingDocumentRequest: outcome === 'parent' ? 'FOREIGN24' : 'REVIEW24',
+          BillingDocumentRequestItem: '000010', NetAmount: '11.125', TaxAmount: '0.005', GrossAmount: '11.130',
+          TransactionCurrency: outcome === 'currency' ? 'EUR' : 'USD'
+        }]));
+      }
+      if (url.pathname.includes("A_BillingDocumentRequest('")) return response({ d: rawRecord(url.pathname.includes('OTHER24') ? 'OTHER24' : 'REVIEW24') });
+      return response(url.searchParams.has('$skip') ? envelope([rawRecord('OTHER24')]) : envelope([rawRecord('REVIEW24'), rawRecord('OTHER24')], '?$skip=10'));
+    }, async ({ p, calls }) => {
+      try {
+        const savedBytes = historical ? await saveFixture(p) : null;
+        // Observe decoded HTTP responses, not private business functions; gates
+        // can be released after navigation without relying on arbitrary sleeps.
+        await p.evaluate(() => {
+          window.__reviewItemResponses = 0;
+          const original = window.fetch;
+          window.fetch = async (...args) => {
+            const result = await original(...args);
+            if (String(args[0]).includes('/items')) {
+              const json = result.json.bind(result);
+              result.json = async () => { const value = await json(); window.__reviewItemResponses++; return value; };
+            }
+            return result;
+          };
+        });
+        await connect(p); await row(p, 'REVIEW24'); await select(p, 'REVIEW24');
+        await p.locator('#check-items').click(); await recovered(p, /Service failure/);
+        await run({ p, calls, pending, savedBytes });
+        safeCalls(calls);
+      } finally { pending.release(); }
+    }, { width, height: 844 });
+  }
+  async function releaseItems(p, pending) {
+    pending.release();
+    await p.waitForFunction(() => window.__reviewItemResponses === 2);
+  }
+  async function assertPendingReview(p) {
+    assert.equal(await p.locator('#screen-cost').isVisible(), true);
+    assert.equal(await p.locator('#screen-decision').isVisible(), false);
+    assert.equal(await p.locator('#continue-decision').isDisabled(), true, 'Pending item evidence must block Continue');
+    assert.equal((await p.evaluate(() => window.__issue6CostSnapshot)).linkedDetail.status, 'checking');
+    await text(p, '#cost-update-status', /Checking updated item evidence/);
+    assert.equal(await p.locator('#cost-update-status').evaluate(e => e === document.activeElement && e.checkVisibility()), true);
+    assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  }
+  async function tryStaleConfirmation(p, includeContinue = true) {
+    // Exercise handler guards too, not only the disabled/hidden presentation.
+    if (includeContinue) await p.locator('#continue-decision').evaluate(e => { e.disabled = false; e.click(); });
+    await p.locator('input[value="keep"]').evaluate(e => { e.disabled = false; e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); });
+    for (const id of ['confirm-intent', 'retry-receipt']) await p.locator(`#${id}`).evaluate(e => { e.disabled = false; e.click(); });
+    assert.equal(await p.locator('#screen-decision').isVisible(), false);
+    await noStorage(p);
+  }
+  async function freshDecision(p, intent = 'Later') {
+    await p.locator('#continue-decision').click();
+    assert.equal(await p.locator('input[name="intent"]:checked').count(), 0, 'Changed evidence needs a fresh choice');
+    assert.equal(await p.locator('#confirm-intent').isDisabled(), true);
+    await p.getByRole('radio', { name: intent, exact: true }).check();
+    await p.locator('#confirm-intent').click();
+    await text(p, '#receipt-status', /Saved/);
+    return p.evaluate(key => JSON.parse(localStorage.getItem(key)), RECEIPT);
+  }
+  async function reviewScreenshot(p, name, width) {
+    if (process.env.CAPTURE_ISSUE8_REVIEW === '1') await p.screenshot({ path: fileURLToPath(new URL(`../../docs/validation/issue-8-review-${name}-${width}.png`, import.meta.url)), fullPage: true });
+  }
+
+  test('issue 8 review V01: cost-view Retry suspends pending confirmation and records the returned currency conflict', async () => {
+    for (const width of [1366, 390]) await itemRetryCase(async ({ p, pending, calls }) => {
+      await review(p); await text(p, '#cost-fields', /unavailable/);
+      await p.locator('#retry-read').click();
+      await assertPendingReview(p);
+      await reviewScreenshot(p, 'item-pending', width);
+      await tryStaleConfirmation(p);
+      await releaseItems(p, pending);
+      await text(p, '#cost-consistency', /Needs review/);
+      await text(p, '#cost-amounts', /250\.000/);
+      await p.locator('#continue-decision').click();
+      assert.equal(await p.getByRole('radio', { name: 'Keep', exact: true }).isDisabled(), true);
+      assert.equal(await p.getByRole('radio', { name: 'Review options', exact: true }).isDisabled(), true);
+      await reviewScreenshot(p, 'item-conflict', width);
+      await p.getByRole('radio', { name: 'Help', exact: true }).check(); await p.locator('#confirm-intent').click();
+      const saved = await p.evaluate(key => JSON.parse(localStorage.getItem(key)), RECEIPT);
+      assert.equal(saved.intent, 'help'); assert.equal(saved.materialInconsistency, true);
+      assert.equal(saved.missing.currencyConflict, true); assert.equal(saved.coverage.status, 'partial');
+      assert.ok(saved.reasons.some(r => /different currency/.test(r)));
+      assert.equal(calls.length, 4); assert.equal(saved.amounts.net, '250.000'); assert.equal(saved.amounts.currency, 'USD');
+    }, { width });
+  });
+
+  for (const outcome of ['currency', 'parent']) {
+    test(`issue 8 review V02 ${outcome}: decision-view Retry clears Keep and rebuilds current restrictions`, async () => {
+      await itemRetryCase(async ({ p, pending }) => {
+        await review(p); await p.locator('#continue-decision').click();
+        await p.getByRole('radio', { name: 'Keep', exact: true }).check();
+        await p.locator('#retry-read').click(); await assertPendingReview(p);
+        assert.equal(await p.locator('input[name="intent"]:checked').count(), 0);
+        await tryStaleConfirmation(p);
+        await releaseItems(p, pending);
+        await text(p, '#cost-consistency', /Needs review/);
+        const saved = await freshDecision(p);
+        assert.equal(saved.intent, 'later'); assert.equal(saved.materialInconsistency, true);
+        assert.equal(saved.missing[outcome === 'currency' ? 'currencyConflict' : 'sourceConflict'], true);
+        assert.equal(saved.coverage.status, outcome === 'currency' ? 'partial' : 'unavailable');
+        assert.ok(saved.reasons.some(r => outcome === 'currency' ? /different currency/.test(r) : /source or parent/.test(r)));
+      }, { outcome });
+    });
+  }
+
+  test('issue 8 review V03: non-conflicting retry requires a new review/choice and saves updated coverage', async () => {
+    await itemRetryCase(async ({ p, pending }) => {
+      await review(p); await p.locator('#continue-decision').click();
+      await p.getByRole('radio', { name: 'Keep', exact: true }).check();
+      await p.locator('#retry-read').click(); await assertPendingReview(p);
+      await releaseItems(p, pending); await text(p, '#cost-fields', /partial/); await text(p, '#cost-items', /11\.125/);
+      await tryStaleConfirmation(p, false); // Hidden old Confirm/Retry cannot skip reviewing new evidence.
+      const saved = await freshDecision(p, 'Review options');
+      assert.equal(saved.intent, 'review-options'); assert.equal(saved.coverage.status, 'partial');
+      assert.equal(saved.missing.linkedDetailPresent, true); assert.equal(saved.materialInconsistency, false);
+    }, { outcome: 'normal' });
+  });
+
+  test('issue 8 review V04: a repeated item failure presents current unavailable limits without losing valid header evidence', async () => {
+    for (const width of [1366, 390]) await itemRetryCase(async ({ p, pending }) => {
+      await review(p); await p.locator('#continue-decision').click(); await p.getByRole('radio', { name: 'Keep', exact: true }).check();
+      await p.locator('#retry-read').click(); await assertPendingReview(p);
+      await releaseItems(p, pending); await recovered(p, /Service failure/);
+      await text(p, '#cost-fields', /unavailable/); await text(p, '#cost-amounts', /250\.000/);
+      await text(p, '#cost-update-status', /unavailable.*Header figures remain valid/);
+      await reviewScreenshot(p, 'item-unavailable', width);
+      const saved = await freshDecision(p);
+      assert.equal(saved.coverage.status, 'unavailable'); assert.equal(saved.materialInconsistency, false);
+      assert.equal(saved.missing.linkedDetailPresent, false); assert.equal(saved.amounts.currency, 'USD');
+    }, { outcome: 'failure', width });
+  });
+
+  test('issue 8 review V05: a cached unsaved receipt and save-Retry cannot persist superseded item evidence', async () => {
+    await itemRetryCase(async ({ p, pending }) => {
+      await review(p); await p.locator('#continue-decision').click();
+      await p.evaluate(() => {
+        const set = Storage.prototype.setItem;
+        window.__reviewWrites = [];
+        Storage.prototype.setItem = function(k, v) {
+          if (k === 'planReviewSnapshot.receipt') { window.__reviewWrites.push(v); if (window.__reviewWrites.length === 1) throw new Error('Injected write failure'); }
+          return set.call(this, k, v);
+        };
+      });
+      await p.getByRole('radio', { name: 'Keep', exact: true }).check(); await p.locator('#confirm-intent').click();
+      await text(p, '#receipt-status', /Unsaved/); assert.equal(await p.locator('#retry-receipt').isVisible(), true);
+      await p.locator('#retry-read').click(); await assertPendingReview(p);
+      assert.equal(await p.locator('#retry-receipt').isVisible(), false);
+      await tryStaleConfirmation(p); assert.equal(await p.evaluate(() => window.__reviewWrites.length), 1);
+      await releaseItems(p, pending); await tryStaleConfirmation(p, false);
+      assert.equal(await p.evaluate(() => window.__reviewWrites.length), 1);
+      const saved = await freshDecision(p, 'Review options');
+      const writes = await p.evaluate(() => window.__reviewWrites.map(value => JSON.parse(value)));
+      assert.equal(writes.length, 2); assert.equal(writes[0].intent, 'keep'); assert.equal(writes[0].coverage.status, 'unavailable');
+      assert.equal(saved.intent, 'review-options'); assert.equal(saved.coverage.status, 'partial');
+      assert.deepEqual(writes[1], saved); assert.equal(saved.missing.linkedDetailPresent, true);
+    }, { outcome: 'normal' });
+  });
+
+  for (const action of ['page', 'selection', 'source', 'reset']) {
+    test(`issue 8 review V06 ${action}: superseded item Retry cannot restore an old assessment`, async () => {
+      await itemRetryCase(async ({ p, pending }) => {
+        await review(p); await p.locator('#continue-decision').click(); await p.getByRole('radio', { name: 'Keep', exact: true }).check();
+        await p.locator('#retry-read').click(); await assertPendingReview(p);
+        let key;
+        if (action === 'page' || action === 'selection') {
+          await p.locator('#back-to-list').click();
+          if (action === 'page') { await p.locator('#next-page').click(); await row(p, 'OTHER24'); }
+          key = 'OTHER24'; await select(p, key); await review(p);
+        } else if (action === 'source') {
+          await p.locator('#use-fixture').click(); await row(p, '9000000001'); key = '9000000001'; await select(p, key); await review(p);
+        } else await p.locator('#disconnect').click();
+        await releaseItems(p, pending);
+        const snapshot = await p.evaluate(() => window.__issue6CostSnapshot);
+        if (action === 'reset') {
+          assert.equal(snapshot, undefined); assert.equal(await p.locator('#screen-list').isVisible(), true);
+        } else {
+          assert.equal(snapshot.document.key, key); assert.equal(snapshot.materialInconsistency, false); assert.equal(snapshot.linkedDetail.status, 'not-checked');
+          await text(p, '#cost-summary', new RegExp(key));
+        }
+        assert.equal(await p.locator('#screen-decision').isVisible(), false); await noStorage(p);
+      });
+    });
+  }
+
+  test('issue 8 review V07: item Retry never rewrites or relabels an existing confirmed historical receipt', async () => {
+    await itemRetryCase(async ({ p, pending, savedBytes }) => {
+      await p.locator('#reopen-receipt').click();
+      const summary = await p.locator('#decision-summary').innerHTML();
+      await p.locator('#retry-read').click();
+      assert.equal(await p.locator('#screen-decision').isVisible(), true);
+      assert.equal(await p.locator('#decision-summary').innerHTML(), summary);
+      await text(p, '#provenance', /Fixture demonstration/);
+      await releaseItems(p, pending);
+      assert.equal(await p.locator('#decision-summary').innerHTML(), summary);
+      assert.equal(await p.evaluate(key => localStorage.getItem(key), RECEIPT), savedBytes);
+      assert.equal(await p.locator('#confirm-intent').isVisible(), false); await text(p, '#receipt-status', /Saved/);
+      await p.locator('#decision-return-to-list').click(); await review(p);
+      const snapshot = await p.evaluate(() => window.__issue6CostSnapshot);
+      assert.equal(snapshot.materialInconsistency, true); assert.equal(snapshot.linkedDetail.currencyConflict, true);
+      assert.equal(await p.evaluate(key => localStorage.getItem(key), RECEIPT), savedBytes);
+    }, { historical: true });
+  });
+
+  test('issue 8 review V08: list-view item Retry is authoritative but does not bypass explicit cost review', async () => {
+    await itemRetryCase(async ({ p, pending }) => {
+      await p.locator('#retry-read').click();
+      assert.equal(await p.locator('#screen-list').isVisible(), true);
+      await p.locator('#continue-decision').evaluate(e => { e.disabled = false; e.click(); });
+      assert.equal(await p.locator('#screen-decision').isVisible(), false);
+      await releaseItems(p, pending);
+      assert.equal(await p.locator('#screen-list').isVisible(), true);
+      assert.equal(await p.evaluate(() => window.__issue6CostSnapshot), undefined);
+      await review(p); await text(p, '#cost-fields', /partial/);
+      const saved = await freshDecision(p);
+      assert.equal(saved.coverage.status, 'partial'); assert.equal(saved.missing.linkedDetailPresent, true);
+    }, { outcome: 'normal' });
+  });
+
   test('issue 8 U02: representative pagination/empty/auth/cooldown/retry layouts remain usable at 1280, 1366 and 390px', async () => {
     for (const width of [1280, 1366, 390]) {
       let state = 'pages';

@@ -18,6 +18,7 @@ const costConsistency = document.getElementById('cost-consistency');
 const costReasons = document.getElementById('cost-reasons');
 const costItems = document.getElementById('cost-items');
 const costLimits = document.getElementById('cost-limits');
+const costUpdateStatus = document.getElementById('cost-update-status');
 const apiKeyInput = document.getElementById('api-key');
 const screenDecision = document.getElementById('screen-decision');
 const receiptStatus = document.getElementById('receipt-status');
@@ -40,6 +41,7 @@ let receiptRecovery = false;
 let resetUncertain = false;
 let chosenIntent = '';
 let pendingReceipt = null;
+let decisionSnapshot = null;
 Object.defineProperty(window, '__issue7Receipt', { get: () => receipt ? structuredClone(receipt) : undefined });
 
 const state = {
@@ -600,6 +602,19 @@ async function loadOptionalItems(moveFocus = false) {
   clearError();
   const sourceRecord = state.verifiedDetail;
   state.itemsCoverage = { status: 'checking', count: 0, rows: [], hasContinuation: false, complete: false, sourceApiId: sourceRecord?.sourceApiId, sourceApiVersion: sourceRecord?.sourceApiVersion, sourceProfileId: sourceRecord?.sourceProfileId, provenance: sourceRecord?.provenance, parentKey: expectedSelection, parentVerified: null, note: 'Optional item request is pending; no breakdown has been verified.' };
+  const historicalView = !screenDecision.hidden && (receipt || receiptRecovery);
+  const pendingDecisionView = !screenDecision.hidden && !historicalView;
+  // Even a retry of the same header supersedes the evidence behind a choice or
+  // an unsaved receipt. Do not hide or rewrite a confirmed historical receipt.
+  clearPendingDecision(historicalView);
+  state.costToken += 1;
+  state.costSnapshot = null;
+  window.__issue6CostSnapshot = undefined;
+  document.getElementById('continue-decision').disabled = true;
+  if (pendingDecisionView) { screenList.hidden = true; screenCost.hidden = false; }
+  refreshItemAssessment();
+  if (moveFocus && !screenCost.hidden) costUpdateStatus.focus();
+  else if (moveFocus && historicalView) document.getElementById('decision-title').focus();
   setStatus(`Checking optional item coverage for ${expectedSelection}...`);
   const path = appendQuery(`/api/billing-requests/${encodeURIComponent(expectedSelection)}/items`, [
     ['mode', expectedMode === 'synthetic' ? 'synthetic' : (expectedMode === 'fixture' ? 'fixture' : 'live')]
@@ -608,7 +623,7 @@ async function loadOptionalItems(moveFocus = false) {
     const { json } = await readJSON(path, expectedMode);
     if (generation !== state.connectionToken || token !== state.itemRequestId || expectedSelection !== state.selectedKey || expectedMode !== state.mode) return;
     state.itemsCoverage = json;
-    if (!screenCost.hidden) await reviewCost();
+    refreshItemAssessment();
     const note = document.createElement('p');
     note.className = 'warning';
     note.textContent = `Optional items: ${json?.status || 'unknown'}${json?.count ? ` (${json.count} rows)` : ''}. ${json?.note || ''}`;
@@ -623,7 +638,7 @@ async function loadOptionalItems(moveFocus = false) {
     const unavailableNote = caught?.message || 'Item coverage could not be loaded; no amounts were invented.';
     const record = state.verifiedDetail;
     state.itemsCoverage = { status: 'unavailable', count: 0, rows: [], hasContinuation: false, complete: false, note: unavailableNote, sourceApiId: record?.sourceApiId, sourceApiVersion: record?.sourceApiVersion, sourceProfileId: record?.sourceProfileId, provenance: record?.provenance, parentKey: expectedSelection, parentVerified: null };
-    if (!screenCost.hidden) await reviewCost();
+    refreshItemAssessment();
     note.textContent = `Optional items: unavailable. ${unavailableNote}`;
     detail.appendChild(note);
     setStatus('Optional item coverage unavailable.');
@@ -633,6 +648,20 @@ async function loadOptionalItems(moveFocus = false) {
     if (generation === state.connectionToken && token === state.itemRequestId) reads.busy.items = false;
     updateReadControls();
   }
+}
+
+function refreshItemAssessment() {
+  // Authoritative state follows the matching response, not screen visibility.
+  // Rendering/exporting the cost view remains separate from historical display.
+  state.costSnapshot = buildCostSnapshot(state.verifiedDetail, state.mode);
+  if (!screenCost.hidden) renderCost(state.costSnapshot);
+  costUpdateStatus.hidden = false;
+  const status = state.costSnapshot.linkedDetail.status;
+  costUpdateStatus.textContent = status === 'checking'
+    ? 'Checking updated item evidence. The previous intention and save retry were cleared. Continue is unavailable until this read finishes.'
+    : (status === 'unavailable'
+      ? 'Updated item evidence is unavailable. Header figures remain valid. Review these limitations and any conflict before choosing a new intention.'
+      : 'Updated item evidence is ready. Review the current coverage and conflict flags, then continue and choose a new intention.');
 }
 
 
@@ -720,6 +749,8 @@ function validateRequiredDetail(record, mode) {
 
 function clearCostView() {
   clearPendingDecision();
+  costUpdateStatus.hidden = true;
+  costUpdateStatus.textContent = '';
   state.costSnapshot = null;
   window.__issue6CostSnapshot = undefined;
   for (const element of [costSummary, costAmounts, costFields, costConsistency, costReasons, costItems, costLimits]) element?.replaceChildren();
@@ -1135,11 +1166,18 @@ function validateReceipt(value) {
   return value;
 }
 
-function clearPendingDecision() {
+function clearPendingDecision(preserveHistoricalView = false) {
   chosenIntent = '';
   pendingReceipt = null;
-  screenDecision.hidden = true;
-  document.getElementById('reset-confirmation').hidden = true;
+  decisionSnapshot = null;
+  if (!preserveHistoricalView) {
+    screenDecision.hidden = true;
+    document.getElementById('reset-confirmation').hidden = true;
+  }
+  if (!receipt && !receiptRecovery) {
+    confirmIntentButton.disabled = true;
+    retryReceiptButton.hidden = true;
+  }
   for (const input of intentOptions.querySelectorAll('input')) input.checked = false;
 }
 
@@ -1203,14 +1241,27 @@ function renderDecision() {
 }
 
 function openDecision() {
-  if (!receipt && !receiptRecovery && (!state.costSnapshot || state.costSnapshot.linkedDetail.status === 'checking')) return;
+  if (!receipt && !receiptRecovery) {
+    if (screenCost.hidden || !currentCostEvidenceReady()) return;
+    decisionSnapshot = state.costSnapshot;
+  }
   renderDecision();
   if (receipt) setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
   showDecision();
 }
 
+function currentCostEvidenceReady() {
+  return state.costSnapshot && !reads.busy.items && state.itemsCoverage?.status !== 'checking' &&
+    state.costSnapshot.linkedDetail.status !== 'checking' && state.verifiedDetailKey === state.selectedKey &&
+    state.costSnapshot.document.key === state.selectedKey;
+}
+
+function currentDecisionEvidence() {
+  return !screenDecision.hidden && decisionSnapshot === state.costSnapshot && currentCostEvidenceReady();
+}
+
 function saveReceipt() {
-  if (receipt || receiptRecovery || !state.costSnapshot || !Object.hasOwn(INTENTS, chosenIntent)) return;
+  if (receipt || receiptRecovery || !currentDecisionEvidence() || !Object.hasOwn(INTENTS, chosenIntent)) return;
   if (state.costSnapshot.materialInconsistency && !['help', 'later'].includes(chosenIntent)) return;
   pendingReceipt ||= receiptFromSnapshot(state.costSnapshot, chosenIntent);
   try {
@@ -1247,6 +1298,7 @@ function reopenStoredReceipt() {
 document.getElementById('continue-decision').addEventListener('click', openDecision);
 reopenReceiptButton.addEventListener('click', openDecision);
 intentOptions.addEventListener('change', event => {
+  if (!currentDecisionEvidence()) { event.target.checked = false; return; }
   if (!Object.hasOwn(INTENTS, event.target.value)) return;
   chosenIntent = event.target.value;
   pendingReceipt = null;

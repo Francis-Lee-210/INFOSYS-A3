@@ -44,7 +44,7 @@ h2 { margin: 0 0 10px; font-size: 18px; }
 input { width: 100%; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 8px; font: inherit; }
 input:focus-visible, button:focus-visible, table [tabindex]:focus-visible { outline: 3px solid var(--plum); outline-offset: 2px; }
 #decision-title:focus { outline: 3px solid var(--plum); outline-offset: 4px; }
-#records-title:focus, #read-recovery-title:focus { outline: 3px solid var(--plum); outline-offset: 4px; }
+#records-title:focus, #read-recovery-title:focus, #cost-update-status:focus { outline: 3px solid var(--plum); outline-offset: 4px; }
 .read-recovery { margin-top: 12px; padding: 12px; border: 1px solid var(--rule); border-radius: 8px; overflow-wrap: anywhere; }
 .read-recovery h3, .read-recovery p { margin: 0 0 10px; }
 .page-actions { margin-top: 12px; }

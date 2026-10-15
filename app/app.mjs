@@ -26,11 +26,12 @@ const confirmIntentButton = document.getElementById('confirm-intent');
 const retryReceiptButton = document.getElementById('retry-receipt');
 const reopenReceiptButton = document.getElementById('reopen-receipt');
 const RECEIPT_KEY = 'planReviewSnapshot.receipt';
-const RECEIPT_VERSION = 'issue-7-receipt-v1';
+const RECEIPT_VERSION = 'issue-7-receipt-v2';
 const INTENTS = { keep: 'Keep', 'review-options': 'Review options', help: 'Help', later: 'Later' };
 const PROVENANCE_LABELS = { 'live-sap-sandbox': 'Live SAP sandbox', 'fixture-demonstration': 'Fixture demonstration', 'synthetic-fixture': 'Synthetic fixture' };
 let receipt = null;
 let receiptRecovery = false;
+let resetUncertain = false;
 let chosenIntent = '';
 let pendingReceipt = null;
 Object.defineProperty(window, '__issue7Receipt', { get: () => receipt ? structuredClone(receipt) : undefined });
@@ -71,6 +72,12 @@ function setProvenance(label, kind) {
 }
 function setMode(mode) {
   state.mode = mode;
+  // Connection state may change behind a historical receipt. The badge describes
+  // the active view, not whichever asynchronous request happened to finish last.
+  if (receipt && !screenDecision.hidden) {
+    setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
+    return;
+  }
   if (mode === 'live') setProvenance('Live SAP sandbox', 'live');
   else if (mode === 'fixture') setProvenance('Fixture demonstration', 'fixture');
   else if (mode === 'synthetic') setProvenance('Synthetic fixture', 'fixture');
@@ -716,7 +723,7 @@ function summarizeLinkedDetail(record, coverage) {
     present: rows.length > 0,
     status: incompleteRows && !sourceConflict && !currencyConflict ? 'partial' : (coverage.status || 'unknown'),
     count: rows.length,
-    hasContinuation: coverage.hasContinuation === true,
+    hasContinuation: typeof coverage.hasContinuation === 'boolean' ? coverage.hasContinuation : null,
     complete: record.sourceProfileId === 'synthetic-billing-document-v1' && coverage.complete === true && coverage.status === 'complete' && coverage.hasContinuation === false && !incompleteRows && !sourceConflict && !currencyConflict,
     currency: currencies.length > 1 ? 'mixed' : (currencies[0] || null),
     rows: displayedRows,
@@ -854,6 +861,8 @@ function receiptFromSnapshot(snapshot, intent) {
     },
     context: { ...snapshot.context },
     assessmentStatus: snapshot.assessmentStatus,
+    assessmentScope: { scope: snapshot.rule.scope, linkedMonetaryReconciliation: snapshot.rule.linkedMonetaryReconciliation },
+    coverage: receiptCoverage(snapshot.linkedDetail),
     materialInconsistency: snapshot.materialInconsistency,
     reasons: snapshot.materialInconsistency ? [...snapshot.reasons] : [],
     missing: {
@@ -867,12 +876,21 @@ function receiptFromSnapshot(snapshot, intent) {
   };
 }
 
+function receiptCoverage(linked) {
+  let status = ['not-checked', 'unavailable', 'absent', 'partial', 'complete'].includes(linked.status) ? linked.status : 'unknown';
+  // A status label alone is not proof of complete coverage. Only the existing
+  // bounded synthetic contract can explicitly establish that result.
+  if (status === 'complete' && !linked.complete) status = 'partial';
+  if (status === 'absent' && (linked.present || linked.hasContinuation === true)) status = 'partial';
+  return { status, complete: status === 'complete' && linked.complete === true, hasContinuation: linked.hasContinuation };
+}
+
 function validateReceipt(value) {
   if (!value || value.version !== RECEIPT_VERSION) throw new Error('Unsupported or missing receipt version.');
   const exactKeys = (object, keys) => {
     if (!object || Array.isArray(object) || Object.keys(object).length !== keys.length || keys.some(key => !Object.hasOwn(object, key))) throw new Error('Invalid receipt fields.');
   };
-  exactKeys(value, ['version', 'reviewId', 'receiptId', 'document', 'date', 'amounts', 'context', 'assessmentStatus', 'materialInconsistency', 'reasons', 'missing', 'intent', 'confirmedAt']);
+  exactKeys(value, ['version', 'reviewId', 'receiptId', 'document', 'date', 'amounts', 'context', 'assessmentStatus', 'assessmentScope', 'coverage', 'materialInconsistency', 'reasons', 'missing', 'intent', 'confirmedAt']);
   const d = value.document;
   if (!d || !Object.hasOwn(PROVENANCE_LABELS, d.provenance)) throw new Error('Missing or unknown receipt provenance.');
   exactKeys(d, ['kind', 'key', 'provenance', 'sourceProfileId', 'sourceApiId', 'sourceApiVersion', 'retrievedAt']);
@@ -907,6 +925,18 @@ function validateReceipt(value) {
     exactKeys(object, keys);
     if (!object || keys.some(key => typeof object[key] !== 'boolean')) throw new Error('Missing receipt evidence flags.');
   }
+  exactKeys(value.assessmentScope, ['scope', 'linkedMonetaryReconciliation']);
+  if (value.assessmentScope.scope !== (synthetic ? 'synthetic-header-net-tax-gross-only' : 'source-and-linkage-validation-only') ||
+      value.assessmentScope.linkedMonetaryReconciliation !== 'not-assessed' ||
+      (!synthetic && !['unassessed', 'inconsistent'].includes(value.assessmentStatus))) throw new Error('Invalid receipt assessment scope.');
+  exactKeys(value.coverage, ['status', 'complete', 'hasContinuation']);
+  const coverage = value.coverage;
+  if (!['not-checked', 'unavailable', 'absent', 'partial', 'complete', 'unknown'].includes(coverage.status) ||
+      typeof coverage.complete !== 'boolean' || (coverage.hasContinuation !== null && typeof coverage.hasContinuation !== 'boolean') ||
+      coverage.complete !== (coverage.status === 'complete') ||
+      (coverage.complete && (!synthetic || coverage.hasContinuation !== false || value.missing.incompleteRows || value.missing.currencyConflict || value.missing.sourceConflict)) ||
+      (['not-checked', 'unavailable', 'absent'].includes(coverage.status) && value.missing.linkedDetailPresent) ||
+      (coverage.status === 'absent' && coverage.hasContinuation === true)) throw new Error('Invalid receipt coverage limitations.');
   if (typeof value.confirmedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value.confirmedAt) ||
       Number.isNaN(Date.parse(value.confirmedAt)) || new Date(value.confirmedAt).toISOString() !== value.confirmedAt) throw new Error('Invalid confirmation timestamp.');
   return value;
@@ -931,13 +961,14 @@ function showDecision() {
 function renderDecision() {
   const saved = Boolean(receipt);
   document.getElementById('decision-title').textContent = receiptRecovery
-    ? 'Receipt could not be recovered'
+    ? (resetUncertain ? 'Receipt storage is uncertain' : 'Receipt could not be recovered')
     : (saved ? 'Saved receipt (historical)' : 'Confirm your intention');
   const snapshot = state.costSnapshot;
-  const value = receipt || (snapshot ? receiptFromSnapshot(snapshot, chosenIntent) : null);
-  document.getElementById('decision-history').textContent = saved
-    ? 'Historical snapshot — not a newly refreshed bill. Original evidence and provenance are retained.'
-    : 'Review this evidence and choose an intention before confirming.';
+  const value = receipt || (!receiptRecovery && snapshot ? receiptFromSnapshot(snapshot, chosenIntent) : null);
+  document.getElementById('decision-history').textContent = receiptRecovery
+    ? 'No verified saved receipt is displayed. Reset demo offers deliberate deletion and verification; cancelling does not change storage.'
+    : (saved ? 'Historical snapshot — not a newly refreshed bill. Original evidence and provenance are retained.'
+      : 'Review this evidence and choose an intention before confirming.');
   if (saved && snapshot && reviewIdentity(snapshot.document) !== receipt.reviewId) {
     document.getElementById('decision-history').textContent += ` A saved receipt for document ${receipt.document.key} already exists. The current document ${snapshot.document.key} has NOT been recorded. Reset demo is required to record a new intention (one receipt at a time).`;
   }
@@ -951,6 +982,8 @@ function renderDecision() {
     ['Retrieved at', value.document.retrievedAt],
     ['Payer / account context', `${value.context.payerPartyAvailable ? 'Available (opaque)' : 'Unknown'} / ${value.context.contractAccountAvailable ? 'Available (opaque)' : 'Unknown'}`],
     ['Assessment', value.assessmentStatus],
+    ['Assessment scope', `${value.assessmentScope.scope === 'synthetic-header-net-tax-gross-only' ? 'Synthetic header net + tax = gross only; not production accounting validation.' : 'Source and linkage validation only. No verified universal item-to-header equation or rounding tolerance; SAP monetary reconciliation remains unassessed.'} Linked monetary reconciliation: not assessed.`],
+    ['Item coverage', `Coverage: ${value.coverage.status}${value.coverage.complete ? ' (explicitly bounded synthetic fixture only, not complete SAP history)' : ''}; continuation: ${value.coverage.hasContinuation === null ? 'unknown' : (value.coverage.hasContinuation ? 'present' : 'not reported')}. Row-field completeness is separate from dataset coverage.`],
     ['Evidence flags', `Linked detail: ${value.missing.linkedDetailPresent ? 'present' : 'not present'}; incomplete rows: ${value.missing.incompleteRows ? 'yes' : 'no'}; currency conflict: ${value.missing.currencyConflict ? 'yes' : 'no'}; source conflict: ${value.missing.sourceConflict ? 'yes' : 'no'}`],
     ['Reasons', saved ? (value.reasons.join(' ') || 'None — no material inconsistency recorded.') : snapshot.reasons.join(' ')],
     ...(saved ? [['Confirmed at', value.confirmedAt], ['Receipt identity', value.receiptId]] : [])
@@ -970,6 +1003,9 @@ function renderDecision() {
   document.getElementById('decision-return-to-list').hidden = !saved && !receiptRecovery;
   retryReceiptButton.hidden = true;
   receiptStatus.textContent = saved ? 'Saved — receipt write and read-back verified.' : 'Unsaved — no intention has been recorded.';
+  if (receiptRecovery) receiptStatus.textContent = resetUncertain
+    ? 'Deletion could not be verified. The receipt may already be deleted; no saved history is verified. Use Reset demo and Confirm reset to retry deletion and verification. The session key is cleared when reset is verified.'
+    : 'Stored receipt could not be recovered. No saved history is shown. Use Reset demo to clear it and start again.';
   reopenReceiptButton.hidden = !saved && !receiptRecovery;
 }
 
@@ -977,7 +1013,6 @@ function openDecision() {
   if (!receipt && !receiptRecovery && (!state.costSnapshot || state.costSnapshot.linkedDetail.status === 'checking')) return;
   renderDecision();
   if (receipt) setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
-  if (receiptRecovery) receiptStatus.textContent = 'Stored receipt could not be recovered. No saved history is shown. Use Reset demo to clear it and start again.';
   showDecision();
 }
 
@@ -993,6 +1028,9 @@ function saveReceipt() {
     if (JSON.stringify(readBack) !== serialized) throw new Error('Receipt read-back differs from the confirmed intent.');
     receipt = readBack;
     renderDecision();
+    // Only an explicit successful confirmation/retry moves focus, not rendering
+    // caused by unrelated connection or optional-evidence activity.
+    document.getElementById('decision-title').focus();
   } catch {
     receiptStatus.textContent = 'Unsaved — storage write or read-back verification failed. Your chosen intent is preserved. Retry to save it.';
     retryReceiptButton.hidden = false;
@@ -1044,17 +1082,46 @@ document.getElementById('cancel-reset').addEventListener('click', () => {
 document.getElementById('confirm-reset').addEventListener('click', () => {
   try {
     localStorage.removeItem(RECEIPT_KEY);
-    if (localStorage.getItem(RECEIPT_KEY) !== null) throw new Error('Reset read-back failed.');
   } catch {
-    receiptStatus.textContent = 'Reset failed. The receipt and session were kept. Try Confirm reset again.';
+    // A thrown removal is not itself proof that the old receipt survived.
+    try {
+      const stored = localStorage.getItem(RECEIPT_KEY);
+      if (stored !== null && (!receipt || JSON.stringify(validateReceipt(JSON.parse(stored))) === JSON.stringify(receipt))) {
+        receiptStatus.textContent = receipt
+          ? 'Reset could not delete the receipt. Saved — receipt is still stored; session kept. Try Confirm reset again.'
+          : 'Reset could not delete the stored data. Read-back confirms stored data is still present. Try Confirm reset again.';
+        return;
+      }
+    } catch {}
+    showUncertainReset();
+    return;
+  }
+  try {
+    if (localStorage.getItem(RECEIPT_KEY) !== null) throw new Error('Reset read-back still contains data.');
+  } catch {
+    showUncertainReset();
     return;
   }
   receipt = null;
   receiptRecovery = false;
+  resetUncertain = false;
   reopenReceiptButton.hidden = true;
   resetSession();
   document.getElementById('decision-summary').replaceChildren();
   receiptStatus.textContent = '';
   document.getElementById('use-fixture').focus();
 });
+
+function showUncertainReset() {
+  // Do not roll back, rewrite storage, or display the cached receipt as Saved.
+  receipt = null;
+  receiptRecovery = true;
+  resetUncertain = true;
+  clearCostView();
+  renderDecision();
+  showDecision();
+  setMode(state.mode);
+  document.getElementById('reset-confirmation').hidden = false;
+  document.getElementById('confirm-reset').focus();
+}
 reopenStoredReceipt();

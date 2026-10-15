@@ -50,6 +50,8 @@ Not stored: API key, raw responses, names or contacts.
 
 ## PR #21 review validation — 15 October 2026
 
+**Integration status:** PR #21 was merged concurrently by `wanyan2333` at **2026-10-15 09:04:24 UTC**, using old head `498e15d2fcfd22e26f50c99d3d864258c63da599` (merge `643755eeb30dacb3b548580948ee6a96d7ee8af3`). This agent did not merge it. The fixes were pushed to the existing shared branch (`3a9c2a2`, `dd11be7`, followed by a documentation-only status note), but are **not in that frozen PR diff or main**. The PR title/body were updated and explicitly distinguish tested branch behaviour from the already-merged snapshot. No replacement PR was created. Integration of the follow-up requires maintainer direction.
+
 **Final unfiltered browser result: 71/71 PASS** (all original 53 scenarios retained, plus 18 review regressions). All application/test JS/MJS syntax checks and `git diff --check` pass. The new run is appended to [issue-7-browser-test-results.txt](issue-7-browser-test-results.txt); earlier output is preserved.
 
 Reviewed and fetched head: `498e15d2fcfd22e26f50c99d3d864258c63da599` (unchanged from the review).

@@ -158,3 +158,9 @@ All 71 tests passed.
 Post-run checks: node --check on all app/**/*.js and app/**/*.mjs PASS; git diff --check PASS.
 Visual inspection: confirmation, historical receipt, both reset failures, 1280px/1366px/390px layouts PASS.
 No completion of #8/#9/#10/#11 or new live SAP acceptance claimed.
+
+Final remote verification (documentation-only status update; no application/test change):
+Push succeeded to existing issue-7-intent-receipt: 3a9c2a27838a8ec91d2520a8d110603f3c289ebd, dd11be75de322a1c7d9b1fac64febd81dea6dfd0.
+PR #21 had concurrently been merged by wanyan2333 at 2026-10-15T09:04:24Z, old head 498e15d2fcfd22e26f50c99d3d864258c63da599, merge 643755eeb30dacb3b548580948ee6a96d7ee8af3.
+Actual frozen PR diff inspected: original nine files; receipt-v2 fixes absent. Fixes are on the shared branch, not in main.
+PR title/body updated with this distinction. Agent did not merge/close or create a replacement PR. Follow-up integration requires maintainer direction.

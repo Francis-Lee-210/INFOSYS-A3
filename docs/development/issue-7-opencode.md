@@ -50,3 +50,9 @@ The earlier Rae development/review record above is preserved. This follow-up was
 - Implementation and regression tests committed as `3a9c2a2` (`fix: preserve receipt evidence and truthful recovery state`); validation documentation/screenshots are a separate follow-up commit. Push targets the existing shared branch, without force or history rewriting.
 
 See the appended [acceptance follow-up](../validation/issue-7-acceptance.md#pr-21-review-validation--15-october-2026), appended [test output](../validation/issue-7-browser-test-results.txt) and new `issue-7-review-*.png` screenshots for validation. The original results/screenshots are historical evidence, not replaced. No completion of #8, #9, #10 or #11 is claimed.
+
+### Concurrent merge discovered during final remote verification
+
+The implementation/test and evidence commits pushed successfully to the original branch. The subsequent GitHub API/diff check revealed that `wanyan2333` had merged PR #21 during this work at **2026-10-15 09:04:24 UTC**, using old head `498e15d2fcfd22e26f50c99d3d864258c63da599`, merge `643755eeb30dacb3b548580948ee6a96d7ee8af3`. No merge/close operation was performed by this agent.
+
+Verified the actual frozen PR diff: nine original files, no receipt-v2 fixes. Verified the shared remote branch at `dd11be75de322a1c7d9b1fac64febd81dea6dfd0` before this documentation-only status note; `main` does not contain the fix commits. The post-merge branch diff is limited to the four application/test files, three Issue #7 records and seven new review screenshots. Updated the existing PR's title/body as requested, with an explicit prominent warning that the tested follow-up is on the branch, **not in the merged PR diff**. Did not attempt to reopen/replace the merged PR, merge the fixes, close issues, rewrite history or force-push. Further integration requires maintainer direction.

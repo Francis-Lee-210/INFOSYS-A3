@@ -1,8 +1,8 @@
 import { SOURCE_API_ID, SOURCE_API_VERSION, SANDBOX_BASE_URL, LIST_PATH, DEFAULT_TOP, ITEMS_TOP, REQUEST_TIMEOUT_MS, MAX_RESPONSE_BYTES } from './config.js';
-import { normaliseODataDate, isKnownCurrency, validateDecimalString, odataQuoteKey, validateSubContinuation } from './contracts.js';
+import { normaliseODataDate, isKnownCurrency, validateDecimalString, odataQuoteKey, validateSubContinuation, validateItemContinuation } from './contracts.js';
 
 function safeTrim(value) {
-  return value === null || value === undefined ? '' : String(value).trim();
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 function makeError(code, message, details = {}) {
@@ -80,7 +80,7 @@ function readEnvelope(json) {
   if (!json || typeof json !== 'object') return { results: null, continuation: null, count: null, single: null };
   const top = json.d && typeof json.d === 'object' ? json.d : json;
   const results = Array.isArray(top.results) ? top.results : Array.isArray(top.value) ? top.value : Array.isArray(json.value) ? json.value : null;
-  const continuation = top.__next || json.__next || json['@odata.nextLink'] || top['@odata.nextLink'] || null;
+  const continuation = top.__next ?? json.__next ?? json['@odata.nextLink'] ?? top['@odata.nextLink'] ?? null;
   const count = typeof top.__count === 'string' || typeof top.__count === 'number' ? Number(top.__count) : null;
   const single = results ? null : top;
   return { results, continuation, count, single };
@@ -91,9 +91,11 @@ function property(record, name) {
 }
 
 function normaliseContext(record) {
+  const payer = property(record, 'PayerParty');
+  const account = property(record, 'ContractAccount');
   return {
-    payerPartyAvailable: safeTrim(property(record, 'PayerParty')) !== '',
-    contractAccountAvailable: safeTrim(property(record, 'ContractAccount')) !== ''
+    payerPartyAvailable: typeof payer === 'string' && payer.trim() !== '' && payer.trim().length <= 10,
+    contractAccountAvailable: typeof account === 'string' && account.trim() !== '' && account.trim().length <= 12
   };
 }
 
@@ -198,8 +200,9 @@ export function createAdapter(options = {}) {
       if (!Array.isArray(envelope.results)) {
         throw makeError('CONTRACT', 'The SAP list response did not contain a result array.');
       }
-      const validatedContinuation = validateSubContinuation(envelope.continuation || '');
-      const continuationAvailable = Boolean(envelope.continuation) && validatedContinuation.ok;
+      const continuationPresented = envelope.continuation !== null;
+      const validatedContinuation = validateSubContinuation(envelope.continuation);
+      const continuationAvailable = continuationPresented && validatedContinuation.ok;
       const records = envelope.results.map((record) => normaliseRecord(record, 'live-sap-sandbox'));
       const usableCount = records.filter((record) => record.usable).length;
       if (records.length > 0 && usableCount === 0) {
@@ -211,7 +214,7 @@ export function createAdapter(options = {}) {
         records,
         continuation: continuationAvailable ? envelope.continuation : null,
         continuationAvailable,
-        continuationValidation: continuationAvailable ? 'available' : (envelope.continuation ? 'rejected' : 'none'),
+        continuationValidation: continuationAvailable ? 'available' : (continuationPresented ? 'rejected' : 'none'),
         loadedCount: records.length,
         usableCount,
         transport: 'https GET-only',
@@ -260,17 +263,38 @@ export function createAdapter(options = {}) {
         if (!Array.isArray(envelope.results)) {
           return { status: 'unavailable', count: 0, hasContinuation: false, note: 'Item navigation did not contain a recognizable result array.' };
         }
+        const rawContinuation = envelope.continuation;
+        const presented = rawContinuation !== null && rawContinuation !== undefined;
+        if (presented && typeof rawContinuation !== 'string') {
+          return { status: 'unavailable', count: 0, hasContinuation: false, note: 'Item navigation continuation was rejected before use: malformed-continuation-type.' };
+        }
+        const continuation = presented ? safeTrim(rawContinuation) : '';
+        const continuationCheck = presented ? validateItemContinuation(continuation, cleanedKey) : { ok: true };
+        if (!continuationCheck.ok) {
+          return { status: 'unavailable', count: 0, hasContinuation: false, note: `Item navigation continuation was rejected before use: ${continuationCheck.reason}.` };
+        }
+        const hasContinuation = Boolean(continuation);
+        const parentsVerified = envelope.results.length === 0 || envelope.results.every((item) =>
+          typeof item === 'object' && item !== null &&
+          typeof item.BillingDocumentRequest === 'string' &&
+          item.BillingDocumentRequest === cleanedKey
+        );
+        if (envelope.results.length > 0 && !parentsVerified) {
+          return { status: 'unavailable', count: 0, hasContinuation: false, note: 'Item parent linkage could not be verified before any result was counted.' };
+        }
+        if (hasContinuation) {
+          if (envelope.results.length === 0) {
+            return { status: 'partial', count: 0, hasContinuation: true, note: 'Item navigation returned no rows but provided a continuation; coverage remains partial and was not declared absent or complete.' };
+          }
+          return { status: 'partial', count: envelope.results.length, hasContinuation: true, note: 'Item navigation returned rows and a verified continuation; coverage is partial only and was not summed.' };
+        }
         if (envelope.results.length === 0) {
-          return { status: 'absent', count: 0, hasContinuation: false, note: 'Item navigation returned no item rows.' };
+          return { status: 'absent', count: 0, hasContinuation: false, note: 'Item navigation returned no item rows and no continuation.' };
         }
-        if (envelope.continuation) {
-          return { status: 'partial', count: envelope.results.length, hasContinuation: true, note: 'Item navigation returned rows and a continuation; coverage is partial only.' };
-        }
-        if (!envelope.results.every(item => item?.BillingDocumentRequest === cleanedKey)) return { status: 'unavailable', count: 0, hasContinuation: false, note: 'Item parent linkage could not be verified.' };
-        const note = envelope.results.length >= ITEMS_TOP
-          ? `Item navigation returned ${envelope.results.length} rows with no continuation; absence of next after a full page is not proof of complete coverage.`
-          : `Item navigation returned ${envelope.results.length} rows with no continuation; metadata only, no amounts were summed.`;
-        return { status: 'partial', count: envelope.results.length, hasContinuation: false, note: note + ' Bounded loaded coverage only.' };
+        const extra = envelope.results.length >= ITEMS_TOP
+          ? ' absence of next after a full page is not proof of complete coverage.'
+          : ' no amounts were summed.';
+        return { status: 'partial', count: envelope.results.length, hasContinuation: false, note: 'Item navigation returned verified parent rows with bounded loaded coverage;' + extra };
       } catch {
         return { status: 'unavailable', count: 0, hasContinuation: false, note: 'Optional item navigation could not be read; no item amounts were invented.' };
       }

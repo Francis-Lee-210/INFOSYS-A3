@@ -80,6 +80,13 @@ function appendQuery(path, pairs) {
 
 async function loadList(mode) {
   clearError();
+  const suppliedKey = mode === 'live' ? apiKeyInput.value.trim() : '';
+  if (mode === 'live' && suppliedKey === '') {
+    showError('Enter an API key before connecting. A missing key is an authentication or connection failure, not an empty result set.');
+    setStatus('Connection not changed. Provide a key or choose the labelled fixture.');
+    return;
+  }
+
   const listToken = ++state.listRequestId;
   const detailToken = ++state.detailRequestId;
   state.selectedKey = '';
@@ -100,12 +107,6 @@ async function loadList(mode) {
   setMode(state.requestedMode);
 
   if (mode === 'live') {
-    const suppliedKey = apiKeyInput.value.trim();
-    if (suppliedKey === '') {
-      showError('Enter an API key before connecting. A missing key is an authentication or connection failure, not an empty result set.');
-      setStatus('Connection not changed. Provide a key or choose the labelled fixture.');
-      return;
-    }
     state.apiKey = suppliedKey;
     apiKeyInput.value = '';
   } else {
@@ -146,10 +147,13 @@ async function loadList(mode) {
     state.records = records;
     state.loadedMeta = json;
     const usableKeys = records.filter((item) => item.usable).map((item) => item.key);
+    const listDigest = usableKeys[0] ? await digestHex(`issue-5:${usableKeys[0]}`) : null;
+    if (listToken !== state.listRequestId) return;
     state.observedList = {
       observedAt: new Date().toISOString(),
       httpStatus: response.status,
       upstreamHttpStatus: json.upstreamStatus ?? null,
+      mode: state.mode,
       sourceApi: 'API_BILLING_DOCUMENT_REQUEST_SRV',
       sourceApiVersion: '1.1.0',
       provenance: state.mode === 'fixture' ? 'fixture-demonstration' : 'live-sap-sandbox',
@@ -159,7 +163,7 @@ async function loadList(mode) {
       usableCount: json.usableCount || records.filter((item) => item.usable).length,
       usabilityBooleans: records.map((item) => item.usable === true),
       continuationAvailable: Boolean(json.continuationAvailable),
-      keyDigestSha256: usableKeys[0] ? await digestHex(`issue-5:${usableKeys[0]}`) : null
+      keyDigestSha256: listDigest
     };
 
     if (records.length === 0) {
@@ -225,6 +229,8 @@ async function selectRecord(key) {
   clearError();
   if (!state.records.some(record => record.key === key && record.usable === true)) { showError('Select a usable record from the current list.'); return; }
   state.observedDetail = null;
+  state.itemsCoverage = null;
+  if (state.observedList) delete state.observedList.selectedKeyDigestSha256;
   state.itemRequestId += 1;
   const requestToken = ++state.detailRequestId;
   state.selectedKey = key;
@@ -264,6 +270,8 @@ async function selectRecord(key) {
     if (!record || record.key !== key || json.keyConsistent !== true) {
       throw Object.assign(new Error('The detail key does not match the selected billing request.'), { code: 'KEY_MISMATCH' });
     }
+    const pendingDigest = await digestHex(`issue-5:${record.key}`);
+    if (requestToken !== state.detailRequestId || key !== state.selectedKey) return;
     state.observedDetail = {
       observedAt: new Date().toISOString(),
       httpStatus: response.status,
@@ -282,10 +290,9 @@ async function selectRecord(key) {
         tax: Boolean(record.amounts?.tax),
         gross: Boolean(record.amounts?.gross)
       },
-      keyDigestSha256: await digestHex(`issue-5:${record.key}`)
+      keyDigestSha256: pendingDigest
     };
-    if (requestToken !== state.detailRequestId || key !== state.selectedKey) return;
-    if (state.observedList) state.observedList.selectedKeyDigestSha256 = state.observedDetail.keyDigestSha256;
+    if (state.observedList) state.observedList.selectedKeyDigestSha256 = pendingDigest;
     renderDetail(record, state.mode === 'fixture');
     detailActions.hidden = false;
     setStatus(`Detail loaded for billing request ${key}. Selection and detail keys match.`);

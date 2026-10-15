@@ -3,7 +3,7 @@ import { SANDBOX_BASE_URL } from './config.js';
 export const ODATA_DATE_RE = /^\/Date\((-?\d+)\)\/$/;
 
 export function safeTrim(value) {
-  return typeof value === 'string' ? value.trim() : value === null || value === undefined ? '' : String(value).trim();
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 export function normaliseODataDate(raw) {
@@ -94,6 +94,25 @@ export function validateSubContinuation(link) {
     if (!allowedParameters.has(key)) return { ok: false, reason: 'disallowed-query' };
   }
   if (url.username !== '' || url.password !== '' || url.hash !== '') return { ok: false, reason: 'embedded-credentials-or-hash' };
+  return { ok: true, url: url.href };
+}
+
+export function validateItemContinuation(link, key) {
+  const raw = safeTrim(link);
+  if (raw === '') return { ok: false, reason: 'missing-link' };
+  let url;
+  try { url = new URL(raw); } catch { return { ok: false, reason: 'invalid-url' }; }
+  if (url.protocol !== 'https:') return { ok: false, reason: 'insecure-protocol' };
+  if (url.hostname !== 'sandbox.api.sap.com') return { ok: false, reason: 'wrong-host' };
+  if (url.port !== '' && url.port !== '443') return { ok: false, reason: 'wrong-port' };
+  if (url.username !== '' || url.password !== '' || url.hash !== '') return { ok: false, reason: 'embedded-credentials-or-hash' };
+  let expected;
+  try { expected = new URL(`${SANDBOX_BASE_URL}/A_BillingDocumentRequest('${odataQuoteKey(key)}')/to_Item`); } catch (error) { return { ok: false, reason: 'invalid-key' }; }
+  if (url.pathname !== expected.pathname) return { ok: false, reason: 'wrong-path' };
+  const allowedParameters = new Set(['$skiptoken', 'skiptoken', '$format', '$top', '$orderby', '$select', '$filter', '$inlinecount']);
+  for (const name of url.searchParams.keys()) {
+    if (!allowedParameters.has(name)) return { ok: false, reason: 'disallowed-query' };
+  }
   return { ok: true, url: url.href };
 }
 

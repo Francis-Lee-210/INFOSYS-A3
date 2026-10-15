@@ -304,13 +304,14 @@ test('invalid path keys and mismatched unusable details are rejected', async () 
 
 test('optional item metadata is partial, not complete history', async () => {
   const port = TEST_PORT + 19;
+  const continuation = `https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata/sap/API_BILLING_DOCUMENT_REQUEST_SRV/A_BillingDocumentRequest('ITEMOWN01')/to_Item?$skiptoken=x`;
   const transport = async (url, options) => {
     if (String(url).includes('/to_Item')) {
-      const rows = Array.from({ length: 20 }, (_, i) => ({ BillingDocumentRequestItem: String(i) }));
+      const rows = Array.from({ length: 20 }, (_, i) => ({ BillingDocumentRequest: 'ITEMOWN01', BillingDocumentRequestItem: String(i) }));
       return {
         status: 200,
         ok: true,
-        text: async () => JSON.stringify(rawOData(rows, 'https://sandbox.api.sap.com/x?$skiptoken=x')),
+        text: async () => JSON.stringify(rawOData(rows, continuation)),
         headers: { get: () => null }
       };
     }
@@ -368,6 +369,8 @@ test('public browser normalizes a raw SAP header, matches detail, and clears a s
     else if (scenario === 'scale') payload = { d: { results: [{ ...unusableRawRecord('GOOD001'), TotalNetAmount: '0.0001' }] } };
     else if (scenario === 'currency') payload = { d: { results: [{ ...validRawRecord('GOOD001'), TransactionCurrency: 'ZZZ' }] } };
     else if (scenario === 'date') payload = { d: { results: [{ ...validRawRecord('GOOD001'), BillingDocumentDate: '2024-02-30' }] } };
+    else if (scenario === 'date-type') payload = { d: { results: [{ ...validRawRecord('GOOD001'), BillingDocumentDate: ['/Date(1728950400000)/'] }] } };
+    else if (scenario === 'currency-type') payload = { d: { results: [{ ...validRawRecord('GOOD001'), TransactionCurrency: ['USD'] }] } };
     else if (scenario === 'identifier') payload = { d: { results: [{ ...validRawRecord('GOOD001'), BillingDocumentRequest: 123 }] } };
     else payload = isDetail ? { d: validRawRecord(scenario === 'mismatch' ? 'OTHER001' : 'GOOD001') } : { d: { results: [validRawRecord('GOOD001')] } };
     return { status: 200, ok: true, headers: { get: () => null }, text: async () => JSON.stringify(payload) };
@@ -393,7 +396,7 @@ test('public browser normalizes a raw SAP header, matches detail, and clears a s
   await expectText(p, '#provenance', 'Not connected');
   const before = calls.length; await p.locator('#reload-detail').evaluate(el => el.click());
   assert.equal(calls.length, before);
-  for (const mode of ['empty', 'unusable', 'malformed', 'number', 'precision', 'scale', 'currency', 'date', 'identifier']) {
+  for (const mode of ['empty', 'unusable', 'malformed', 'number', 'precision', 'scale', 'currency', 'currency-type', 'date', 'date-type', 'identifier']) {
     scenario = mode; await connect();
     await p.waitForFunction(() => document.querySelector('#status').textContent.includes('failed') || document.querySelector('#status').textContent.includes('No usable'));
     assert.equal(await p.locator('#records-body tr.selectable').count(), 0, mode);
@@ -439,6 +442,252 @@ test('browser rejects detail with missing source, wrong provenance, or unusable 
   assert.equal(await p.locator('#evidence').innerText(), '');
   await p.close();
 });
+
+test('malformed required date and currency types are rejected while valid optional context defects stay Unknown', async () => {
+  const badDatePort = TEST_PORT + 60;
+  const badDateTransport = makeTransport([{ ...validRawRecord('BADDATETYPE'), BillingDocumentDate: ['/Date(1728950400000)/'] }]);
+  const badDateServer = await startInjectedServer(badDatePort, badDateTransport);
+  injectedServers.push(badDateServer);
+  let response = await fetch(`http://127.0.0.1:${badDatePort}/api/billing-requests?mode=live`, {
+    headers: { 'X-SAP-APIKey': 'SENTINEL-BAD-DATE-TYPE' }
+  });
+  let json = await response.json();
+  assert.equal(response.ok, false);
+  assert.match(json.error.code, /NO_USABLE/);
+
+  const badCurrencyPort = TEST_PORT + 61;
+  const badCurrencyTransport = makeTransport([{ ...validRawRecord('BADCURTYPE'), TransactionCurrency: ['USD'] }]);
+  const badCurrencyServer = await startInjectedServer(badCurrencyPort, badCurrencyTransport);
+  injectedServers.push(badCurrencyServer);
+  response = await fetch(`http://127.0.0.1:${badCurrencyPort}/api/billing-requests?mode=live`, {
+    headers: { 'X-SAP-APIKey': 'SENTINEL-BAD-CURRENCY-TYPE' }
+  });
+  json = await response.json();
+  assert.equal(response.ok, false);
+  assert.match(json.error.code, /NO_USABLE/);
+
+  const optionalPort = TEST_PORT + 62;
+  const optionalTransport = makeTransport([
+    { ...validRawRecord('GOOD001') },
+    { ...validRawRecord('BADCONTEXT'), PayerParty: {}, ContractAccount: false, TransactionCurrency: 'USD', TotalNetAmount: '1.000' },
+    { ...validRawRecord('TOOLONG01'), PayerParty: 'TOOLONG0011', ContractAccount: 'TOOLONGACCT01', TransactionCurrency: 'USD', TotalNetAmount: '1.000' }
+  ]);
+  const optionalServer = await startInjectedServer(optionalPort, optionalTransport);
+  injectedServers.push(optionalServer);
+  response = await fetch(`http://127.0.0.1:${optionalPort}/api/billing-requests?mode=live`, {
+    headers: { 'X-SAP-APIKey': 'SENTINEL-OPTIONAL-CONTEXT' }
+  });
+  json = await response.json();
+  assert.equal(response.ok, true, JSON.stringify(json));
+  assert.equal(json.loadedCount, 3);
+  assert.equal(json.usableCount, 3);
+  assert.equal(json.records[0].usable, true);
+  assert.equal(json.records[1].usable, true);
+  assert.equal(json.records[1].context.payerPartyAvailable, false);
+  assert.equal(json.records[1].context.contractAccountAvailable, false);
+  assert.equal(json.records[2].usable, true);
+  assert.equal(json.records[2].context.payerPartyAvailable, false);
+  assert.equal(json.records[2].context.contractAccountAvailable, false);
+});
+
+test('item linkage requires validated parents and exact continuation before any success count', async () => {
+  const validPort = TEST_PORT + 63;
+  const validContinuation = `https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata/sap/API_BILLING_DOCUMENT_REQUEST_SRV/A_BillingDocumentRequest('ITEMOWN01')/to_Item?$skiptoken=x`;
+  const validTransport = async (url) => String(url).includes('/to_Item')
+    ? { status: 200, ok: true, text: async () => JSON.stringify(rawOData(Array.from({ length: 20 }, (_, i) => ({ BillingDocumentRequest: 'ITEMOWN01', BillingDocumentRequestItem: String(i) })), validContinuation)), headers: { get: () => null } }
+    : { status: 200, ok: true, text: async () => JSON.stringify(rawOData([validRawRecord('ITEMOWN01')])), headers: { get: () => null } };
+  const validServer = await startInjectedServer(validPort, validTransport);
+  injectedServers.push(validServer);
+  let response = await fetch(`http://127.0.0.1:${validPort}/api/billing-requests/ITEMOWN01/items?mode=live`, { headers: { 'X-SAP-APIKey': 'SENTINEL-VALID-ITEMS' } });
+  let json = await response.json();
+  assert.equal(response.ok, true, JSON.stringify(json));
+  assert.equal(json.status, 'partial');
+  assert.equal(json.count, 20);
+  assert.equal(json.hasContinuation, true);
+
+  const wrongParentPort = TEST_PORT + 64;
+  const wrongContinuation = `https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata/sap/API_BILLING_DOCUMENT_REQUEST_SRV/A_BillingDocumentRequest('ITEMOWN01')/to_Item?$skiptoken=x`;
+  const wrongTransport = async (url) => String(url).includes('/to_Item')
+    ? { status: 200, ok: true, text: async () => JSON.stringify(rawOData(Array.from({ length: 20 }, (_, i) => ({ BillingDocumentRequest: 'WRONG001', BillingDocumentRequestItem: String(i) })), wrongContinuation)), headers: { get: () => null } }
+    : { status: 200, ok: true, text: async () => JSON.stringify(rawOData([validRawRecord('ITEMOWN01')])), headers: { get: () => null } };
+  const wrongParentServer = await startInjectedServer(wrongParentPort, wrongTransport);
+  injectedServers.push(wrongParentServer);
+  response = await fetch(`http://127.0.0.1:${wrongParentPort}/api/billing-requests/ITEMOWN01/items?mode=live`, { headers: { 'X-SAP-APIKey': 'SENTINEL-WRONG-ITEM-PARENT' } });
+  json = await response.json();
+  assert.equal(response.ok, true, JSON.stringify(json));
+  assert.equal(json.status, 'unavailable');
+  assert.equal(json.count, 0);
+
+  const unsafePort = TEST_PORT + 65;
+  const unsafeContinuation = 'https://evil.invalid/bad?$skiptoken=x';
+  const unsafeTransport = async (url) => String(url).includes('/to_Item')
+    ? { status: 200, ok: true, text: async () => JSON.stringify(rawOData(Array.from({ length: 20 }, (_, i) => ({ BillingDocumentRequest: 'ITEMOWN01', BillingDocumentRequestItem: String(i) })), unsafeContinuation)), headers: { get: () => null } }
+    : { status: 200, ok: true, text: async () => JSON.stringify(rawOData([validRawRecord('ITEMOWN01')])), headers: { get: () => null } };
+  const unsafeServer = await startInjectedServer(unsafePort, unsafeTransport);
+  injectedServers.push(unsafeServer);
+  response = await fetch(`http://127.0.0.1:${unsafePort}/api/billing-requests/ITEMOWN01/items?mode=live`, { headers: { 'X-SAP-APIKey': 'SENTINEL-UNSAFE-ITEM-CONTINUATION' } });
+  json = await response.json();
+  assert.equal(response.ok, true, JSON.stringify(json));
+  assert.equal(json.status, 'unavailable');
+  assert.equal(json.count, 0);
+
+  const emptyPort = TEST_PORT + 66;
+  const emptyTransport = async (url) => ({ status: 200, ok: true, text: async () => JSON.stringify(rawOData([], `https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata/sap/API_BILLING_DOCUMENT_REQUEST_SRV/A_BillingDocumentRequest('ITEMOWN01')/to_Item?$skiptoken=x`)), headers: { get: () => null } });
+  const emptyServer = await startInjectedServer(emptyPort, emptyTransport);
+  injectedServers.push(emptyServer);
+  response = await fetch(`http://127.0.0.1:${emptyPort}/api/billing-requests/ITEMOWN01/items?mode=live`, { headers: { 'X-SAP-APIKey': 'SENTINEL-EMPTY-ITEM-CONTINUATION' } });
+  json = await response.json();
+  assert.equal(response.ok, true, JSON.stringify(json));
+  assert.equal(json.status, 'partial');
+  assert.equal(json.count, 0);
+  assert.equal(json.hasContinuation, true);
+});
+
+test('malformed and wrong-key item continuations are rejected before any count', async () => {
+  const baseRows = (key) => Array.from({ length: 3 }, (_, i) => ({ BillingDocumentRequest: key, BillingDocumentRequestItem: String(i) }));
+  const wrongfulPort = TEST_PORT + 70;
+  const malformedObjectTransport = async (url) => ({ status: 200, ok: true, text: async () => JSON.stringify({ d: { results: baseRows('ITEMOWN01'), __next: { bad: true } } }), headers: { get: () => null } });
+  const malformedServer = await startInjectedServer(wrongfulPort, malformedObjectTransport);
+  injectedServers.push(malformedServer);
+  let response = await fetch(`http://127.0.0.1:${wrongfulPort}/api/billing-requests/ITEMOWN01/items?mode=live`, { headers: { 'X-SAP-APIKey': 'SENTINEL-MALFORMED-CONTINUATION-OBJECT' } });
+  let json = await response.json();
+  assert.equal(response.ok, true, JSON.stringify(json));
+  assert.equal(json.status, 'unavailable');
+  assert.equal(json.hasContinuation, false);
+  assert.equal(json.count, 0);
+  assert.match(json.note, /rejected/i);
+
+  const wrongfulArrayPort = TEST_PORT + 71;
+  const malformedArrayTransport = async (url) => ({ status: 200, ok: true, text: async () => JSON.stringify({ d: { results: baseRows('ITEMOWN01'), __next: ['https://evil.invalid/next'] } }), headers: { get: () => null } });
+  const malformedArrayServer = await startInjectedServer(wrongfulArrayPort, malformedArrayTransport);
+  injectedServers.push(malformedArrayServer);
+  response = await fetch(`http://127.0.0.1:${wrongfulArrayPort}/api/billing-requests/ITEMOWN01/items?mode=live`, { headers: { 'X-SAP-APIKey': 'SENTINEL-MALFORMED-CONTINUATION-ARRAY' } });
+  json = await response.json();
+  assert.equal(response.ok, true, JSON.stringify(json));
+  assert.equal(json.status, 'unavailable');
+  assert.equal(json.hasContinuation, false);
+  assert.equal(json.count, 0);
+
+  const wrongKeyPort = TEST_PORT + 72;
+  const wrongKeyContinuation = `https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata/sap/API_BILLING_DOCUMENT_REQUEST_SRV/A_BillingDocumentRequest('OTHER001')/to_Item?$skiptoken=x`;
+  const wrongKeyTransport = async (url) => ({ status: 200, ok: true, text: async () => JSON.stringify(rawOData(baseRows('ITEMOWN01'), wrongKeyContinuation)), headers: { get: () => null } });
+  const wrongKeyServer = await startInjectedServer(wrongKeyPort, wrongKeyTransport);
+  injectedServers.push(wrongKeyServer);
+  response = await fetch(`http://127.0.0.1:${wrongKeyPort}/api/billing-requests/ITEMOWN01/items?mode=live`, { headers: { 'X-SAP-APIKey': 'SENTINEL-WRONG-KEY-ITEM-CONTINUATION' } });
+  json = await response.json();
+  assert.equal(response.ok, true, JSON.stringify(json));
+  assert.equal(json.status, 'unavailable');
+  assert.equal(json.hasContinuation, false);
+
+  let nextValue = false;
+  const falsyPort = TEST_PORT + 73;
+  const falsyTransport = async () => ({
+    status: 200, ok: true, headers: { get: () => null },
+    text: async () => JSON.stringify({ d: { results: [], __next: nextValue } })
+  });
+  const falsyServer = await startInjectedServer(falsyPort, falsyTransport);
+  injectedServers.push(falsyServer);
+  for (const value of [false, 0, '']) {
+    nextValue = value;
+    const options = { headers: { 'X-SAP-APIKey': 'SENTINEL-FALSY-CONTINUATION' } };
+    response = await fetch(`http://127.0.0.1:${falsyPort}/api/billing-requests/ITEMOWN01/items?mode=live`, options);
+    json = await response.json();
+    assert.equal(response.ok, true, JSON.stringify(json));
+    assert.equal(json.status, 'unavailable', `Explicit invalid continuation ${JSON.stringify(value)} is not an absent collection.`);
+    assert.equal(json.count, 0);
+    assert.equal(json.hasContinuation, false);
+    assert.match(json.note, /rejected/i);
+    response = await fetch(`http://127.0.0.1:${falsyPort}/api/billing-requests?mode=live`, options);
+    json = await response.json();
+    assert.equal(response.ok, true, JSON.stringify(json));
+    assert.equal(json.continuationAvailable, false);
+    assert.equal(json.continuationValidation, 'rejected');
+  }
+});
+
+test('missing live key leaves the current source unchanged and reports the connection error', async () => {
+  const p = await browser.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.locator('#use-fixture').click();
+    await p.waitForFunction(() => document.querySelector('#records-body')?.textContent.includes('9000000001'));
+    await p.locator('#api-key').fill('');
+    await p.locator('#connect-live').click();
+    await p.waitForFunction(() => !!document.querySelector('#error')?.textContent.includes('Enter an API key'));
+    await expectText(p, '#provenance', 'Fixture demonstration');
+    assert.ok((await p.locator('#records-body').innerText()).includes('9000000001'));
+    const reportText = await p.evaluate(() => document.querySelector('#error')?.textContent || '');
+    assert.ok(reportText.toLowerCase().includes('key'));
+  } finally {
+    await p.close();
+  }
+});
+
+test('a failed reused-key detail clears the prior selected digest and leaves evidence not-observed', async () => {
+  const p = await browser.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.locator('#use-fixture').click();
+    await p.waitForFunction(() => document.querySelector('#records-body')?.textContent.includes('9000000001'));
+    await p.locator('#records-body tr.selectable').first().click();
+    await p.waitForFunction(() => document.querySelector('#status').textContent.includes('Detail loaded'));
+    await p.locator('#check-evidence').click();
+    await p.waitForFunction(() => document.querySelector('#evidence pre')?.textContent.includes('keyDigestSha256'));
+    const before = JSON.parse(await p.locator('#evidence pre').innerText());
+    assert.ok(before.observedList.selectedKeyDigestSha256);
+    // Route a real mismatching detail for the same selected key.
+    const bad = await fetch(`${BASE_URL}/api/billing-requests/9000000001?mode=fixture&selected=9000000001`).then(r => r.json());
+    const payload = structuredClone(bad);
+    if (payload.record) payload.record.sourceApiId = 'WRONG_API';
+    await p.unroute('**/api/billing-requests/9000000001*');
+    await p.route('**/api/billing-requests/9000000001*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(payload) }));
+    await p.locator('#records-body tr.selectable').first().click();
+    await p.waitForFunction(() => !document.querySelector('#error').hidden);
+    await p.locator('#check-evidence').click();
+    const report = JSON.parse(await p.locator('#evidence pre').innerText());
+    assert.equal(report.observedDetail.status, 'not-observed');
+    assert.equal(Object.hasOwn(report.observedList || {}, 'selectedKeyDigestSha256'), false);
+    await p.unroute('**/api/billing-requests/9000000001*');
+  } finally {
+    await p.close();
+  }
+});
+
+test('a delayed first list digest cannot restore stale list rows after disconnect', async () => {
+  const p = await browser.newPage();
+  try {
+    await p.addInitScript(() => {
+      const subtle = window.crypto.subtle;
+      const original = subtle.digest.bind(subtle);
+      const gate = (window.__listDigestGate = { started: false, finished: false, release: null });
+      subtle.digest = (algorithm, data) => {
+        const text = new TextDecoder().decode(data);
+        if (!gate.started && text.includes('9000000001')) {
+          gate.started = true;
+          return new Promise((resolve) => {
+            gate.release = () => original(algorithm, data).then((result) => { gate.finished = true; resolve(result); });
+          });
+        }
+        return original(algorithm, data);
+      };
+    });
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.locator('#use-fixture').click();
+    await p.waitForFunction(() => window.__listDigestGate.started === true);
+    await p.locator('#disconnect').click();
+    await p.evaluate(() => window.__listDigestGate.release());
+    await p.waitForFunction(() => window.__listDigestGate.finished === true);
+    assert.equal(await p.locator('#records-body').innerText(), 'No records loaded.');
+    assert.equal(await p.locator('#provenance').innerText(), 'Not connected');
+    assert.ok((await p.locator('#status').innerText()).toLowerCase().includes('disconnected'));
+    assert.equal(await p.locator('#detail-actions').isVisible(), false);
+    assert.equal(await p.locator('#evidence').innerText(), '');
+  } finally {
+    await p.close();
+  }
+});
+
+
 
 async function main() {
   let failures = [];

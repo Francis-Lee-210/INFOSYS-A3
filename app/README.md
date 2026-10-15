@@ -31,7 +31,8 @@ npx playwright install chromium
 npm test
 ```
 
-There are 9 test groups, including the same public browser entry driven through
+There are 15 deterministic test groups, including the same public browser entry
+driven through
 raw OData normalization, matching/mismatched keys, empty/unusable/malformed data,
 decimal types and precision, date/currency/identifier failures, provenance,
 sentinel key clearing, stale-evidence clearing, redirects and unsafe destinations.

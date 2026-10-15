@@ -1,0 +1,62 @@
+{
+  "verificationTimeUtc": "2026-10-15T02:14:21.913Z",
+  "verificationTimeNzdt": "2026-10-15T15:14:21.913+13:00",
+  "outcome": "B0 passed for one selected source",
+  "sourceApi": "API_BILLING_DOCUMENT_REQUEST_SRV",
+  "sourceApiVersion": "1.1.0",
+  "entity": "A_BillingDocumentRequest",
+  "documentKind": "billing request",
+  "provenance": "live-sap-sandbox",
+  "applicationOrigin": "http://127.0.0.1:6286",
+  "transport": "browser GET -> loopback Node adapter -> documented SAP sandbox HTTPS GET",
+  "tls": {
+    "implementation": "Node built-in fetch with default certificate verification",
+    "rejectUnauthorizedZeroRefusedAtStartup": true,
+    "insecureOptionUsed": false,
+    "redirectsFollowed": false
+  },
+  "list": {
+    "observedAtUtc": "2026-10-15T02:12:17.978Z",
+    "localHttpStatus": 200,
+    "sapHttpStatus": 200,
+    "requestedTop": 10,
+    "loadedCount": 10,
+    "usableCount": 10,
+    "continuationReturned": false,
+    "coverage": "bounded loaded records; not complete history",
+    "selectedKeySha256": "17030632b3f5b869fb2899ee1220f51b53f2ea2ffffc6f5e3046ed7ed93e161f"
+  },
+  "detail": {
+    "observedAtUtc": "2026-10-15T02:12:28.063Z",
+    "localHttpStatus": 200,
+    "sapHttpStatus": 200,
+    "keyBasedGet": true,
+    "keyConsistent": true,
+    "keySha256": "17030632b3f5b869fb2899ee1220f51b53f2ea2ffffc6f5e3046ed7ed93e161f",
+    "usable": true,
+    "dateAvailable": true,
+    "knownCurrency": true,
+    "netAmountAvailable": true,
+    "taxAmountAvailable": true,
+    "grossAmountAvailable": true,
+    "payerContextAvailable": true,
+    "contractAccountContextAvailable": false
+  },
+  "optionalItems": {
+    "navigationRead": true,
+    "loadedCount": 1,
+    "continuationReturned": false,
+    "coverage": "partial; bounded loaded coverage only",
+    "amountsSummed": false
+  },
+  "sanitization": {
+    "keyDigestInput": "issue-5: plus selected document identifier; no raw identifier retained",
+    "apiKeyIncluded": false,
+    "rawDocumentIdsIncluded": false,
+    "rawAmountsIncluded": false,
+    "partyOrAccountIdsIncluded": false,
+    "rawResponsesStored": false,
+    "customerIdentityOrPaymentAsserted": false
+  },
+  "boundary": "Actual browser acceptance through the shipped app transport; separate from deterministic test results. This does not establish the complete Lite workflow or course submission."
+}

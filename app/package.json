@@ -1,0 +1,17 @@
+{
+  "name": "plan-review-snapshot-billing-lite-issue-5",
+  "description": "Issue #5 prototype: allowlisted SAP sandbox billing request connection, small list, and selected matching detail.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/browser.mjs",
+    "check": "node --check server.js"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

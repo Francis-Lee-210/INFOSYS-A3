@@ -2,6 +2,8 @@
 
 15 October 2026. [Issue #8](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/8) / [parent #4](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/4), AC09–AC13. English implementation/validation record; no authenticated SAP requests or new AC25 acceptance.
 
+**Review follow-up:** see [the PR #24 item-evidence lifecycle correction](#pr-24-review-correction-item-evidence-lifecycle) below. The original 113-test results and screenshots are retained as historical evidence; that suite did not cover the confirmed stale-decision defect.
+
 ## Baseline, dependency and tested head
 
 | Coordinate | Verified value |
@@ -106,3 +108,48 @@ Inspection checks readable wrapping, useful input/control widths, visible focus,
 - Receipt v1 uses existing non-destructive recovery, not invented metadata or automatic deletion.
 - Full joined integration/accessibility assessment remains #9. No completion of #4/#9/#10/#11 or course submission is claimed; assignees and issues are not manually changed/closed.
 - #23 is already merged and integrated; the Issue #8 PR has no outstanding stacked-base retarget step.
+
+## PR #24 review correction: item-evidence lifecycle
+
+16 October 2026 (NZDT). Verified PR #24 remained open and unchanged at reviewed head **`8aaa0737e5f01da78512b50c1db6df285d5afd80`**. Work resumed only after the maintainer completed the safe handover to the **original** checkout `/Users/rione1/Downloads/INFOSYS 704/A3/INFOSYS-A3`. The parked `chore/park-issue-8-checkout` branch/worktree was left untouched. No worktree, clone, replacement checkout or automatic stash was created; no history was rewritten.
+
+### Independently reproduced before implementation changes
+
+The untouched reviewed implementation passed **113/113** again. Two isolated public-browser runs used the actual loopback handler/adapter, a valid USD header, a first item HTTP 503 and a gated matching-parent EUR item retry:
+
+- **A (Retry from cost):** while pending, the exported snapshot still said `unavailable` and Continue remained enabled. Entering Screen 3 before releasing the response allowed Keep to be saved with `currencyConflict: false`, `materialInconsistency: false` and stale `coverage: unavailable`.
+- **B (Retry from decision after choosing Keep):** the decision stayed visible and Confirm stayed enabled during the new read; the same wrong Keep receipt could be saved after the EUR response.
+- The newly added desired-behaviour tests were run **before** fixing application code: **10 of 13 focused tests failed** (12 new groups plus the retained fixture-server setup test). The two preservation/list-view groups already passed. No inherited assertions were weakened.
+
+### Correction and focused coverage
+
+Implementation/test commit: **`58063cf2c1af9f4cee853eee674a12179dbe98c1`**. Each new item read clears the pending choice, cached unsaved receipt and decision-snapshot binding before transport starts. An unconfirmed decision returns to Screen 2; its focused checking status and disabled Continue explain the suspension. Continue, intent change, Confirm and receipt-save Retry also validate current evidence in their handlers, including against forced activation of hidden/disabled controls.
+
+Matching completion rebuilds the authoritative assessment whether list, cost or historical receipt is visible. Cost rendering is separate: no hidden decision is silently reconfirmed. Normal and failed retries both require deliberate review and a new choice; a conflict restricts Help/Later and retains current flags/reasons in the receipt. Unavailable items do not erase valid header amounts. Existing request-generation checks discard superseded results. Confirmed receipt bytes/identity/provenance, storage recovery and read cooldowns are preserved; no receipt schema/version change.
+
+| Regression identifier | Public-boundary scenario and actual assertion | Result |
+|---|---|---|
+| V01 | Gated cost-view retry at 1366/390px: current checking state, blocked Continue/forged save actions, then EUR conflict; Help receipt has partial coverage, actual currency flag/reason and unchanged exact USD header figures. | PASS |
+| V02 currency / parent | Retry after choosing Keep returns to cost and clears it; matching EUR or invalid-parent response produces current restrictions and a fresh Help/Later outcome with retained reasons. | PASS |
+| V03 | Matching USD success updates visible item evidence/coverage; hidden old Confirm cannot skip review; a fresh Review options choice saves the new partial evidence. | PASS |
+| V04 | Repeated 503 at 1366/390px shows current unavailable limitations and valid header figures, without restoring Keep; deliberate new choice saves honest unavailable coverage. | PASS |
+| V05 | Injected failed receipt write creates a cached unsaved Keep; item retry invalidates its save Retry. Forced old handlers cause no further write, pending or completed; fresh confirmation writes updated partial evidence/choice. | PASS |
+| V06 page / selection / source / reset | Release an obsolete conflicting item response after navigation/context changes; it cannot restore an old assessment, intention or receipt. | PASS |
+| V07 | Retry while a confirmed fixture receipt is open leaves its summary and stored bytes exactly unchanged; returning to the current live-mode review exposes the new conflict separately. | PASS |
+| V08 | List-view retry does not bypass explicit cost review; after completion, opening cost shows the actual current evidence and requires a fresh choice. | PASS |
+
+After the fix, the focused run passed **13/13**, including fixture setup. These tests extend the directly affected AC09/AC13 evidence lifecycle and parent AC16/17/19 guards; they do **not** claim all Issue #9 integration/accessibility is complete. Only sentinel keys, synthetic headers/items, injected HTTP/storage failures and deterministic gates were used. No authenticated SAP request or local SAP credential-file access.
+
+**Final unfiltered review run: 125/125 PASS**, exit 0: all original 113 scenarios/assertions retained plus 12 focused lifecycle groups, at code-bearing head **`58063cf2c1af9f4cee853eee674a12179dbe98c1`**. All application/test JS/MJS `node --check` checks and `git diff --check` passed. Subsequent changes are English documentation and six new review screenshots only; the old result log and images remain intact. No remaining blocker for this focused repair was observed; the existing Issue #9/#10 boundaries still apply.
+
+### Additional screenshots and visual review
+
+New files preserve all earlier screenshots. These configured live-mode labels represent **injected transport**, not new SAP acceptance:
+
+| View | Desktop 1366px | Mobile 390px |
+|---|---|---|
+| Pending retry / focused checking status / disabled Continue | [image](issue-8-review-item-pending-1366.png) | [image](issue-8-review-item-pending-390.png) |
+| Current currency conflict / fresh restricted decision | [image](issue-8-review-item-conflict-1366.png) | [image](issue-8-review-item-conflict-390.png) |
+| Repeated failure / current unavailable evidence and retained header | [image](issue-8-review-item-unavailable-1366.png) | [image](issue-8-review-item-unavailable-390.png) |
+
+Visual inspection checked status wrapping, visible focus, blocked versus available actions, current coverage/conflict labels and no page-level overflow. The monetary table retains its existing contained mobile scrolling. Runtime remains macOS, Node **v24.20.0**, Playwright **1.62.1**, installed headless Chrome **155.0.8059.40**. The appended [browser results](issue-8-browser-test-results.txt) distinguish this review run from the original 113-test evidence.

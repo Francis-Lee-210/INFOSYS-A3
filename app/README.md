@@ -33,6 +33,13 @@ verification is required; do not disable it. No SAP key is bundled.
   without reconnecting. Reset requires confirmation; uncertain storage is never
   falsely displayed as Saved. Receipt v2 retains coverage/assessment limitations;
   v1 remains untouched in unsupported-version recovery until deliberate reset.
+- **Optional-item read/retry supersedes unconfirmed evidence.** From a decision,
+  Retry read returns to cost evidence with a focused checking status. The old
+  intention and cached unsaved receipt/save Retry are cleared. Continue and the
+  action handlers block confirmation while pending. Review the updated result
+  and choose again, including after a repeated failure; currency/source/parent
+  conflicts permit only Help/Later. Independently valid header figures remain.
+  An existing confirmed historical receipt stays unchanged and separate.
 
 ## Coverage and pagination
 
@@ -134,8 +141,9 @@ CHROME_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Ch
 CAPTURE_ISSUE8_SCREENSHOTS=1 npm test
 ```
 
-The inherited baseline was independently rerun: **71/71 passed**. The final
-unfiltered expanded suite passed **113/113** (71 inherited + 42 Issue #8 groups).
+The initial inherited baseline passed **71/71** and the original Issue #8 suite
+passed **113/113**. The PR #24 review repair independently reran that baseline,
+then passed **125/125 unfiltered** (all 113 retained + 12 item-retry lifecycle groups).
 Runtime/browser and individual test identifiers are recorded in the
 [Issue #8 acceptance matrix](../docs/validation/issue-8-acceptance.md) and
 [browser output](../docs/validation/issue-8-browser-test-results.txt).

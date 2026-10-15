@@ -255,6 +255,7 @@ async function loadList(mode) {
   if (mode === 'live' && suppliedKey === '') {
     showError('Enter an API key before connecting. A missing key is an authentication or connection failure, not an empty result set.');
     setStatus('Connection not changed. Provide a key or choose the labelled fixture.');
+    apiKeyInput.focus();
     return;
   }
 
@@ -266,7 +267,9 @@ async function loadList(mode) {
   state.apiKey = mode === 'live' ? suppliedKey : '';
   apiKeyInput.value = '';
   resetReads();
-  return loadPage({ kind: 'list', mode, cursor: null, page: 1 });
+  // A source button disables itself while loading, which drops focus to <body>
+  // exactly like Next page does; reuse the same outcome-focus pattern.
+  return loadPage({ kind: 'list', mode, cursor: null, page: 1 }, true);
 }
 
 async function loadPage(operation, moveFocus = false) {

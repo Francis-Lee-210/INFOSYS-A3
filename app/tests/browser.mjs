@@ -4,6 +4,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { fileURLToPath } from 'node:url';
 import { registerIssue8Tests } from './issue-8.mjs';
+import { registerIssue9Tests } from './issue-9.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = path.resolve(__dirname, '..');
@@ -2149,6 +2150,7 @@ test('issue 7 review: connection input and hint remain usable with Reopen visibl
 });
 
 registerIssue8Tests({ test, browser: () => browser, startInjectedServer, injectedServers, TEST_PORT });
+registerIssue9Tests({ test, browser: () => browser, startInjectedServer, injectedServers, TEST_PORT });
 
 async function main() {
   let failures = [];

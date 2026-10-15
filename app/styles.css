@@ -115,4 +115,9 @@ button:disabled { opacity: .55; cursor: default; }
 .amount-table tbody tr { cursor: default; }
 .cost-fields dd { min-width: 0; }
 .mobile-table-hint { display: none; }
+#intent-options { margin: 16px 0; border: 1px solid var(--rule); border-radius: 8px; }
+#intent-options label { display: block; padding: 8px; }
+#intent-options input { width: auto; margin-right: 8px; }
+#decision-summary { overflow-wrap: anywhere; }
+#continue-decision, #reset-demo { margin-top: 16px; }
 @media (max-width: 600px) { .mobile-table-hint { display: block; } }

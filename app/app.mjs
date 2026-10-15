@@ -19,6 +19,21 @@ const costReasons = document.getElementById('cost-reasons');
 const costItems = document.getElementById('cost-items');
 const costLimits = document.getElementById('cost-limits');
 const apiKeyInput = document.getElementById('api-key');
+const screenDecision = document.getElementById('screen-decision');
+const receiptStatus = document.getElementById('receipt-status');
+const intentOptions = document.getElementById('intent-options');
+const confirmIntentButton = document.getElementById('confirm-intent');
+const retryReceiptButton = document.getElementById('retry-receipt');
+const reopenReceiptButton = document.getElementById('reopen-receipt');
+const RECEIPT_KEY = 'planReviewSnapshot.receipt';
+const RECEIPT_VERSION = 'issue-7-receipt-v1';
+const INTENTS = { keep: 'Keep', 'review-options': 'Review options', help: 'Help', later: 'Later' };
+const PROVENANCE_LABELS = { 'live-sap-sandbox': 'Live SAP sandbox', 'fixture-demonstration': 'Fixture demonstration', 'synthetic-fixture': 'Synthetic fixture' };
+let receipt = null;
+let receiptRecovery = false;
+let chosenIntent = '';
+let pendingReceipt = null;
+Object.defineProperty(window, '__issue7Receipt', { get: () => receipt ? structuredClone(receipt) : undefined });
 
 const state = {
   mode: 'none',
@@ -525,6 +540,7 @@ function validateRequiredDetail(record, mode) {
 }
 
 function clearCostView() {
+  clearPendingDecision();
   state.costSnapshot = null;
   window.__issue6CostSnapshot = undefined;
   for (const element of [costSummary, costAmounts, costFields, costConsistency, costReasons, costItems, costLimits]) element?.replaceChildren();
@@ -728,6 +744,7 @@ function bigintFromDecimal(value, scale) {
 }
 
 function renderCost(snapshot) {
+  document.getElementById('continue-decision').disabled = snapshot.linkedDetail.status === 'checking';
   clearError();
   if (costError) { costError.hidden = true; costError.textContent = ''; }
   if (costSummary) {
@@ -813,3 +830,231 @@ document.getElementById('reload-detail').addEventListener('click', () => {
 });
 document.getElementById('check-items').addEventListener('click', loadOptionalItems);
 document.getElementById('check-evidence').addEventListener('click', loadEvidence);
+
+// Identity uses the immutable review coordinates, never the selected intent or a retry time.
+function reviewIdentity(document) {
+  return [document.provenance, document.sourceProfileId, document.key, document.retrievedAt].join('|');
+}
+
+function receiptFromSnapshot(snapshot, intent) {
+  const d = snapshot.document;
+  return {
+    version: RECEIPT_VERSION,
+    reviewId: reviewIdentity(d),
+    receiptId: `receipt:${reviewIdentity(d)}`,
+    document: {
+      kind: d.kind, key: d.key, provenance: d.provenance, sourceProfileId: d.sourceProfileId,
+      sourceApiId: d.sourceApiId, sourceApiVersion: d.sourceApiVersion, retrievedAt: d.retrievedAt
+    },
+    date: { value: snapshot.date.value, meaning: snapshot.date.meaning },
+    amounts: {
+      net: snapshot.amounts.net, tax: snapshot.amounts.tax, gross: snapshot.amounts.gross,
+      basis: Object.fromEntries(['net', 'tax', 'gross'].map(field => [field, snapshot.amounts.basis[field] || null])),
+      currency: snapshot.amounts.currency
+    },
+    context: { ...snapshot.context },
+    assessmentStatus: snapshot.assessmentStatus,
+    materialInconsistency: snapshot.materialInconsistency,
+    reasons: snapshot.materialInconsistency ? [...snapshot.reasons] : [],
+    missing: {
+      linkedDetailPresent: snapshot.linkedDetail.present,
+      incompleteRows: snapshot.linkedDetail.incompleteRows,
+      currencyConflict: snapshot.linkedDetail.currencyConflict,
+      sourceConflict: snapshot.linkedDetail.sourceConflict
+    },
+    intent,
+    confirmedAt: new Date().toISOString()
+  };
+}
+
+function validateReceipt(value) {
+  if (!value || value.version !== RECEIPT_VERSION) throw new Error('Unsupported or missing receipt version.');
+  const exactKeys = (object, keys) => {
+    if (!object || Array.isArray(object) || Object.keys(object).length !== keys.length || keys.some(key => !Object.hasOwn(object, key))) throw new Error('Invalid receipt fields.');
+  };
+  exactKeys(value, ['version', 'reviewId', 'receiptId', 'document', 'date', 'amounts', 'context', 'assessmentStatus', 'materialInconsistency', 'reasons', 'missing', 'intent', 'confirmedAt']);
+  const d = value.document;
+  if (!d || !Object.hasOwn(PROVENANCE_LABELS, d.provenance)) throw new Error('Missing or unknown receipt provenance.');
+  exactKeys(d, ['kind', 'key', 'provenance', 'sourceProfileId', 'sourceApiId', 'sourceApiVersion', 'retrievedAt']);
+  exactKeys(value.date, ['value', 'meaning']);
+  exactKeys(value.amounts, ['net', 'tax', 'gross', 'basis', 'currency']);
+  exactKeys(value.amounts.basis, ['net', 'tax', 'gross']);
+  for (const field of ['net', 'tax', 'gross']) {
+    if (value.amounts[field] !== null && typeof value.amounts[field] !== 'string') throw new Error('Invalid receipt amount.');
+    if (value.amounts.basis[field] !== null && typeof value.amounts.basis[field] !== 'string') throw new Error('Invalid receipt amount basis.');
+  }
+  const synthetic = d.provenance === 'synthetic-fixture';
+  const mode = synthetic ? 'synthetic' : (d.provenance === 'fixture-demonstration' ? 'fixture' : 'live');
+  if (d.sourceProfileId !== (synthetic ? 'synthetic-billing-document-v1' : 'billing-document-request-v1') ||
+      d.sourceApiId !== (synthetic ? null : 'API_BILLING_DOCUMENT_REQUEST_SRV') ||
+      d.sourceApiVersion !== (synthetic ? null : '1.1.0') ||
+      d.kind !== (synthetic ? 'synthetic billing document' : 'billing request')) throw new Error('Invalid receipt source identity.');
+  validateRequiredDetail({
+    usable: true, key: d.key, configuredSourceLabel: PROVENANCE_LABELS[d.provenance],
+    currencyKnown: true, currency: value.amounts?.currency, dateValid: true,
+    dateNormalized: value.date?.value, dateMeaning: value.date?.meaning,
+    retrievedAt: d.retrievedAt, amounts: value.amounts, amountBasis: value.amounts?.basis
+  }, mode);
+  if (value.reviewId !== reviewIdentity(d) || value.receiptId !== `receipt:${value.reviewId}` ||
+      !Object.hasOwn(INTENTS, value.intent) || typeof value.materialInconsistency !== 'boolean' ||
+      !['unassessed', 'partial', 'consistent', 'inconsistent'].includes(value.assessmentStatus) ||
+      (value.materialInconsistency !== (value.assessmentStatus === 'inconsistent')) ||
+      (value.materialInconsistency && !['help', 'later'].includes(value.intent)) ||
+      !Array.isArray(value.reasons) || value.reasons.some(reason => typeof reason !== 'string' || !reason.trim()) ||
+      (value.materialInconsistency && value.reasons.length === 0)) throw new Error('Invalid receipt decision or consistency flags.');
+  for (const [object, keys] of [[value.context, ['payerPartyAvailable', 'contractAccountAvailable']],
+    [value.missing, ['linkedDetailPresent', 'incompleteRows', 'currencyConflict', 'sourceConflict']]]) {
+    exactKeys(object, keys);
+    if (!object || keys.some(key => typeof object[key] !== 'boolean')) throw new Error('Missing receipt evidence flags.');
+  }
+  if (typeof value.confirmedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value.confirmedAt) ||
+      Number.isNaN(Date.parse(value.confirmedAt)) || new Date(value.confirmedAt).toISOString() !== value.confirmedAt) throw new Error('Invalid confirmation timestamp.');
+  return value;
+}
+
+function clearPendingDecision() {
+  chosenIntent = '';
+  pendingReceipt = null;
+  screenDecision.hidden = true;
+  document.getElementById('reset-confirmation').hidden = true;
+  for (const input of intentOptions.querySelectorAll('input')) input.checked = false;
+}
+
+function showDecision() {
+  screenList.hidden = true;
+  screenCost.hidden = true;
+  screenDecision.hidden = false;
+  document.getElementById('reset-confirmation').hidden = true;
+  document.getElementById('decision-title').focus();
+}
+
+function renderDecision() {
+  const saved = Boolean(receipt);
+  document.getElementById('decision-title').textContent = receiptRecovery
+    ? 'Receipt could not be recovered'
+    : (saved ? 'Saved receipt (historical)' : 'Confirm your intention');
+  const snapshot = state.costSnapshot;
+  const value = receipt || (snapshot ? receiptFromSnapshot(snapshot, chosenIntent) : null);
+  document.getElementById('decision-history').textContent = saved
+    ? 'Historical snapshot — not a newly refreshed bill. Original evidence and provenance are retained.'
+    : 'Review this evidence and choose an intention before confirming.';
+  if (saved && snapshot && reviewIdentity(snapshot.document) !== receipt.reviewId) {
+    document.getElementById('decision-history').textContent += ` A saved receipt for document ${receipt.document.key} already exists. The current document ${snapshot.document.key} has NOT been recorded. Reset demo is required to record a new intention (one receipt at a time).`;
+  }
+  const fields = value ? [
+    ['Document kind / key', `${value.document.kind} / ${value.document.key}`],
+    ['Provenance', PROVENANCE_LABELS[value.document.provenance]],
+    ['Source API / version', `${value.document.sourceApiId ?? 'Not applicable (synthetic fixture)'} / ${value.document.sourceApiVersion ?? 'Not applicable'}`],
+    ['Configured profile', value.document.sourceProfileId],
+    ['Date', `${value.date.value} — ${value.date.meaning}`],
+    ...[['net', 'Net amount'], ['tax', 'Tax amount'], ['gross', 'Gross amount']].map(([field, label]) => [label, `${value.amounts[field] ?? 'Not reported'} ${value.amounts.currency} — ${value.amounts.basis[field] ?? 'Not reported'}`]),
+    ['Retrieved at', value.document.retrievedAt],
+    ['Payer / account context', `${value.context.payerPartyAvailable ? 'Available (opaque)' : 'Unknown'} / ${value.context.contractAccountAvailable ? 'Available (opaque)' : 'Unknown'}`],
+    ['Assessment', value.assessmentStatus],
+    ['Evidence flags', `Linked detail: ${value.missing.linkedDetailPresent ? 'present' : 'not present'}; incomplete rows: ${value.missing.incompleteRows ? 'yes' : 'no'}; currency conflict: ${value.missing.currencyConflict ? 'yes' : 'no'}; source conflict: ${value.missing.sourceConflict ? 'yes' : 'no'}`],
+    ['Reasons', saved ? (value.reasons.join(' ') || 'None — no material inconsistency recorded.') : snapshot.reasons.join(' ')],
+    ...(saved ? [['Confirmed at', value.confirmedAt], ['Receipt identity', value.receiptId]] : [])
+  ] : [];
+  document.getElementById('decision-summary').innerHTML = `<dl class="cost-fields">${fields.map(([label, text]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(text)}</dd>`).join('')}</dl>`;
+  const restricted = value?.materialInconsistency === true;
+  document.getElementById('decision-restriction').textContent = restricted ? 'Material inconsistency: only Help or Later can be confirmed. The reason is retained with the receipt.' : '';
+  intentOptions.hidden = saved || receiptRecovery;
+  for (const input of intentOptions.querySelectorAll('input')) {
+    input.disabled = restricted && ['keep', 'review-options'].includes(input.value);
+    input.checked = input.value === chosenIntent;
+  }
+  document.getElementById('decision-choice').textContent = `Chosen intent: ${INTENTS[receipt?.intent || chosenIntent] || 'None yet'}`;
+  confirmIntentButton.hidden = saved || receiptRecovery;
+  confirmIntentButton.disabled = !chosenIntent || (restricted && !['help', 'later'].includes(chosenIntent));
+  document.getElementById('back-to-evidence').hidden = saved || receiptRecovery;
+  document.getElementById('decision-return-to-list').hidden = !saved && !receiptRecovery;
+  retryReceiptButton.hidden = true;
+  receiptStatus.textContent = saved ? 'Saved — receipt write and read-back verified.' : 'Unsaved — no intention has been recorded.';
+  reopenReceiptButton.hidden = !saved && !receiptRecovery;
+}
+
+function openDecision() {
+  if (!receipt && !receiptRecovery && (!state.costSnapshot || state.costSnapshot.linkedDetail.status === 'checking')) return;
+  renderDecision();
+  if (receipt) setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
+  if (receiptRecovery) receiptStatus.textContent = 'Stored receipt could not be recovered. No saved history is shown. Use Reset demo to clear it and start again.';
+  showDecision();
+}
+
+function saveReceipt() {
+  if (receipt || receiptRecovery || !state.costSnapshot || !Object.hasOwn(INTENTS, chosenIntent)) return;
+  if (state.costSnapshot.materialInconsistency && !['help', 'later'].includes(chosenIntent)) return;
+  pendingReceipt ||= receiptFromSnapshot(state.costSnapshot, chosenIntent);
+  try {
+    validateReceipt(pendingReceipt);
+    const serialized = JSON.stringify(pendingReceipt);
+    localStorage.setItem(RECEIPT_KEY, serialized);
+    const readBack = validateReceipt(JSON.parse(localStorage.getItem(RECEIPT_KEY)));
+    if (JSON.stringify(readBack) !== serialized) throw new Error('Receipt read-back differs from the confirmed intent.');
+    receipt = readBack;
+    renderDecision();
+  } catch {
+    receiptStatus.textContent = 'Unsaved — storage write or read-back verification failed. Your chosen intent is preserved. Retry to save it.';
+    retryReceiptButton.hidden = false;
+  }
+}
+
+function reopenStoredReceipt() {
+  try {
+    const stored = localStorage.getItem(RECEIPT_KEY);
+    if (stored === null) return;
+    receipt = validateReceipt(JSON.parse(stored));
+    setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
+    openDecision();
+  } catch {
+    receipt = null;
+    receiptRecovery = true;
+    openDecision();
+  }
+}
+
+document.getElementById('continue-decision').addEventListener('click', openDecision);
+reopenReceiptButton.addEventListener('click', openDecision);
+intentOptions.addEventListener('change', event => {
+  if (!Object.hasOwn(INTENTS, event.target.value)) return;
+  chosenIntent = event.target.value;
+  pendingReceipt = null;
+  renderDecision();
+});
+confirmIntentButton.addEventListener('click', saveReceipt);
+retryReceiptButton.addEventListener('click', saveReceipt);
+document.getElementById('back-to-evidence').addEventListener('click', () => {
+  screenDecision.hidden = true;
+  screenCost.hidden = false;
+  document.getElementById('continue-decision').focus();
+});
+document.getElementById('decision-return-to-list').addEventListener('click', () => {
+  backToList();
+  setMode(state.mode);
+  if (!state.selectedKey) document.getElementById('use-fixture').focus();
+});
+document.getElementById('reset-demo').addEventListener('click', () => {
+  document.getElementById('reset-confirmation').hidden = false;
+  document.getElementById('confirm-reset').focus();
+});
+document.getElementById('cancel-reset').addEventListener('click', () => {
+  document.getElementById('reset-confirmation').hidden = true;
+  document.getElementById('reset-demo').focus();
+});
+document.getElementById('confirm-reset').addEventListener('click', () => {
+  try {
+    localStorage.removeItem(RECEIPT_KEY);
+    if (localStorage.getItem(RECEIPT_KEY) !== null) throw new Error('Reset read-back failed.');
+  } catch {
+    receiptStatus.textContent = 'Reset failed. The receipt and session were kept. Try Confirm reset again.';
+    return;
+  }
+  receipt = null;
+  receiptRecovery = false;
+  reopenReceiptButton.hidden = true;
+  resetSession();
+  document.getElementById('decision-summary').replaceChildren();
+  receiptStatus.textContent = '';
+  document.getElementById('use-fixture').focus();
+});
+reopenStoredReceipt();

@@ -1427,6 +1427,389 @@ test('desktop and mobile cost ledger contain overflow and preserve keyboard focu
   }
 });
 
+const issue7ReceiptKey = 'planReviewSnapshot.receipt';
+const issue7Intents = [['keep', 'Keep'], ['review-options', 'Review options'], ['help', 'Help'], ['later', 'Later']];
+
+async function issue7Decision(p, profile = issue6RegressionProfiles[0]) {
+  await issue6RegressionOpen(p, profile);
+  const snapshot = await issue6RegressionReview(p);
+  await p.getByRole('button', { name: 'Continue to decision' }).click();
+  await p.locator('#screen-decision').waitFor({ state: 'visible' });
+  return snapshot;
+}
+
+async function issue7Confirm(p, label) {
+  await p.getByRole('radio', { name: label, exact: true }).check();
+  await p.getByRole('button', { name: 'Confirm intent', exact: true }).click();
+}
+
+async function issue7Saved(p) {
+  await expectText(p, '#receipt-status', 'Saved');
+  const rendered = await p.evaluate(() => window.__issue7Receipt);
+  assert.ok(rendered);
+  assert.deepEqual(await p.evaluate(key => JSON.parse(localStorage.getItem(key)), issue7ReceiptKey), rendered);
+  assert.deepEqual(await p.evaluate(() => [localStorage.length, sessionStorage.length]), [1, 0]);
+  return rendered;
+}
+
+for (const [intent, label] of issue7Intents) {
+  test(`issue 7: ${label} confirms the reviewed evidence with a minimal read-back-verified receipt`, async () => {
+    const context = await browser.newContext(); const p = await context.newPage();
+    try {
+      const snapshot = await issue7Decision(p);
+      assert.equal(await p.locator('#confirm-intent').isDisabled(), true);
+      assert.equal(await p.evaluate(() => localStorage.length), 0);
+      await expectText(p, '#screen-decision', 'not a plan suitability verdict');
+      await expectText(p, '#screen-decision', 'not an account switch');
+      await expectText(p, '#screen-decision', 'not a submitted support ticket');
+      await expectText(p, '#screen-decision', 'not a scheduled reminder');
+      await p.locator('#api-key').fill('SENTINEL-ISSUE7-NEVER-STORED');
+      // Choice correction is allowed before confirmation and does not persist anything.
+      await p.getByRole('radio', { name: label === 'Help' ? 'Later' : 'Help', exact: true }).check();
+      await p.getByRole('button', { name: 'Back to cost evidence', exact: true }).click();
+      assert.deepEqual(await p.evaluate(() => window.__issue6CostSnapshot), snapshot);
+      await p.locator('#continue-decision').click();
+      await issue7Confirm(p, label);
+      const saved = await issue7Saved(p);
+      assert.equal(saved.intent, intent);
+      assert.equal(saved.version, 'issue-7-receipt-v1');
+      for (const field of ['kind', 'key', 'provenance', 'sourceProfileId', 'sourceApiId', 'sourceApiVersion', 'retrievedAt']) assert.equal(saved.document[field], snapshot.document[field]);
+      assert.deepEqual(saved.date, snapshot.date);
+      assert.deepEqual(saved.amounts, snapshot.amounts);
+      assert.deepEqual(saved.context, snapshot.context);
+      assert.equal(saved.assessmentStatus, snapshot.assessmentStatus);
+      assert.equal(saved.materialInconsistency, false);
+      assert.deepEqual(saved.reasons, []);
+      assert.equal(new Date(saved.confirmedAt).toISOString(), saved.confirmedAt);
+      assert.equal(saved.reviewId, [snapshot.document.provenance, snapshot.document.sourceProfileId, snapshot.document.key, snapshot.document.retrievedAt].join('|'));
+      assert.equal(saved.receiptId, `receipt:${saved.reviewId}`);
+      await expectText(p, '#decision-summary', saved.receiptId);
+      assert.doesNotMatch(await p.locator('#decision-summary').innerText(), /receipt:\[/);
+      await expectText(p, '#decision-summary', 'None — no material inconsistency recorded.');
+      assert.deepEqual(Object.keys(saved).sort(), ['version', 'reviewId', 'receiptId', 'document', 'date', 'amounts', 'context', 'assessmentStatus', 'materialInconsistency', 'reasons', 'missing', 'intent', 'confirmedAt'].sort());
+      assert.doesNotMatch(JSON.stringify(saved), /SENTINEL|apiKey|rawResponse|PayerParty|ContractAccount|contact|name/);
+      await expectText(p, '#decision-summary', snapshot.document.key);
+      await expectText(p, '#decision-summary', snapshot.document.retrievedAt);
+      await expectText(p, '#decision-summary', snapshot.date.meaning);
+      await expectText(p, '#decision-choice', label);
+      // The exposed rendered receipt is a read-only copy.
+      await p.evaluate(() => { window.__issue7Receipt.document.provenance = 'live-sap-sandbox'; });
+      assert.equal((await p.evaluate(() => window.__issue7Receipt)).document.provenance, snapshot.document.provenance);
+    } finally { await context.close(); }
+  });
+}
+
+for (const conflict of ['synthetic relation', 'linked currency']) {
+  test(`issue 7: ${conflict} permits only Help or Later and retains material reasons`, async () => {
+    const profile = issue6RegressionProfiles[1];
+    const seed = await issue6RegressionSeed(profile);
+    for (const label of ['Help', 'Later']) {
+      const context = await browser.newContext(); const p = await context.newPage();
+      try {
+        const payload = structuredClone(seed);
+        if (conflict === 'synthetic relation') {
+          payload.record.amounts.gross = '999.999';
+          await p.route(issue6RegressionDetailMatch(profile.key), route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(payload) }));
+        }
+        await issue6RegressionOpen(p, profile);
+        if (conflict === 'linked currency') {
+          const coverage = issue6RegressionCoverage(seed, 'ISSUE7-CURRENCY-CONFLICT');
+          coverage.rows[0].currency = 'EUR';
+          await issue6RegressionItems(p, profile, coverage);
+        }
+        const snapshot = await issue6RegressionReview(p);
+        assert.equal(snapshot.materialInconsistency, true);
+        await p.locator('#continue-decision').click();
+        assert.equal(await p.getByRole('radio', { name: 'Keep', exact: true }).isDisabled(), true);
+        assert.equal(await p.getByRole('radio', { name: 'Review options', exact: true }).isDisabled(), true);
+        await expectText(p, '#decision-restriction', 'only Help or Later');
+        // Even a forged enabled radio cannot bypass the confirmation guard.
+        await p.locator('input[value="keep"]').evaluate(input => {
+          input.disabled = false; input.checked = true; input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        await p.locator('#confirm-intent').evaluate(button => button.click());
+        assert.equal(await p.evaluate(() => localStorage.length), 0);
+        await issue7Confirm(p, label);
+        const saved = await issue7Saved(p);
+        assert.equal(saved.materialInconsistency, true);
+        assert.equal(saved.assessmentStatus, 'inconsistent');
+        assert.deepEqual(saved.reasons, snapshot.reasons);
+        assert.equal(saved.intent, label.toLowerCase());
+        await p.reload();
+        assert.deepEqual(await issue7Saved(p), saved);
+        for (const reason of saved.reasons) await expectText(p, '#decision-summary', reason);
+      } finally { await context.close(); }
+    }
+  });
+}
+
+for (const failure of ['write', 'read-back']) {
+  test(`issue 7: ${failure} failure stays unsaved and Retry preserves the original outcome`, async () => {
+    const context = await browser.newContext(); const p = await context.newPage();
+    try {
+      await p.addInitScript(({ key, failure }) => {
+        const originalSet = Storage.prototype.setItem;
+        const originalGet = Storage.prototype.getItem;
+        const gate = window.__storageGate = { fail: true, written: null, writes: [] };
+        Storage.prototype.setItem = function(k, value) {
+          if (this === localStorage && k === key) {
+            gate.writes.push(value);
+            if (gate.fail && failure === 'write') throw new DOMException('Injected quota error', 'QuotaExceededError');
+            gate.written = value;
+          }
+          return originalSet.call(this, k, value);
+        };
+        Storage.prototype.getItem = function(k) {
+          if (this === localStorage && k === key && gate.fail && gate.written && failure === 'read-back') return '{invalid read-back';
+          return originalGet.call(this, k);
+        };
+      }, { key: issue7ReceiptKey, failure });
+      await issue7Decision(p);
+      await issue7Confirm(p, 'Review options');
+      await expectText(p, '#receipt-status', 'Unsaved');
+      assert.doesNotMatch(await p.locator('#receipt-status').innerText(), /Saved/);
+      assert.equal(await p.getByRole('radio', { name: 'Review options', exact: true }).isChecked(), true);
+      assert.equal(await p.evaluate(() => window.__issue7Receipt), undefined);
+      const attempted = await p.evaluate(() => JSON.parse(window.__storageGate.writes[0]));
+      await p.evaluate(() => { window.__storageGate.fail = false; });
+      await p.getByRole('button', { name: 'Retry', exact: true }).click();
+      assert.deepEqual(await issue7Saved(p), attempted);
+      const writes = await p.evaluate(() => window.__storageGate.writes);
+      assert.equal(writes.length, 2);
+      assert.equal(writes[0], writes[1]);
+      assert.equal(await p.locator('#retry-receipt').isVisible(), false);
+    } finally { await context.close(); }
+  });
+}
+
+test('issue 7: duplicate confirmation records one receipt identity and one storage outcome', async () => {
+  const context = await browser.newContext(); const p = await context.newPage();
+  try {
+    await p.addInitScript(key => {
+      window.__receiptWrites = [];
+      const original = Storage.prototype.setItem;
+      Storage.prototype.setItem = function(k, value) {
+        if (this === localStorage && k === key) window.__receiptWrites.push(value);
+        return original.call(this, k, value);
+      };
+    }, issue7ReceiptKey);
+    await issue7Decision(p);
+    await issue7Confirm(p, 'Keep');
+    const saved = await issue7Saved(p);
+    await p.locator('#confirm-intent').evaluate(button => { button.click(); button.click(); });
+    await p.locator('#retry-receipt').evaluate(button => button.click());
+    assert.deepEqual(await issue7Saved(p), saved);
+    assert.equal(await p.evaluate(() => window.__receiptWrites.length), 1);
+  } finally { await context.close(); }
+});
+
+test('issue 7: refresh reopens original live, fixture and synthetic historical receipts with zero API requests', async () => {
+  const livePort = TEST_PORT + 150;
+  const transport = async url => ({
+    status: 200, ok: true, headers: { get: () => null },
+    text: async () => JSON.stringify(String(url).includes("A_BillingDocumentRequest('") ? { d: validRawRecord('LIVE7') } : rawOData([validRawRecord('LIVE7')]))
+  });
+  injectedServers.push(await startInjectedServer(livePort, transport));
+  for (const mode of ['live', 'fixture', 'synthetic']) {
+    const context = await browser.newContext(); const p = await context.newPage();
+    try {
+      if (mode === 'live') {
+        await p.goto(`http://127.0.0.1:${livePort}`);
+        await p.locator('#api-key').fill('SENTINEL-ISSUE7-LIVE');
+        await p.locator('#connect-live').click();
+        await p.locator('#records-body tr.selectable').waitFor();
+        await issue6RegressionSelect(p, 'LIVE7');
+        await issue6RegressionReview(p);
+        await p.locator('#continue-decision').click();
+      } else await issue7Decision(p, issue6RegressionProfiles[mode === 'synthetic' ? 1 : 0]);
+      await issue7Confirm(p, 'Later');
+      const saved = await issue7Saved(p);
+      const apiRequests = [];
+      p.on('request', request => { if (new URL(request.url()).pathname.startsWith('/api/')) apiRequests.push(request.url()); });
+      await p.reload({ waitUntil: 'networkidle' });
+      await p.locator('#screen-decision').waitFor({ state: 'visible' });
+      assert.deepEqual(await issue7Saved(p), saved);
+      assert.deepEqual(apiRequests, []);
+      await expectText(p, '#decision-history', 'Historical snapshot');
+      await expectText(p, '#decision-history', 'not a newly refreshed bill');
+      await expectText(p, '#provenance', mode === 'live' ? 'Live SAP sandbox' : (mode === 'fixture' ? 'Fixture demonstration' : 'Synthetic fixture'));
+      assert.equal(await p.locator('#api-key').inputValue(), '');
+      assert.equal(await p.evaluate(() => window.__issue6CostSnapshot), undefined);
+    } finally { await context.close(); }
+  }
+});
+
+for (const defect of ['corrupt JSON', 'unsupported version', 'missing provenance', 'unknown provenance']) {
+  test(`issue 7: ${defect} shows recovery without invented history and supports reset`, async () => {
+    const context = await browser.newContext(); const p = await context.newPage();
+    try {
+      await issue7Decision(p);
+      await issue7Confirm(p, 'Help');
+      const value = await issue7Saved(p);
+      if (defect === 'unsupported version') value.version = 'future-version';
+      if (defect === 'missing provenance') delete value.document.provenance;
+      if (defect === 'unknown provenance') value.document.provenance = 'unknown-source';
+      const corrupted = defect === 'corrupt JSON' ? '{not JSON' : JSON.stringify(value);
+      await p.evaluate(({ key, value }) => localStorage.setItem(key, value), { key: issue7ReceiptKey, value: corrupted });
+      const requests = [];
+      p.on('request', request => { if (new URL(request.url()).pathname.startsWith('/api/')) requests.push(request.url()); });
+      await p.reload({ waitUntil: 'networkidle' });
+      await expectText(p, '#receipt-status', 'Stored receipt could not be recovered');
+      assert.equal(await p.evaluate(() => window.__issue7Receipt), undefined);
+      assert.equal(await p.locator('#decision-summary').innerText(), '');
+      assert.doesNotMatch(await p.locator('#provenance').innerText(), /Live/);
+      assert.equal(await p.locator('#confirm-intent').isVisible(), false);
+      assert.deepEqual(requests, []);
+      await p.locator('#reset-demo').click();
+      await p.locator('#cancel-reset').click();
+      assert.equal(await p.evaluate(key => localStorage.getItem(key), issue7ReceiptKey), corrupted);
+      await p.locator('#reset-demo').click();
+      await p.locator('#confirm-reset').click();
+      assert.equal(await p.evaluate(() => localStorage.length), 0);
+      assert.equal(await p.locator('#screen-list').isVisible(), true);
+    } finally { await context.close(); }
+  });
+}
+
+test('issue 7: cancel reset keeps the receipt; confirmed reset clears receipt, review and API key', async () => {
+  const context = await browser.newContext(); const p = await context.newPage();
+  try {
+    await issue7Decision(p);
+    await issue7Confirm(p, 'Keep');
+    const saved = await issue7Saved(p);
+    await p.locator('#api-key').fill('SENTINEL-RESET7');
+    await p.getByRole('button', { name: 'Reset demo', exact: true }).click();
+    await p.getByRole('button', { name: 'Cancel', exact: true }).click();
+    assert.deepEqual(await issue7Saved(p), saved);
+    assert.equal(await p.locator('#api-key').inputValue(), 'SENTINEL-RESET7');
+    await p.locator('#reset-demo').click();
+    await p.locator('#confirm-reset').click();
+    assert.equal(await p.evaluate(() => localStorage.length), 0);
+    assert.equal(await p.locator('#api-key').inputValue(), '');
+    assert.equal(await p.locator('#screen-list').isVisible(), true);
+    assert.equal(await p.evaluate(() => window.__issue7Receipt), undefined);
+    assert.equal(await p.evaluate(() => window.__issue6CostSnapshot), undefined);
+    await expectText(p, '#records-body', 'No records loaded');
+    await p.reload();
+    assert.equal(await p.locator('#screen-list').isVisible(), true);
+    assert.equal(await p.locator('#screen-decision').isVisible(), false);
+  } finally { await context.close(); }
+});
+
+test('issue 7: source, detail refresh and selection changes invalidate unconfirmed intent', async () => {
+  for (const action of ['source', 'detail', 'selection']) {
+    const context = await browser.newContext(); const p = await context.newPage();
+    try {
+      await issue7Decision(p);
+      await p.getByRole('radio', { name: 'Keep', exact: true }).check();
+      if (action === 'source') {
+        await p.locator('#use-synthetic').click();
+        await issue6RegressionSelect(p, 'SYN-0001');
+      } else {
+        await p.getByRole('button', { name: 'Back to cost evidence', exact: true }).click();
+        await p.locator('#back-to-list').click();
+        if (action === 'detail') {
+          await p.locator('#reload-detail').click();
+          await p.waitForFunction(() => document.querySelector('#status').textContent.includes('Detail loaded'));
+        } else await issue6RegressionSelect(p, '9000000002');
+      }
+      await issue6RegressionReview(p);
+      await p.locator('#continue-decision').click();
+      assert.equal(await p.locator('input[name="intent"]:checked').count(), 0, action);
+      assert.equal(await p.locator('#confirm-intent').isDisabled(), true, action);
+      assert.equal(await p.evaluate(() => localStorage.length), 0);
+    } finally { await context.close(); }
+  }
+});
+
+test('issue 7: disconnect and new API results preserve the confirmed historical receipt', async () => {
+  const context = await browser.newContext(); const p = await context.newPage();
+  try {
+    await issue7Decision(p);
+    await issue7Confirm(p, 'Help');
+    const saved = await issue7Saved(p);
+    await p.locator('#disconnect').click();
+    assert.deepEqual(await p.evaluate(() => window.__issue7Receipt), saved);
+    await p.locator('#reopen-receipt').click();
+    assert.deepEqual(await issue7Saved(p), saved);
+    await p.locator('#use-synthetic').click();
+    await issue6RegressionSelect(p, 'SYN-0001');
+    const newSnapshot = await issue6RegressionReview(p);
+    assert.notEqual(newSnapshot.document.key, saved.document.key);
+    await p.locator('#continue-decision').click();
+    assert.deepEqual(await issue7Saved(p), saved);
+    await expectText(p, '#decision-history', 'Historical snapshot');
+    await expectText(p, '#provenance', 'Fixture demonstration');
+    await p.locator('#confirm-intent').evaluate(button => button.click());
+    assert.deepEqual(await issue7Saved(p), saved);
+  } finally { await context.close(); }
+});
+
+test('issue 7: a different reviewed document explains the existing receipt without changing its stored bytes', async () => {
+  const context = await browser.newContext(); const p = await context.newPage();
+  try {
+    const snapshot = await issue7Decision(p);
+    assert.equal(await p.getByRole('button', { name: 'Return to list', exact: true }).isVisible(), false);
+    await issue7Confirm(p, 'Keep');
+    const stored = await p.evaluate(key => localStorage.getItem(key), issue7ReceiptKey);
+    await p.getByRole('button', { name: 'Return to list', exact: true }).click();
+    assert.equal(await p.locator('#screen-decision').isVisible(), false);
+    assert.equal(await p.locator('#screen-list').isVisible(), true);
+    assert.equal(await p.locator('#records-body tr.selected').getAttribute('data-key'), snapshot.document.key);
+    assert.equal(await p.locator('#records-body tr.selected').evaluate(element => element === document.activeElement), true);
+    await issue6RegressionSelect(p, '9000000002');
+    await issue6RegressionReview(p);
+    await p.locator('#continue-decision').click();
+    await expectText(p, '#decision-history', `A saved receipt for document ${snapshot.document.key} already exists`);
+    await expectText(p, '#decision-history', 'The current document 9000000002 has NOT been recorded');
+    await expectText(p, '#decision-history', 'Reset demo is required to record a new intention (one receipt at a time)');
+    assert.equal(await p.locator('#intent-options').isVisible(), false);
+    assert.equal(await p.locator('#confirm-intent').isVisible(), false);
+    assert.equal(await p.evaluate(key => localStorage.getItem(key), issue7ReceiptKey), stored);
+    await p.getByRole('button', { name: 'Return to list', exact: true }).click();
+    assert.equal(await p.locator('#records-body tr.selected').getAttribute('data-key'), '9000000002');
+    assert.equal(await p.locator('#records-body tr.selected').evaluate(element => element === document.activeElement), true);
+    assert.equal(await p.evaluate(key => localStorage.getItem(key), issue7ReceiptKey), stored);
+  } finally { await context.close(); }
+});
+
+test('issue 7: desktop and mobile decision screens contain overflow and focus the heading on entry', async () => {
+  for (const width of [390, 1366]) {
+    const context = await browser.newContext({ viewport: { width, height: 844 } });
+    const p = await context.newPage();
+    try {
+      await issue7Decision(p);
+      const assertLayout = async () => {
+        assert.equal(await p.locator('#decision-title').evaluate(element => element === document.activeElement), true, `${width}px heading focus`);
+        assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${width}px page overflow`);
+      };
+      assert.equal(await p.locator('#decision-title').innerText(), 'Confirm your intention');
+      const labels = await p.locator('#decision-summary dt').allTextContents();
+      for (const label of ['Net amount', 'Tax amount', 'Gross amount']) assert.ok(labels.includes(label));
+      assert.doesNotMatch(await p.locator('#decision-summary').innerText(), /None — no material inconsistency recorded\./);
+      await assertLayout();
+      await expectText(p, '#decision-summary', 'Linked detail: not present; incomplete rows: no; currency conflict: no; source conflict: no');
+      assert.doesNotMatch(await p.locator('#decision-summary').innerText(), /"linkedDetailPresent"/);
+      await issue7Confirm(p, 'Help');
+      await p.reload();
+      await p.locator('#screen-decision').waitFor({ state: 'visible' });
+      assert.equal(await p.locator('#decision-title').innerText(), 'Saved receipt (historical)');
+      await assertLayout();
+      // Recovery also provides a way back to Screen 1 without deleting stored data.
+      await p.evaluate(key => localStorage.setItem(key, '{invalid'), issue7ReceiptKey);
+      await p.reload();
+      await p.locator('#screen-decision').waitFor({ state: 'visible' });
+      assert.equal(await p.locator('#decision-title').innerText(), 'Receipt could not be recovered');
+      await assertLayout();
+      await p.getByRole('button', { name: 'Return to list', exact: true }).click();
+      assert.equal(await p.locator('#screen-list').isVisible(), true);
+      assert.equal(await p.locator('#screen-decision').isVisible(), false);
+      assert.equal(await p.locator('#use-fixture').evaluate(element => element === document.activeElement), true);
+      assert.equal(await p.evaluate(key => localStorage.getItem(key), issue7ReceiptKey), '{invalid');
+    } finally { await context.close(); }
+  }
+});
+
 async function main() {
   let failures = [];
   try {

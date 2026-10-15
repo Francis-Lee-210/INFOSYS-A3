@@ -316,21 +316,77 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
       await tabToRow(p, '9000000001');
       assert.equal(await outline(p, '#records-body tr[data-key="9000000001"]'), 'solid 3px');
       await screenshot(p, 'keyboard-focus-region');
-      // Tabbing cycles through many controls (no trap) and Shift+Tab moves back.
-      const fingerprint = () => p.evaluate(() => {
-        const element = document.activeElement;
-        return element ? `${element.tagName}#${element.id}[${element.dataset?.key || ''}].${element.className}` : 'none';
+      // Tabbing on each of the three screens: every visible focus stop on the
+      // page is reached, no stop repeats in the sequence (no trap) and Shift+Tab
+      // reverses a forward step. The expected set is computed from the rendered
+      // page in the current screen state: enabled controls with tabindex >= 0,
+      // one stop per radio group, hidden screens and hidden controls excluded.
+      const focusStops = () => p.evaluate(() => {
+        const key = element => element.dataset?.key ? `row:${element.dataset.key}`
+          : element.type === 'radio' && element.name ? `radio:${element.name}`
+          : element.id ? `#${element.id}` : `${element.tagName.toLowerCase()}:${element.getAttribute('aria-label') || element.textContent.trim()}`;
+        const radios = new Set();
+        const stops = [];
+        for (const element of document.querySelectorAll('a[href], button, input, select, textarea, [tabindex]')) {
+          if (element.disabled || element.tabIndex < 0 || !element.checkVisibility({ visibilityProperty: true })) continue;
+          if (element.type === 'radio' && element.name) {
+            if (radios.has(element.name)) continue;
+            radios.add(element.name);
+          }
+          const id = key(element);
+          if (!stops.includes(id)) stops.push(id);
+        }
+        return stops;
       });
-      const visited = new Set();
-      for (let i = 0; i < 45; i++) {
-        await p.keyboard.press('Tab');
-        visited.add(await fingerprint());
-      }
-      assert.ok(visited.size >= 8, `Tab order did not cycle: ${[...visited].join(', ')}`);
-      const before = await fingerprint();
-      await p.keyboard.press('Shift+Tab');
-      const after = await fingerprint();
-      assert.notEqual(before, after);
+      const activeStop = () => p.evaluate(() => {
+        const element = document.activeElement;
+        if (!element || element === document.body) return 'body';
+        return element.dataset?.key ? `row:${element.dataset.key}`
+          : element.type === 'radio' && element.name ? `radio:${element.name}`
+          : element.id ? `#${element.id}` : `${element.tagName.toLowerCase()}:${element.getAttribute('aria-label') || element.textContent.trim()}`;
+      });
+      // Chromium moves focus to <body> when Tab passes the last stop instead of
+      // wrapping inside the page, so the no-repeat check is scoped to consecutive
+      // steps inside the expected set, and the Shift+Tab reversal is checked only
+      // between two stops that are both inside the expected set.
+      const checkTabbing = async label => {
+        const expected = await focusStops();
+        assert.ok(expected.length >= 2, `${label}: expected several focus stops, found ${expected.length}`);
+        console.log(`K05 ${label}: ${expected.length} focus stops`);
+        const visited = new Set();
+        const sequence = [];
+        for (let i = 0; i < expected.length + 3; i++) {
+          await p.keyboard.press('Tab');
+          const stop = await activeStop();
+          sequence.push(stop);
+          if (expected.includes(stop)) visited.add(stop);
+        }
+        assert.deepEqual([...visited].sort(), [...expected].sort(), `${label}: not every focus stop was reached`);
+        const inSet = sequence.filter(stop => expected.includes(stop));
+        for (let i = 1; i < inSet.length; i++) {
+          assert.notEqual(inSet[i], inSet[i - 1], `${label}: focus repeated on ${inSet[i]}`);
+        }
+        let previous = await activeStop();
+        for (let i = 0; i < expected.length + 3; i++) {
+          await p.keyboard.press('Tab');
+          const current = await activeStop();
+          if (expected.includes(previous) && expected.includes(current) && previous !== current) {
+            await p.keyboard.press('Shift+Tab');
+            assert.equal(await activeStop(), previous, `${label}: Shift+Tab from ${current} did not return to ${previous}`);
+            await p.keyboard.press('Tab');
+            assert.equal(await activeStop(), current, `${label}: Tab after Shift+Tab did not return to ${current}`);
+          }
+          previous = await activeStop();
+        }
+      };
+      await checkTabbing('list screen');
+      await pressRow(p, '9000000001');
+      await tabTo(p, 'review-cost-evidence'); await p.keyboard.press('Enter');
+      await p.locator('#screen-cost').waitFor({ state: 'visible' });
+      await checkTabbing('cost screen');
+      await tabTo(p, 'continue-decision'); await p.keyboard.press('Enter');
+      await p.locator('#screen-decision').waitFor({ state: 'visible' });
+      await checkTabbing('decision screen');
       assert.equal(calls.length, 0);
     });
   });
@@ -534,6 +590,36 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
         assert.equal(await receiptBytes(p), bytes);
         assert.equal(await p.locator('#records-body tr[data-key="LIVEROW9"]').count(), 1);
         await expectOnlyReceipt(p);
+        safeCalls(calls);
+      } finally { pending.release(); }
+    });
+  });
+
+  test('issue 9 S08: a stale live list arriving after a confirmed Reset cannot restore rows, provenance, key or storage', async () => {
+    const pending = gate();
+    await scenario(async ({ options }) => {
+      if (options.headers.APIKey === KEY) { await pending.promise; return response(envelope([rawRecord('AFTERRESET9')])); }
+      return response(envelope([]));
+    }, async ({ p, calls }) => {
+      try {
+        await saveFixture(p);
+        await connect(p);
+        const arrived = p.waitForResponse(r => new URL(r.url()).pathname === '/api/billing-requests' && r.request().headers()['x-sap-apikey'] === KEY);
+        await p.locator('#reopen-receipt').click();
+        await p.locator('#decision-title').waitFor({ state: 'visible' });
+        await p.locator('#reset-demo').click();
+        await p.locator('#confirm-reset').click();
+        await p.waitForFunction(() => !localStorage.getItem('planReviewSnapshot.receipt'));
+        pending.release(); await (await arrived).finished();
+        assert.equal(await p.locator('#records-body tr[data-key="AFTERRESET9"]').count(), 0);
+        await text(p, '#provenance', /Not connected/);
+        await text(p, '#records-body', /No records loaded/);
+        assert.equal(await p.locator('#api-key').inputValue(), '');
+        await expectNoStorage(p);
+        assert.equal(await p.evaluate(() => window.__issue6CostSnapshot), undefined);
+        assert.equal(await p.locator('#use-fixture').evaluate(element => element === document.activeElement), true);
+        assert.deepEqual(await visibleScreens(p), ['screen-list']);
+        assert.equal(calls.length, 1);
         safeCalls(calls);
       } finally { pending.release(); }
     });

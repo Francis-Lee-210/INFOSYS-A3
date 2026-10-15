@@ -11,6 +11,9 @@ export function registerIssue27Tests({ test, browser, startInjectedServer, injec
     await p.goto(`http://127.0.0.1:${currentPort}`);
     return { p, context };
   }
+  async function expectScreenName(p, heading, title) {
+    await p.waitForFunction(({ heading, title }) => document.querySelector('.title-row h1')?.textContent === heading && document.title === title, { heading, title });
+  }
 
   test('issue 27: blocked storage at start-up stays on Screen 1 with a clear notice', async () => {
     const { p, context } = await pageWithInit(() => Object.defineProperty(window, 'localStorage', {
@@ -86,6 +89,44 @@ export function registerIssue27Tests({ test, browser, startInjectedServer, injec
       await p.locator('#screen-decision').waitFor({ state: 'visible' });
       assert.match(await p.locator('#decision-title').innerText(), /Receipt could not be recovered/);
       assert.match(await p.locator('#receipt-status').innerText(), /Reset demo/);
+      await expectScreenName(p, 'Decide and save a receipt', 'Decision and receipt – Plan Review Snapshot');
+    } finally { await context.close(); }
+  });
+
+  test('issue 27: heading and title follow list, cost, decision, Back to cost, and Back to list', async () => {
+    const { p, context } = await pageWithInit();
+    try {
+      await expectScreenName(p, 'Choose a document to review', 'Choose a document – Plan Review Snapshot');
+      await p.locator('#use-fixture').click();
+      await p.locator('#records-body tr[data-key="9000000001"]').waitFor({ state: 'visible' });
+      await p.locator('#records-body tr[data-key="9000000001"]').click();
+      await p.locator('#review-cost-evidence').click();
+      await expectScreenName(p, 'Review cost evidence', 'Cost evidence – Plan Review Snapshot');
+      await p.locator('#continue-decision').click();
+      await expectScreenName(p, 'Decide and save a receipt', 'Decision and receipt – Plan Review Snapshot');
+      await p.locator('#back-to-evidence').click();
+      await expectScreenName(p, 'Review cost evidence', 'Cost evidence – Plan Review Snapshot');
+      await p.locator('#back-to-list').click();
+      await expectScreenName(p, 'Choose a document to review', 'Choose a document – Plan Review Snapshot');
+    } finally { await context.close(); }
+  });
+
+  test('issue 27: saved receipt refresh and Return to list update heading and title', async () => {
+    const { p, context } = await pageWithInit();
+    try {
+      await p.locator('#use-fixture').click();
+      await p.locator('#records-body tr[data-key="9000000001"]').waitFor({ state: 'visible' });
+      await p.locator('#records-body tr[data-key="9000000001"]').click();
+      await p.locator('#review-cost-evidence').click();
+      await p.locator('#continue-decision').click();
+      await p.getByRole('radio', { name: 'Later', exact: true }).check();
+      await p.locator('#confirm-intent').click();
+      await p.locator('#receipt-status').filter({ hasText: 'Saved' }).waitFor({ state: 'visible' });
+      await p.reload();
+      await p.locator('#screen-decision').waitFor({ state: 'visible' });
+      await expectScreenName(p, 'Decide and save a receipt', 'Decision and receipt – Plan Review Snapshot');
+      await p.locator('#decision-return-to-list').click();
+      await expectScreenName(p, 'Choose a document to review', 'Choose a document – Plan Review Snapshot');
     } finally { await context.close(); }
   });
 }

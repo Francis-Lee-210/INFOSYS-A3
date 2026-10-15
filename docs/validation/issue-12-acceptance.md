@@ -51,6 +51,18 @@ git diff --check
 
 `ISSUE12_QA_TMP` optionally selects a scratch directory for the inline-script syntax check. This execution used OpenCode's approved temporary directory, not repository build output. Runtime/browser, tested artifact identity, actual pass counts, source/link checks and visual notes are recorded with the final run below and in the [output file](issue-12-artifact-check-results.txt). Automated checks are not an actual human walkthrough or full accessibility audit.
 
+### Final executed artifact checks
+
+Tested artifact/code identity: **`1b69b5e81e2611ba548f30833895dbcee6eebd5f`**, after integration of main `f829c6c`. macOS; **Node v24.20.0**, **Playwright 1.62.1**, installed headless **Chrome 155.0.8059.80**. The earlier development iterations used Chrome 155.0.8059.40; the final captured browser reports .80. No version is inferred from the old app logs.
+
+- **39/39 artifact groups PASS**, unfiltered: ten states at 1280/1366/390px, three pending-resolution outcomes, correction/credit/stale manual result, history across failed source, old-receipt/new-selection notice, keyboard navigation, structure/selected-palette contrast and full SVG rendering. External requests **0**; browser-storage records **0**.
+- **81 authored relative file/anchor links PASS**; HTML parser/unique IDs/three-screen structure and both SVG XML checks pass. All four Rae manifest counts/hashes, v4/spec/V3 hashes and byte-identical original-model extraction pass. External authenticated-source limits remain disclosed, not marked verified by these checks.
+- Inline JavaScript and artifact-check syntax pass. Selected normal-text palette ratios: **15.24, 7.17, 10.17, 8.68, 8.32**, all above 4.5:1; this is not a full accessibility certification.
+- Visually inspected the complete new map, the existing comparison matrix and the primary original model images. Inspected every wireframe variant/screen, including temporary full-state captures for not-checked/unavailable/absent/complete, invalid/empty, loaded selection, conflict, ordinary decision and changed-selection history. Kept only seven useful screenshot files below; no clipping/overlap/page overflow observed in the inspected design states. All labels/limitations and focus routes agree with the map/rationale.
+- **Application suite deliberately not run.** App, frozen sources and earlier evidence are byte-unchanged relative to integrated main. `git diff --check` passes. Subsequent updates record results/links/screenshots only, not changed wireframe/process/QA logic.
+
+These outcomes complete the **agent checks**, not the pending human/model-owner/#15 fields in the criteria table. The PR remains draft.
+
 ### Focused screenshot evidence
 
 - [Select / source / scope](issue-12-wireframe-select-desktop.png)

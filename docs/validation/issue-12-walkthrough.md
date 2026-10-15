@@ -78,6 +78,8 @@ The user/team must fill only what actually occurred, keeping role (e.g. teammate
 
 Automated checks are reproducible with `node docs/validation/issue-12-artifact-check.mjs` using Playwright and an installed browser (instructions in the acceptance record). They stage ten synthetic variants at desktop/mobile widths, test correction/choice/receipt/pending guards, inspect layout/contrast and render the complete SVG. The final command output is linked from acceptance. **Neither a pass nor agent visual inspection fills the human-results table above.**
 
+Final artifact run on `1b69b5e81e2611ba548f30833895dbcee6eebd5f`: **39/39 PASS**, with 81 authored relative links/source/markup checks passing separately. Node v24.20.0, Playwright 1.62.1 and installed headless Chrome 155.0.8059.80 on macOS. Zero external requests and browser-storage records. Full diagram and all state variants were visually inspected, with representative captures retained; human evaluation is still **Pending — not yet conducted**.
+
 ### Handoff to #9 / #15—not changes to another member's work
 
 - **#9:** check comprehension of source/date/basis, keyboard correction/recovery and pending-choice invalidation in the integrated app, using its actual participant/heuristic evidence. This wireframe has related semantics but is not a replacement acceptance run or a report of newly reproduced app bugs.

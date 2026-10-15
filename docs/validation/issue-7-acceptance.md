@@ -1,5 +1,7 @@
 # Issue #7 acceptance evidence
 
+**Current integration follow-up:** [combined-branch validation](#follow-up-integration-validation--15-october-2026) records the separate run after merging the preserved review commits onto current `main`. The earlier concurrent-merge status below is historical.
+
 **Review follow-up:** see [PR #21 review validation](#pr-21-review-validation--15-october-2026) below for the new receipt-v2 run. The original evidence and screenshots below are retained as history, not replaced or reinterpreted.
 
 ## Original implementation validation (receipt v1)
@@ -113,3 +115,15 @@ New screenshots (original `issue-7-desktop.png` / `issue-7-mobile.png` remain un
 Visual inspection checked the confirmation, historical and both reset-failure outputs plus desktop/mobile wrapping. At 1280px and 1366px the input/hint are **450.39px wide**, hint **37.69px tall**; at 390px they are **320px wide**, hint **75.38px tall**. Controls wrap without squeezing the key column; the mobile summary stacks and long receipt identity wraps within the page.
 
 This is fixture/synthetic and injected HTTP/storage validation only. **No new authenticated SAP request or live acceptance.** Wider pagination/recovery #8, full integration/accessibility #9, live workflow #10 and comparison documentation #11 remain outside this follow-up. Resources and #5/#6 evidence are unchanged.
+
+## Follow-up integration validation — 15 October 2026
+
+The maintainer explicitly authorised a follow-up PR after #21 merged without its review corrections. Refetched both branches and checked all open PRs: none existed. `origin/main` was `643755eeb30dacb3b548580948ee6a96d7ee8af3`; `origin/issue-7-intent-receipt` was `55e8a9986ccff8610d0accf879a95a1ca1f7a398`. #7 was already closed and was not reopened.
+
+Created `fix/receipt-evidence-and-recovery` from that current `origin/main`, then merged `origin/issue-7-intent-receipt` with merge commit **`cb8bf21514e8cec4d0ad9c3e9ddf6d847f93f5d9`**. No conflicts or genuine integration problems were found. The combined application/test files are byte-identical to the reviewed correction branch; no fixes were reimplemented. Current main's candidate-comparison work is retained unchanged.
+
+Verified ancestry of the original PR head `498e15d` and all three follow-up commits **`3a9c2a2`, `dd11be7`, `55e8a99`**. Their original SHAs and Rae's earlier history remain intact. No amend, squash, rebase, cherry-pick, reset or force-push was used.
+
+This validation is a **new, unfiltered complete browser run on the combined branch**, not a reuse of the earlier 71-test result. The new output is appended separately in [issue-7-browser-test-results.txt](issue-7-browser-test-results.txt). Screenshot capture was not enabled: the visible application is unchanged from the existing seven review screenshots, which remain preserved. Test mode remains fixtures/synthetic plus injected HTTP/storage; no authenticated SAP calls or new live acceptance. Receipt-v1 recovery and the #8/#9/#10/#11 scope boundaries above are unchanged.
+
+**Combined-branch result: 71/71 PASS** (all original 53 scenarios plus the 18 review regressions), Node **v24.20.0**, Playwright **1.62.1**, installed headless Chrome **155.0.8059.40** on macOS. `node --check` passed on every application/test JS/MJS file; `git diff --check` passed for the working changes and the full diff against current main. No integration-specific code changes were needed. Existing screenshot bytes are unchanged.

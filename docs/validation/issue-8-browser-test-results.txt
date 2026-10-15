@@ -12,7 +12,7 @@ Unfiltered; exit code 0. Raw output:
 > test
 > node tests/browser.mjs
 
-Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright /private/var/folders/gr/c764x1r91mgcd2r25jm77cn40000gn/T/opencode/receipt-review-tools/node_modules/playwright
+Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright <task-temp>/opencode/receipt-review-tools/node_modules/playwright
 PASS fixture provenance and exact source labels
 PASS raw records empty unusable and mixed are distinct
 PASS malicious keys do not reach upstream transport
@@ -106,7 +106,7 @@ TEST_FILTER unset. Exit code 0. 71 inherited + 42 Issue #8 groups. Raw output:
 > test
 > node tests/browser.mjs
 
-Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright /private/var/folders/gr/c764x1r91mgcd2r25jm77cn40000gn/T/opencode/receipt-review-tools/node_modules/playwright
+Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright <task-temp>/opencode/receipt-review-tools/node_modules/playwright
 PASS fixture provenance and exact source labels
 PASS raw records empty unusable and mixed are distinct
 PASS malicious keys do not reach upstream transport
@@ -232,7 +232,7 @@ No real key, raw live-response dump, specification/resource change or earlier-ev
 
 === PR #24 item-evidence review repair — 16 October 2026 (NZDT) ===
 Original reviewed head: 8aaa0737e5f01da78512b50c1db6df285d5afd80 (remote unchanged; PR open).
-Original checkout after maintainer-completed handover: /Users/rione1/Downloads/INFOSYS 704/A3/INFOSYS-A3.
+Original checkout after maintainer-completed handover: `<local-checkout>`.
 No new worktree/clone/stash or changes to the parked branch/worktree. Existing commits preserved.
 Independent untouched pre-repair baseline: complete unfiltered 113/113 PASS, exit 0, same runtime below.
 
@@ -251,7 +251,7 @@ Raw final output:
 > test
 > node tests/browser.mjs
 
-Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright /private/var/folders/gr/c764x1r91mgcd2r25jm77cn40000gn/T/opencode/receipt-review-tools/node_modules/playwright
+Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright <task-temp>/opencode/receipt-review-tools/node_modules/playwright
 PASS fixture provenance and exact source labels
 PASS raw records empty unusable and mixed are distinct
 PASS malicious keys do not reach upstream transport
@@ -386,3 +386,4 @@ All 125 tests passed.
 Final review checks: all application/test JS/MJS node --check PASS; git diff --check PASS.
 Visual checks: desktop 1366px/mobile 390px pending focus/status, current restricted choices, repeated-failure limits and no page overflow PASS.
 Only injected/synthetic transport and sentinel keys. No authenticated SAP call or local SAP credential-file access. Historical evidence/screenshots retained unchanged.
+Redaction note (issue #9 AC23 audit): local machine paths were replaced with placeholders; no test output, counts or conclusions were altered.

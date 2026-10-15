@@ -111,7 +111,7 @@ Inspection checks readable wrapping, useful input/control widths, visible focus,
 
 ## PR #24 review correction: item-evidence lifecycle
 
-16 October 2026 (NZDT). Verified PR #24 remained open and unchanged at reviewed head **`8aaa0737e5f01da78512b50c1db6df285d5afd80`**. Work resumed only after the maintainer completed the safe handover to the **original** checkout `/Users/rione1/Downloads/INFOSYS 704/A3/INFOSYS-A3`. The parked `chore/park-issue-8-checkout` branch/worktree was left untouched. No worktree, clone, replacement checkout or automatic stash was created; no history was rewritten.
+16 October 2026 (NZDT). Verified PR #24 remained open and unchanged at reviewed head **`8aaa0737e5f01da78512b50c1db6df285d5afd80`**. Work resumed only after the maintainer completed the safe handover to the **original** checkout `<local-checkout>`. The parked `chore/park-issue-8-checkout` branch/worktree was left untouched. No worktree, clone, replacement checkout or automatic stash was created; no history was rewritten.
 
 ### Independently reproduced before implementation changes
 
@@ -153,3 +153,4 @@ New files preserve all earlier screenshots. These configured live-mode labels re
 | Repeated failure / current unavailable evidence and retained header | [image](issue-8-review-item-unavailable-1366.png) | [image](issue-8-review-item-unavailable-390.png) |
 
 Visual inspection checked status wrapping, visible focus, blocked versus available actions, current coverage/conflict labels and no page-level overflow. The monetary table retains its existing contained mobile scrolling. Runtime remains macOS, Node **v24.20.0**, Playwright **1.62.1**, installed headless Chrome **155.0.8059.40**. The appended [browser results](issue-8-browser-test-results.txt) distinguish this review run from the original 113-test evidence.
+Redaction note (issue #9 AC23 audit): local machine paths were replaced with placeholders; no test output, counts or conclusions were altered.

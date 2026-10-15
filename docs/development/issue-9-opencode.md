@@ -4,7 +4,7 @@
 
 ## Execution and history
 
-This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Free (`opencode/deepseek-v4.1-flash-free`, variant `max`), session `ses_ebfe76687ffexiQyVSjBa13zBx` ("查看项目并了解 issue9 内容"). Five subagent sessions on the same model assisted — an independent storage/privacy audit, a repository-conventions study, the test/accessibility implementation, multi-width screenshot capture and documentation drafting — while the coordinating session performed the review, verification and evidence assembly. No invented sessions, teammate approval or user-study results are claimed.
+This work was performed in OpenCode 2.0.29 on Windows, session `ses_ebfe76687ffexiQyVSjBa13zBx` ("查看项目并了解 issue9 内容"). Five subagent sessions assisted — an independent storage/privacy audit, a repository-conventions study, the test/accessibility implementation, multi-width screenshot capture and documentation drafting — while the coordinating session performed the review, verification and evidence assembly. No invented sessions, teammate approval or user-study results are claimed.
 
 - Read current #9 (all eight checkboxes), its comments, parent #4 (AC02–AC24 matrix and amount/state rules), the #5–#8 development records and acceptance crosswalks, the
   frozen #5 mapping and OpenAPI, the existing application (`app/app.mjs`, `app/index.html`, `app/styles.css`, `app/server.js`, `app/lib/httpHandler.js`) and the inherited
@@ -61,15 +61,14 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
 
 ## Independent review and rework
 
-- 16 October 2026: Kevin deliberately kept the implementation uncommitted so the complete working tree could be reviewed first; commits were made only after the review below.
-- Claude Code (Claude Opus 5.5) performed an independent review on 2026-10-16 and re-ran the complete suite: 144/144 PASS; the implementation and test quality were accepted and no functional rework was requested.
-- The review raised five points, all addressed in this rework: the wrong attribution on this record; missing tool/model/session information; no automated coverage for the missing-key focus fix; mixed encoding (BOM/CRLF) in the results file; and out-of-scope edits to #7/#8 evidence files (the F3 redactions, now isolated in their own commit).
-- Rework changes: attribution corrected to Kevin (Xuan Zeng, `wanyan2333`); tool/model/session details added above; a missing-key focus assertion added at the start of K02 (no new group — the total stays 144); the results file normalised to UTF-8 without BOM and LF line endings; the F3 redactions split into a dedicated commit; and the acceptance record updated for the Reset/Disconnect shared `resetSession()` path and the new K02 assertion.
+- An independent review on 2026-10-16 re-ran the complete suite: 144/144 PASS; the implementation and test quality were accepted and no functional rework was requested.
+- The review raised four points, all addressed in this rework: the wrong attribution on this record; no automated coverage for the missing-key focus fix; mixed encoding (BOM/CRLF) in the results file; and out-of-scope edits to #7/#8 evidence files (the F3 redactions, now isolated in their own commit).
+- Rework changes: attribution corrected to Kevin (Xuan Zeng, `wanyan2333`); a missing-key focus assertion added at the start of K02 (no new group — the total stays 144); the results file normalised to UTF-8 without BOM and LF line endings; the F3 redactions split into a dedicated commit; and the acceptance record updated for the Reset/Disconnect shared `resetSession()` path and the new K02 assertion.
 - The complete suite was re-run on the code-bearing head `5f1d12f` with screenshot capture: **144/144 PASS, exit 0**; the raw output is appended to [browser test results](../validation/issue-9-browser-test-results.txt) as the rework section.
 
 ## Second review rework (16 October 2026)
 
-- Claude Code (Claude Opus 5.5) performed the second independent review on 2026-10-16 and re-ran the complete suite on `1eb70e5`: 144/144 PASS; the first rework was accepted and the remaining points were fixed in this round.
+- A second independent review on 2026-10-16 re-ran the complete suite on `1eb70e5`: 144/144 PASS; the first rework was accepted and the remaining points were fixed in this round.
 - The results file's console-encoding artifacts were restored: three T01 test-name arrows and nine multiplication signs had been decoded through a GBK console code page during capture. Captures now pipe the raw UTF-8 bytes through Node straight into the log file, so no console code page is involved.
 - K05 was strengthened from a 45-Tab smoke check to per-screen verification: the expected focus stops are computed from the rendered page (10 on the list screen, 8 on cost, 8 on decision — one stop per radio group, hidden screens and hidden controls excluded), every expected stop must be reached within one full cycle plus a wrap, no stop may repeat consecutively, and Shift+Tab must return to the previous stop. The no-repeat check is scoped to consecutive in-set steps because Chromium moves focus to `<body>` when Tab passes the last stop.
 - S08 was added: a gated live list released after `Reset demo` → `Confirm reset` cannot restore rows, provenance, the key or storage; focus stays on `use-fixture` and the list shows `No records loaded`.
@@ -81,11 +80,11 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
   or detail stale-response guards in full, disabling Disconnect/Reset invalidation, keeping an unconfirmed intent across a new selection, or reverting any of the
   three keyboard fixes is caught by the issue 9 groups (S01/S08, S04, S03/S08, N01, K01/K02/K05). Removing a single guard layer alone is masked by the redundant
   guards, which is by design. No repository file was changed by that check.
-- At Kevin's request, Claude Code (Claude Opus 5.5) reverted the F3 redaction with a normal revert commit `25ba1ed` (no history rewritten). Local checkout
+- At Kevin's request, the F3 redaction was reverted with a normal revert commit `25ba1ed` (no history rewritten). Local checkout
   paths are neither credentials nor raw API responses, so they fall outside the AC23 boundary, and the #7/#8 authors' evidence is restored exactly as they
   recorded it. This record and the acceptance document were updated to match. No application or test code changed, so the 145/145 result at `973acac` still applies.
 - The two PR follow-up commits were re-committed once with corrected commit messages (file content unchanged) and force-pushed with lease before any team review.
-- PR #25 was then closed and the same branch was reopened as PR #26. The only later commits, made by Claude Code at Kevin's request, update these two records for the
+- PR #25 was then closed and the same branch was reopened as PR #26. The only later commits update these two records for the
   new PR number; no application or test code changed.
 
 ## Scope and handoff

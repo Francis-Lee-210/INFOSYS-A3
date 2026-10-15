@@ -4,7 +4,7 @@
 
 ## OpenCode 环境
 
-- OpenCode CLI 1.19.0（Homebrew 安装），模型 `openai/gpt-6.1-sol`，通过 ChatGPT 账号登录。
+- OpenCode CLI 1.19.0（Homebrew 安装），使用已有账号配置。
 - 实际 session：`ses_ec17307f1ffeDFqpzIXjPnwsQC`，标题 "A3 Issue 7 - intent receipt"。三轮都在同一个 session 内完成。
 - 应用代码和测试由 OpenCode 生成。OpenCode 在每轮中不执行 git 操作；提交在审查与独立测试之后进行。
 
@@ -38,7 +38,7 @@
 
 ## PR #21 review follow-up — 15 October 2026
 
-The earlier Rae development/review record above is preserved. This follow-up was performed in OpenCode by GPT-6.1 Sol (`openai/gpt-6.1-sol`), session `ses_ec13d22feffd4d4LYSG4lIUe6g`, in the isolated `INFOSYS-A3-receipt-review` worktree on the existing `issue-7-intent-receipt` branch. No subagents were used. No existing commits were rewritten; Issue #11 files and unrelated worktrees were not edited.
+The earlier Rae development/review record above is preserved. This follow-up was performed in OpenCode, session `ses_ec13d22feffd4d4LYSG4lIUe6g`, in the isolated `INFOSYS-A3-receipt-review` worktree on the existing `issue-7-intent-receipt` branch. No subagents were used. No existing commits were rewritten; Issue #11 files and unrelated worktrees were not edited.
 
 - Fetched PR #21 at `498e15d2fcfd22e26f50c99d3d864258c63da599`; it had not advanced. Read current #7 and parent #4 requirements. No applicable `AGENTS.md` was present.
 - Reproduced the five findings before implementation changes: gated source-response provenance mismatch; lost partial/continuation/scope metadata after reload; deleted storage described as kept after a read-back exception; BODY focus after Enter; 103px key field at 1280px. The original 53 tests passed on this checkout. One initial success-gate expected-count typo was corrected and the targeted provenance failure reproduced again before fixing application code.
@@ -59,7 +59,7 @@ Verified the actual frozen PR diff: nine original files, no receipt-v2 fixes. Ve
 
 ## Follow-up PR integration — 15 October 2026
 
-The maintainer subsequently authorised a new follow-up PR, superseding the earlier no-new-PR constraint. Continued in the same OpenCode session/worktree with the same truthful tool/model disclosures above; no subagents used.
+The maintainer subsequently authorised a new follow-up PR, superseding the earlier no-new-PR constraint. Continued in the same OpenCode session/worktree with the same truthful disclosures above; no subagents used.
 
 - Refetched `main` and `issue-7-intent-receipt`; checked all open PRs through GitHub API (none existed). Main was `643755e`, corrections branch `55e8a99`. #7 was already closed and was not reopened.
 - Created `fix/receipt-evidence-and-recovery` **from `origin/main`**, merged the remote correction branch with `--no-ff`, producing `cb8bf21514e8cec4d0ad9c3e9ddf6d847f93f5d9`. No conflicts; application/test files and existing evidence match the correction branch exactly. No reimplementation or integration-specific code change was necessary. Current main's unrelated work, including the candidate-comparison merge, is preserved unchanged.

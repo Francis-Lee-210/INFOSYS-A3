@@ -77,7 +77,7 @@ Output (external module path retained as emitted):
 > test
 > node tests/browser.mjs
 
-Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright <task-temp>/opencode/receipt-review-tools/node_modules/playwright
+Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright /private/var/folders/gr/c764x1r91mgcd2r25jm77cn40000gn/T/opencode/receipt-review-tools/node_modules/playwright
 PASS fixture provenance and exact source labels
 PASS raw records empty unusable and mixed are distinct
 PASS malicious keys do not reach upstream transport
@@ -179,7 +179,7 @@ External Playwright package version: 1.62.1. Fixture/synthetic and injected HTTP
 > test
 > node tests/browser.mjs
 
-Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright <task-temp>/opencode/receipt-review-tools/node_modules/playwright
+Runtime: v24.20.0; browser: Chromium/Chrome 155.0.8059.40; Playwright /private/var/folders/gr/c764x1r91mgcd2r25jm77cn40000gn/T/opencode/receipt-review-tools/node_modules/playwright
 PASS fixture provenance and exact source labels
 PASS raw records empty unusable and mixed are distinct
 PASS malicious keys do not reach upstream transport
@@ -259,4 +259,3 @@ All 71 tests passed.
 
 Combined-branch checks: node --check on all application/test JS/MJS PASS; git diff --check (working changes and origin/main...HEAD) PASS.
 Prior run outputs/screenshots retained unchanged. No completion of #8/#9/#10/#11 or new live SAP acceptance claimed.
-Redaction note (issue #9 AC23 audit): local machine paths were replaced with placeholders; no test output, counts or conclusions were altered.

@@ -74,7 +74,7 @@ def validate(source, target):
         assert anchor in {slug(x) for x in headings}, f"Missing anchor: {source.name} -> {target}"
     targets += 1
 
-authored = [*sorted((ROOT / "docs/design").glob("issue-12-*.md")), ROOT / "docs/validation/issue-12-walkthrough.md", ROOT / "docs/validation/issue-12-acceptance.md", ROOT / "docs/development/issue-12-opencode.md"]
+authored = [*sorted((ROOT / "docs/design").glob("issue-12-*.md")), ROOT / "docs/validation/issue-12-walkthrough.md", ROOT / "docs/validation/issue-12-acceptance.md", *sorted((ROOT / "docs/development").glob("issue-12-*.md"))]
 for path in authored:
     assert path.exists(), path
     for target in re.findall(r"!?\[[^\]]*\]\((<[^>]+>|[^\s)]+)\)", path.read_text()):

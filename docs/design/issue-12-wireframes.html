@@ -147,7 +147,7 @@
     byId('load').hidden=state.loaded;
     const failure=state.loaded && ['failed','invalid'].includes(state.scenario), empty=state.loaded && state.scenario==='empty';
     byId('read-failure').hidden=!failure;
-    byId('read-failure').textContent=state.scenario==='invalid' ? 'Required header data invalid (simulation): no valid amount/date/currency contract. Do not create a financial snapshot. Correct the read before reviewing.' : 'Connection / read failed (simulation). This is not an empty result. Retry or return to connection; no fixture is substituted for live data because this entire artifact is synthetic.';
+    byId('read-failure').textContent=state.scenario==='invalid' ? 'Required header data invalid (simulation): no valid amount/date/currency contract. Do not create a financial snapshot. Correct the read before reviewing.' : 'Connection / read failed (simulation). This is not an empty result. Retry or return to connection. No live account or financial evidence was loaded.';
     byId('empty').hidden=!empty;byId('read-actions').hidden=!failure&&!empty;
     const usable=state.loaded&&!failure&&!empty;
     byId('read-status').textContent=!state.loaded ? 'No example read yet.' : failure ? 'Illustrated read failed; no usable rows.' : empty ? 'Valid illustrated response: no records. Not zero spending.' : '2 loaded synthetic records in this bounded example; not complete account or annual history. Select one explicitly.';

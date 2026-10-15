@@ -2,6 +2,8 @@
 
 16 October 2026 NZDT. **Agent-executable design package prepared; mandatory human evidence remains pending. PR must remain draft.** Related to [#12](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/12), not an automatic issue closure. Starting main: **`7a368f529b60edae730afe2b8b1a0f9513d65e5e`** (includes #24 and its item-retry correction).
 
+**Integrated main:** `f829c6c` (concurrent PR #26/#9), included conflict-free by normal merge `f885d082bccad9814754032178f16ee6a8f17802`. Its application/earlier evidence changes are preserved, not authored or retested by #12. Final checks below concern only this design package; new repository instructions are applied, with [tool disclosure kept separately](../development/issue-12-tool-disclosure.md).
+
 ## Artifact index and independent use
 
 | Artifact | Purpose |

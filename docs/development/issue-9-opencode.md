@@ -11,9 +11,9 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
   browser suite. No applicable `AGENTS.md` was present.
 - Created `feat/9-three-screen-integration` from the merged #8 review head **`7a368f529b60edae730afe2b8b1a0f9513d65e5e`** (PR #24 merge, 16 October 2026). That base is
   the dependency this slice was authorised to build on; no other branch or worktree was modified and no history was rewritten.
-- The #9 work is committed on that base as the fix `3c48fe8`, test `5f1d12f`, F3 redaction `7fe272f`, evidence `ce6a81c`, development record `b322c72` and line-count correction `1eb70e5` commits, plus the second-review commits — encoding fix `d9d7a3e`, test `973acac` (new code-bearing head) and the documentation commit that carries this record:
+- The #9 work is committed on that base as the fix `3c48fe8`, test `5f1d12f`, F3 redaction `7fe272f` (reverted by `25ba1ed` during PR review), evidence `ce6a81c`, development record `b322c72` and line-count correction `1eb70e5` commits, plus the second-review commits — encoding fix `d9d7a3e`, test `973acac` (new code-bearing head) and the documentation commit that carries this record:
   modified `app/app.mjs`, `app/index.html`, `app/styles.css`, `app/tests/browser.mjs`, new `app/tests/issue-9.mjs`, and 29 `docs/validation/issue-9-*.png` captures.
-  The branch has no upstream ref; nothing was pushed and no PR was made, and the commits await team review.
+  The branch was published as PR #25 after the second review and awaits team approval.
 - Depended on, without refactoring: #7's receipt v2 lifecycle (single `planReviewSnapshot.receipt` key, exact validated schema, write-plus-read-back verification, historical
   provenance) and #8's connection/navigation recovery (generation-bound reads, explicit Retry read, bounded continuation, validated destinations).
 
@@ -43,7 +43,8 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
 4. **AC23 storage/privacy audit (read-only).** Exactly one storage write exists in shipped code — the minimal receipt with whitelisted fields; keys travel only in request
    headers, never URLs; fixtures are synthetic; the harness writes no files during tests. Findings: **F1** development scratch probes were deleted before final (confirmed
    absent); **F2** `tools/sap_api_probe_result.json` (gitignored, 61 KB) contains live-sandbox sample data — packaging must use `git archive`, never a folder copy; **F3**
-   earlier evidence files contained local machine paths — redacted with placeholders in this documentation pass.
+   earlier evidence files contained local machine paths — first redacted with placeholders, then reverted during PR #25 review because paths are neither credentials
+   nor raw API responses (see the PR review follow-up below).
 
 ## Verification and defects found
 
@@ -74,11 +75,22 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
 - S08 was added: a gated live list released after `Reset demo` → `Confirm reset` cannot restore rows, provenance, the key or storage; focus stays on `use-fixture` and the list shows `No records loaded`.
 - The complete suite was re-run on the new code-bearing head `973acac` with screenshot capture: **145/145 PASS, exit 0** (125 inherited + 20 Issue #9 groups); the focused run passed **21/21**. Both raw outputs are appended to [browser test results](../validation/issue-9-browser-test-results.txt) as the second-review section. The capture run re-generated all 29 screenshots; the 17 that changed byte-wise were re-committed.
 
+## PR review follow-up (16 October 2026)
+
+- After the second review the branch was pushed and opened as PR #25. The second review also ran a mutation check in a throwaway worktree: removing the list
+  or detail stale-response guards in full, disabling Disconnect/Reset invalidation, keeping an unconfirmed intent across a new selection, or reverting any of the
+  three keyboard fixes is caught by the issue 9 groups (S01/S08, S04, S03/S08, N01, K01/K02/K05). Removing a single guard layer alone is masked by the redundant
+  guards, which is by design. No repository file was changed by that check.
+- At Kevin's request, Claude Code (Claude Opus 5.5) reverted the F3 redaction with a normal revert commit `25ba1ed` (no history rewritten). Local checkout
+  paths are neither credentials nor raw API responses, so they fall outside the AC23 boundary, and the #7/#8 authors' evidence is restored exactly as they
+  recorded it. This record and the acceptance document were updated to match. No application or test code changed, so the 145/145 result at `973acac` still applies.
+- The two PR follow-up commits were re-committed once with corrected commit messages (file content unchanged) and force-pushed with lease before any team review.
+
 ## Scope and handoff
 
-The commits are local on `feat/9-three-screen-integration` (no upstream ref) and await team review; nothing was pushed; no issue, assignee or PR state was changed, and no automatic merge is implied. This slice claims AC17/AC23/AC24
+The branch is published as PR #25 and awaits team approval; no issue or assignee state was changed, and no automatic merge is implied. This slice claims AC17/AC23/AC24
 integration evidence and the AC02–AC24 combined crosswalk only. #10 live SAP workflow, #11 comparison work and course-submission packaging (including the F2 `git archive`
-requirement) remain open. Earlier #5–#8 evidence is preserved; three files carry a redaction note from the F3 cleanup.
+requirement) remain open. Earlier #5–#8 evidence is preserved unchanged; the F3 redaction was reverted.
 
 See [Issue #9 acceptance](../validation/issue-9-acceptance.md) and `issue-9-*.png`. Runtime: Windows, Node v24.14.1, Playwright 1.62.1 (declared devDependency); the harness
 reported Chromium/Chrome 151.0.7922.34 (bundled headless Chromium; installed Google Chrome 155.0.8059.40 is used only when `CHROME_EXECUTABLE_PATH` is set). No local SAP

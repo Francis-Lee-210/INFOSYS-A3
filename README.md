@@ -2,14 +2,14 @@
 
 小组的A3候选比较、SAP API参考、技术练习和后续应用开发资料。
 
-**当前平台：OpenCode.ai + SAP APIs。** 四份候选文件已收集，归属已于14 October核对；尚未在现有资料中记录团队最终决定。此仓库初始化不表示API/MCP部署、A3应用开发或课程提交已经完成。
+**当前平台：OpenCode.ai + SAP APIs。** [Billing Review Lite应用](app/README.md)已实现连接、选单、按key详情及金额解释/返回。#5已合并并保留真实B0证据；#6的34组浏览器验收通过，等待PR审核/合并。两个fixture kind明确标记，第二kind无SAP API身份；本轮未新增live验收。完整receipt、分页、用户测试和课程交付仍有后续任务。四份候选已收集，真实团队最终决定仍以选题工作表为准。
 
 ## 从哪里开始
 
 1. 阅读[作业要求与评分crosswalk](作业要求.md)及[官方V3规格](Specification-and-Rubric.docx)。
 2. 阅读[Staff澄清](docs/requirements/A3_Staff_Clarifications.md)，特别是API适配与MCP教学范围。
 3. 比较下列候选，在[选题工作表](decisions/A3_选题工作表.md)记录API适配、理由和真实团队决定。
-4. 确定一个核心功能后，再开发正式应用。正式应用尚未建立；开发时在`app/`中维护源码和运行说明。
+4. 查看[应用运行说明](app/README.md)、[当前#6验收矩阵](docs/validation/issue-6-acceptance.md)及[OpenCode开发记录](docs/development/issue-6-opencode.md)。
 
 | 文件标签 | 候选业务方向 | 方案 |
 |---|---|---|
@@ -24,9 +24,12 @@
 
 ```text
 candidates/               四份个人候选方案
+app/                      Billing Review Lite源码、fixture与浏览器测试
 decisions/                选题工作表和组员Agent提示词
 docs/requirements/        A3相关Staff原文摘录
 docs/platform-history/    23 September旧平台研究
+docs/validation/          字段契约、B0与逐票验收证据
+docs/development/         OpenCode执行与审查记录
 references/Francis/       Francis的四项既有作业参考
 resources/api/            SAP API Pool与教学EDMX
 resources/course/         Lab 7、8比较方法参考

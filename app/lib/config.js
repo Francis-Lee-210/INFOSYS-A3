@@ -26,3 +26,8 @@ export const FIELD_MEANINGS = Object.freeze({
   totalTaxAmount: 'TotalTaxAmount, document-currency sales tax',
   totalGrossAmount: 'TotalGrossAmount, reported gross document amount'
 });
+
+export const REQUEST_SOURCE_PROFILE_ID = 'billing-document-request-v1';
+export const SYNTHETIC_SOURCE_PROFILE_ID = 'synthetic-billing-document-v1';
+export const COST_SNAPSHOT_VERSION = 'issue-6-cost-snapshot-v1';
+export const COST_CONSISTENCY_RULE_ID = 'issue-6-monetary-consistency-v1';

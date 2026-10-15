@@ -11,8 +11,8 @@
     <header class="title-row">
       <div>
         <p class="eyebrow">Plan Review Snapshot - cost evidence</p>
-        <h1>Choose a request to review</h1>
-        <p class="lead">Connect to the fixed SAP sandbox or choose an explicitly labelled fixture, select one billing request, and inspect the returned amount, basis, date and currency.</p>
+        <h1>Choose a document to review</h1>
+        <p class="lead">Connect to the fixed SAP sandbox or choose an explicitly labelled fixture, select one document, and inspect the returned amount, basis, date and currency.</p>
       </div>
       <div id="provenance" class="badge" aria-live="polite">Not connected</div>
     </header>
@@ -28,6 +28,7 @@
         <div class="actions">
           <button id="connect-live" type="button">Connect to live SAP sandbox</button>
           <button id="use-fixture" type="button" class="secondary">Use fixture demonstration</button>
+          <button id="use-synthetic" type="button" class="secondary">Use synthetic billing-document fixture</button>
           <button id="disconnect" type="button" class="ghost">Disconnect / reset</button>
         </div>
       </div>
@@ -35,19 +36,19 @@
       <div id="error" class="error" role="alert" hidden></div>
     </section>
 
-    <section class="workspace" aria-labelledby="records-title">
+    <section id="screen-list" class="screen workspace" aria-labelledby="records-title">
       <aside class="ledger-panel">
         <div class="panel-head">
-          <h2 id="records-title">Loaded billing requests</h2>
+          <h2 id="records-title">Loaded billing records</h2>
           <p id="coverage" class="coverage">Loaded records, not complete history.</p>
-          <p class="hint">Source API: API_BILLING_DOCUMENT_REQUEST_SRV (version 1.1.0). SAP sandbox records are demonstration data; they are not Spark customer bills, payments or service-history evidence.</p>
+          <p class="hint">Source API: API_BILLING_DOCUMENT_REQUEST_SRV (version 1.1.0), for the live source. The synthetic fixture has its own profile and no SAP API identity. SAP sandbox records are demonstration data; they are not Spark customer bills, payments or service-history evidence.</p>
         </div>
         <div class="table-wrap" tabindex="0">
           <table>
             <thead>
               <tr>
                 <th scope="col">Kind</th>
-                <th scope="col">Request ID</th>
+                <th scope="col">Document key</th>
                 <th scope="col">Billing date</th>
                 <th scope="col">Amount</th>
                 <th scope="col">Basis</th>
@@ -64,19 +65,62 @@
 
       <article class="detail-panel" aria-labelledby="detail-title">
         <div class="panel-head">
-          <h2 id="detail-title">Selected request detail</h2>
+          <h2 id="detail-title">Selected document detail</h2>
           <p class="coverage">Selected row is never reused as detail; a separate by-key GET validates the same key.</p>
         </div>
         <div id="detail" class="detail empty-detail">
-          <p>Select a billing request to load its detail.</p>
+          <p>Select a document to load its detail.</p>
         </div>
         <div id="detail-actions" class="actions" hidden>
+          <button id="review-cost-evidence" type="button" disabled>Review cost evidence</button>
           <button id="reload-detail" type="button" class="secondary">Reload detail</button>
           <button id="check-items" type="button" class="ghost">Check optional items</button>
           <button id="check-evidence" type="button" class="ghost">B0 evidence</button>
         </div>
         <div id="evidence" class="evidence" hidden></div>
       </article>
+    </section>
+
+    <section id="screen-cost" class="screen cost-screen" hidden aria-labelledby="cost-title">
+      <div class="cost-head">
+        <button id="back-to-list" type="button" class="secondary">Back to list</button>
+        <h2 id="cost-title">Cost evidence</h2>
+        <p class="coverage">Reported figures remain exactly as returned. No payment, service-period, customer-identity or converted-total claim is made.</p>
+      </div>
+      <div id="cost-error" class="error" role="alert" hidden></div>
+      <div id="cost-summary" class="cost-summary"></div>
+      <section class="amount-card" aria-labelledby="amount-title">
+        <h3 id="amount-title">Reported document amounts</h3>
+        <p class="mobile-table-hint hint">Scroll the table horizontally to compare all columns.</p>
+        <div class="table-wrap cost-amount-wrap" tabindex="0" role="region" aria-label="Reported document amounts table">
+        <table class="amount-table">
+          <thead>
+            <tr>
+              <th scope="col">Component</th>
+              <th scope="col" class="numeric">Reported value</th>
+              <th scope="col">Currency</th>
+              <th scope="col">Basis</th>
+            </tr>
+          </thead>
+          <tbody id="cost-amounts"></tbody>
+        </table>
+        </div>
+      </section>
+      <section class="cost-details" aria-labelledby="cost-details-title">
+        <h3 id="cost-details-title">Source and date context</h3>
+        <dl id="cost-fields" class="cost-fields"></dl>
+        <h3>Linked item evidence</h3>
+        <ul id="cost-items"></ul>
+      </section>
+      <section class="consistency-card" aria-labelledby="cost-consistency-title">
+        <h3 id="cost-consistency-title">Consistency result</h3>
+        <p id="cost-consistency"></p>
+        <ul id="cost-reasons"></ul>
+      </section>
+      <section class="coverage-card" aria-labelledby="cost-coverage-title">
+        <h3 id="cost-coverage-title">Evidence limits</h3>
+        <p id="cost-limits"></p>
+      </section>
     </section>
   </main>
   <script type="module" src="/app.mjs"></script>

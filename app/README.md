@@ -1,70 +1,99 @@
-# Plan Review Snapshot: billing reader (Issue #5)
+# Plan Review Snapshot: billing reader and cost evidence
 
-This implements connection → bounded list → matching by-key detail for
-[SAP billing requests](https://api.sap.com/api/API_BILLING_DOCUMENT_REQUEST_SRV/overview).
-[B0 passed on 15 October 2026](../docs/validation/issue-5-b0.md): the actual browser
-loaded 10 usable SAP sandbox records, retrieved matching detail and checked the
-optional item navigation. This is Issue #5 only; Screens 2/3 and receipts follow
-in later tickets.
+Issues [#5](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/5) and
+[#6](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/6) implement connection →
+bounded list → matching by-key detail → cost explanation → Back.
+
+[B0 passed for #5 on 15 October 2026](../docs/validation/issue-5-b0.md). Issue #6
+adds deterministic browser acceptance; it does not claim another live SAP read.
+Choices and receipts belong to #7; full pagination belongs to #8.
 
 ## Run
 
-Use Node.js 22 or newer. Runtime dependencies and a build step are unnecessary.
+Use Node.js 22 or newer. No runtime dependencies or build step are needed.
 
-```sh
-cd app
-npm start
-```
+    cd app
+    npm start
 
-Open <http://127.0.0.1:6285/>. To use another loopback port, run
-`PORT=6286 npm start`. Choose **Connect to live SAP sandbox** and enter your own
-Hub sandbox key locally, or choose **Use fixture demonstration**. The fixture is
-synthetic and is never substituted automatically for a failed live read.
+Open <http://127.0.0.1:6285/>. Use PORT=6287 npm start for another loopback port.
+Choose a source, select a record, then **Review cost evidence**. **Back to list**
+preserves the selection and returns keyboard focus to it.
 
-## Tests
+- **Connect to live SAP sandbox** uses your own Hub sandbox key, supplied locally.
+- **Use fixture demonstration** uses synthetic OData billing-request headers
+  through the approved request mapping, labelled fixture-demonstration.
+- **Use synthetic billing-document fixture** uses a separate contract profile,
+  labelled synthetic-fixture. It has no SAP API ID/version. Its header relation
+  and processing date are declared fixture semantics.
 
-For a fresh test installation:
+A failed live read never substitutes a fixture. Disconnect/reset or page reload
+clears the session key; keys are not written to storage or logs.
 
-```sh
-npm install
-npx playwright install chromium
-npm test
-```
+## Tests and evidence
 
-There are 15 deterministic test groups, including the same public browser entry
-driven through
-raw OData normalization, matching/mismatched keys, empty/unusable/malformed data,
-decimal types and precision, date/currency/identifier failures, provenance,
-sentinel key clearing, stale-evidence clearing, redirects and unsafe destinations.
-The fixture server runs in-process; a port collision fails rather than reusing a
-pre-existing service. `PORT` can select the test port too.
+For a fresh installation:
 
-An existing bundled Playwright can be used with `PLAYWRIGHT_MODULE_PATH` pointing
-to its `index.mjs` and `PLAYWRIGHT_BROWSERS_PATH` pointing to its browser cache.
-Those paths are local execution settings, not source-code dependencies.
+    npm install
+    npx playwright install chromium
+    npm test
 
-## Source and boundaries
+The 34 groups retain all 15 #5 regressions. Public HTTP/browser flows cover both
+kinds, exact signed decimals including coefficients above 2^53, missing/invalid
+fields, currency switching, source/parent conflicts, recovery, pending/stale
+responses and desktop/mobile focus/layout.
 
-- Source API `API_BILLING_DOCUMENT_REQUEST_SRV`, API version `1.1.0`, OData V2.
-  Its specification format is OpenAPI `3.0.0`.
-- Exact base: `https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata/sap/API_BILLING_DOCUMENT_REQUEST_SRV`.
-- The preferred `CABILLINGDOCUMENT_0001` failed the documented header-amount
-  contract. Exactly one source is selected for this reader.
-- A billing request does not prove payment or identify a Spark customer. Dates
-  retain their documented accounting meaning; amounts retain their sign and
-  decimal text. There are no annual totals, conversions or recommendations.
-- Lists and item navigation show bounded loaded coverage. Missing continuation
-  links do not prove complete history. Full pagination belongs to Issue #8.
-- Keys stay in the browser connection's memory and request headers. Disconnect
-  or closing/reloading the page clears the connection. No key, raw response or
-  receipt is persisted by this ticket.
-- The server binds to `127.0.0.1`, validates Host/Origin and exact upstream
-  destinations, permits GET only for SAP/local API reads, refuses redirects,
-  uses default TLS certificate verification and rejects a TLS-bypass environment.
-  Static serving is limited to the three public assets.
-- Error bodies are sanitized; the B0 button exposes observations without raw
-  document identifiers, amounts, parties or credentials. It is supporting
-  metadata; the [live read record](../docs/validation/issue-5-live-evidence.json)
-  and [field contract](../docs/validation/issue-5-field-contract.md) record acceptance.
+The harness owns and closes its servers. A port collision fails rather than
+reusing an existing service. PORT selects its base port. A bundled Playwright
+can be supplied through PLAYWRIGHT_MODULE_PATH and PLAYWRIGHT_BROWSERS_PATH.
 
-[OpenCode execution and verification record](../docs/development/issue-5-opencode.md)
+See the [acceptance matrix and screenshots](../docs/validation/issue-6-acceptance.md)
+and [captured 34/34 output](../docs/validation/issue-6-browser-test-results.txt).
+
+## Source and monetary rules
+
+The sole live source remains API_BILLING_DOCUMENT_REQUEST_SRV v1.1.0, OData V2,
+at https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata/sap/API_BILLING_DOCUMENT_REQUEST_SRV.
+The [frozen #5 contract](../docs/validation/issue-5-field-contract.md) explains why
+CABILLINGDOCUMENT_0001 was rejected. The second fixture adds no live mapping.
+
+Amounts remain exact signed strings: header net p16/s3, tax p14/s3, gross p17/s3;
+optional item net/gross p16/s3 and tax p14/s3. No currency rounding, default NZD,
+FX, annual total or header-plus-item sum is made. A billing request/date does not
+establish payment, a Spark customer identity or continuous service. Missing
+optional fields stay Unknown/Not available. Required contract failures cannot
+create a usable zero snapshot.
+
+Linked items must match profile, API/version, provenance and parent. A known
+foreign currency or structural source/parent contradiction sets a material flag
+and withholds linked rows. Missing optional data alone does not. Matching item
+responses arriving on the cost view update both the view and exported assessment.
+Back/source/reset invalidate pending output. SAP coverage stays bounded/partial.
+
+## Versioned handoff to #7
+
+window.__issue6CostSnapshot is the current in-memory handoff:
+
+- version: issue-6-cost-snapshot-v1; materialInconsistency; reasons;
+  assessmentStatus: unassessed, partial, consistent or inconsistent.
+- document retains kind/key, original machine provenance, source profile,
+  API ID/version, currency and retrieval time. Display labels are separate.
+- amounts retains exact strings/null, field bases and currency; date retains
+  the mapped value and controlled meaning.
+- rule.scope is synthetic-header-net-tax-gross-only for the synthetic profile,
+  or source-and-linkage-validation-only for the request profile.
+  rule.linkedMonetaryReconciliation is always not-assessed.
+
+Consistent means only that the declared synthetic header net+tax=gross relation
+passes using exact BigInt coefficients at scale 3 with zero tolerance. It does
+not verify linked monetary reconciliation, complete history or production
+accounting. Live/request reconciliation stays unassessed because no universal
+equation or rounding tolerance was established. Structural conflicts can still
+set materialInconsistency=true. #7 owns choice restrictions and receipt reasons.
+
+The export is cleared on Back, selection, reload, source change and reset.
+It is not persisted. The loopback server retains Host/Origin validation, exact
+GET destinations, TLS verification, sanitized errors and a fixed asset allowlist.
+Browser B0 metadata excludes raw IDs, amounts, parties and credentials;
+historical live evidence stays separate.
+
+[OpenCode development record](../docs/development/issue-6-opencode.md)

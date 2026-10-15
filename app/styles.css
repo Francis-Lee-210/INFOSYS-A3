@@ -88,3 +88,31 @@ td.empty { text-align: center; color: var(--muted); }
 }
 [hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+.cost-screen { background: var(--white); border: 1px solid var(--rule); border-radius: 10px; padding: 18px; }
+.cost-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.cost-summary, .cost-details, .consistency-card, .coverage-card, .amount-card { margin-top: 12px; }
+.cost-summary p { margin: 6px 0; }
+.amount-table { width: 100%; }
+.amount-table th, .amount-table td { white-space: normal; }
+.amount-table .numeric { text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.cost-fields { display: grid; grid-template-columns: 180px 1fr; gap: 8px 12px; margin: 0; }
+.cost-fields dt { font-weight: 700; }
+.cost-fields dd { margin: 0; word-break: break-word; }
+.consistency-card p { font-weight: 700; margin: 0; }
+.consistency-card ul { margin: 8px 0 0 18px; }
+@media (max-width: 600px) {
+  .cost-screen { padding: 14px; }
+  .cost-fields { grid-template-columns: 1fr; }
+  .detail dl { grid-template-columns: 1fr; }
+  table { font-size: 12px; }
+  .cost-head { gap: 8px; }
+}
+
+button:disabled { opacity: .55; cursor: default; }
+.cost-amount-wrap { max-height: none; margin-top: 8px; }
+.amount-table { min-width: 580px; }
+.amount-table tbody tr { cursor: default; }
+.cost-fields dd { min-width: 0; }
+.mobile-table-hint { display: none; }
+@media (max-width: 600px) { .mobile-table-hint { display: block; } }

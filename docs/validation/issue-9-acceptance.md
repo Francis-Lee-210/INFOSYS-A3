@@ -14,7 +14,7 @@
 | New module | `app/tests/issue-9.mjs` (855 lines, 20 groups), registered by `app/tests/browser.mjs` |
 | Evidence | 29 `issue-9-*.png` captures; [browser test results](issue-9-browser-test-results.txt) (final unfiltered run and focused re-run) |
 
-All #9 changes are committed on the branch as the fix (`3c48fe8`), test (`5f1d12f`), redaction (`7fe272f`, reverted by `25ba1ed` during PR #26 review), evidence (`ce6a81c`), record (`b322c72`), line-count (`1eb70e5`), second-review encoding (`d9d7a3e`) and second-review test (`973acac`) commits, plus this second-review documentation update: `app/app.mjs`, `app/index.html`, `app/styles.css`, `app/tests/browser.mjs` modified; `app/tests/issue-9.mjs` and the screenshots added. The branch is published as PR #26 and awaits team approval. Original #5–#8 commits, evidence and screenshots are preserved unchanged: the F3 redaction of three earlier evidence files was reverted during PR review (section below). No history was rewritten.
+All #9 changes are committed on the branch as the fix (`3c48fe8`), test (`5f1d12f`), redaction (`7fe272f`, reverted by `25ba1ed` during PR review), evidence (`ce6a81c`), record (`b322c72`), line-count (`1eb70e5`), second-review encoding (`d9d7a3e`) and second-review test (`973acac`) commits, plus this second-review documentation update: `app/app.mjs`, `app/index.html`, `app/styles.css`, `app/tests/browser.mjs` modified; `app/tests/issue-9.mjs` and the screenshots added. The branch is published as PR #26 and awaits team approval. Original #5–#8 commits, evidence and screenshots are preserved unchanged: the F3 redaction of three earlier evidence files was reverted during PR review (section below). No history was rewritten.
 
 Test identifiers are the stable `issue 9 Kxx/Sxx/Nxx/Fxx/Txx` prefixes in `app/tests/issue-9.mjs`; upstream evidence uses the `issue 7:` / `issue 7 review:` / `issue 8 Pxx/Rxx/Sxx/Uxx` / `issue 8 review Vxx` prefixes and the unpredixed #5/#6 group names. Every group can contain several controlled cases; counts are test groups, not a fabricated count of every assertion.
 
@@ -138,7 +138,7 @@ Read-only audit of the working tree before it was committed: static inspection o
 |---|---|---|
 | F1 scratch probes | `app/tests/probe-issue9.mjs` and `app/tests/probe-s07.mjs` existed during development | Deleted before final; `git status` shows no probe files |
 | F2 live-sandbox sample | `tools/sap_api_probe_result.json` is gitignored (61 KB) and contains live-sandbox sample data, including an employee userId | Must not ship in the course ZIP; packaging must use `git archive`, never a folder copy. Left unchanged here (packaging-stage action) |
-| F3 machine paths | Earlier evidence files (`issue-7-browser-test-results.txt`, `issue-8-browser-test-results.txt`, `issue-8-acceptance.md`) contained local machine paths | First redacted to placeholders (`7fe272f`), then reverted during PR #26 review (`25ba1ed`): local checkout paths are neither credentials nor raw API responses, so they fall outside the AC23 boundary, and the earlier authors' evidence is kept exactly as recorded. No change remains |
+| F3 machine paths | Earlier evidence files (`issue-7-browser-test-results.txt`, `issue-8-browser-test-results.txt`, `issue-8-acceptance.md`) contained local machine paths | First redacted to placeholders (`7fe272f`), then reverted during PR review (`25ba1ed`): local checkout paths are neither credentials nor raw API responses, so they fall outside the AC23 boundary, and the earlier authors' evidence is kept exactly as recorded. No change remains |
 
 ## Usability review against the ten heuristics
 
@@ -193,7 +193,7 @@ All screenshots are fixture or injected live-mode captures with sentinel keys �
 - **#10/#11 out of scope.** No authenticated SAP read is claimed: every scenario uses fixtures, the bounded synthetic profile, or injected loopback transport with sentinel keys. AC25 (live workflow) and AC26 (independent package run) remain #10/course-packaging responsibilities; #11 comparison work is untouched.
 - **F2 packaging instruction.** `tools/sap_api_probe_result.json` (gitignored live-sandbox sample data) must not ship in the course ZIP. Package with `git archive`, never a folder copy; this audit made no change to it.
 - **Tested-head caveat.** The tested head is `973acac` — the code-bearing head after the second-review rework on base `7a368f5` (16 October 2026). The 145/145 result, the filtered 21/21 and the 29 screenshot captures describe exactly this head; any later edit invalidates the counts until rerun. Pushing, merging and issue-state changes remain with the maintainers.
-- **F3 not applied.** The machine-path redaction of three earlier evidence files was reverted during PR #26 review; those files are byte-identical to their state on `7a368f5`.
+- **F3 not applied.** The machine-path redaction of three earlier evidence files was reverted during PR review; those files are byte-identical to their state on `7a368f5`.
 - **Usability claim limit.** The review above is an expert heuristic inspection; no participant testing was conducted or fabricated, and no population-level usability is claimed.
 - **Documented behaviour.** In-app Back semantics and the contained horizontal scroll of the amounts table at 390px are intended choices, not defects.
 

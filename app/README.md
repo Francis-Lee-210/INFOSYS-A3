@@ -3,6 +3,8 @@
 Connect → bounded page → separate matching by-key detail → cost evidence →
 intention → one minimal local historical receipt. Issue #8 adds next-page
 navigation and controlled connection/read recovery to the #5/#6/#7 journey.
+Issue #9 keeps the three screens consistent under stale responses and drives
+the whole journey — including error and retry paths — by keyboard.
 
 ## Run
 
@@ -104,6 +106,29 @@ clear keys. Only the minimal receipt is persisted, never page cursors, retry sta
 raw responses, full item arrays, names or contacts. Reads/retries never confirm an
 intention or write a receipt.
 
+## Integrated three-screen flow and keyboard access
+
+Issue #9 joins the #7 receipt lifecycle with the #8 recovery paths and keeps the
+review consistent in exactly three screens — list, cost evidence, decision and
+receipt — with no fourth comparison screen.
+
+- **The full journey works by keyboard.** Tab/Shift+Tab, arrow keys, Enter and
+  Space reach connection, rows, Back, review, the decision radios, confirmation,
+  save Retry, reopen and reset. Controls keep their labels; status, error and
+  recovery text is announced (`role="status"`/`role="alert"` live regions);
+  both scrollable tables are named regions with a visible 3px focus ring.
+- **Read outcomes restore focus.** Source loading, direct Reload detail / Check
+  optional items and Retry read return focus to a useful result or recovery
+  control when the user has not moved elsewhere. Saving focuses the saved
+  heading; a missing-key error focuses the labelled key input.
+- **Stale responses clear, they never restore.** A new page, reload, selection
+  or source change invalidates the pending snapshot and unconfirmed choice;
+  superseded live or fixture responses cannot restore old rows, provenance,
+  item evidence or a confirmable decision, and a confirmed receipt keeps its
+  exact stored bytes.
+- **Back is in-app.** Back to list and Back to cost evidence preserve the
+  reviewed context; browser history is not intercepted.
+
 ## Source and monetary meaning
 
 The [frozen #5 mapping](../docs/validation/issue-5-field-contract.md) and
@@ -139,14 +164,23 @@ npm test
 CHROME_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm test
 # Capture only Issue #8 screenshots during the complete suite:
 CAPTURE_ISSUE8_SCREENSHOTS=1 npm test
+# Capture only Issue #9 screenshots during the complete suite:
+CAPTURE_ISSUE9_SCREENSHOTS=1 npm test
 ```
 
 The initial inherited baseline passed **71/71** and the original Issue #8 suite
 passed **113/113**. The PR #24 review repair independently reran that baseline,
 then passed **125/125 unfiltered** (all 113 retained + 12 item-retry lifecycle groups).
+Issue #9 extended that baseline with 20 integration groups: **145/145 unfiltered
+PASS** (125 inherited + 20 new), with `TEST_FILTER='issue 9'` passing 21/21 for
+focused diagnostics and the screenshot run also passing 145/145.
+The PR #26 review repair adds K06 for direct Reload detail / Check optional
+items outcomes and user-moved focus: **146/146 unfiltered PASS** (125 inherited
++ 21 issue-9 groups); synthetic receipt fields are now asserted exactly too.
 Runtime/browser and individual test identifiers are recorded in the
-[Issue #8 acceptance matrix](../docs/validation/issue-8-acceptance.md) and
-[browser output](../docs/validation/issue-8-browser-test-results.txt).
+[Issue #9 acceptance matrix](../docs/validation/issue-9-acceptance.md) and
+[Issue #9 browser output](../docs/validation/issue-9-browser-test-results.txt);
+the Issue #8 records above remain historical.
 New tests drive the actual loopback handler/adapter with injected transport and
 sentinel keys; clocks are controlled for cooldown checks. No SAP key is required.
 
@@ -156,7 +190,9 @@ the base port; additional isolated ports are allocated for injected scenarios.
 `TEST_FILTER` is only for local diagnostics; acceptance runs are **unfiltered**.
 
 [Issue #8 development record](../docs/development/issue-8-opencode.md) ·
+[Issue #9 development record](../docs/development/issue-9-opencode.md) ·
 [Historical #6 acceptance](../docs/validation/issue-6-acceptance.md) ·
 [Receipt #7 acceptance](../docs/validation/issue-7-acceptance.md).
-Full integration/accessibility remains #9; new real live workflow evidence remains
-#10. No parent specification or course-submission completion is claimed.
+The integrated three-screen/keyboard evidence is recorded in the Issue #9
+documents above; new real live workflow evidence remains #10. No parent
+specification or course-submission completion is claimed.

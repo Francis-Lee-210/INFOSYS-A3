@@ -4,7 +4,7 @@
 
 ## Execution and history
 
-This work was performed directly in OpenCode by GPT-6.1 Sol (`openai/gpt-6.1-sol`), session `ses_ec13d22feffd4d4LYSG4lIUe6g`. No subagents, invented sessions, teammate approval or user-study results are claimed. #8 was open, with RIOne1 and Rae404 both assigned and no comments; no assignment was changed and Rae's approval of a handover was not inferred.
+This work was performed directly in OpenCode, session `ses_ec13d22feffd4d4LYSG4lIUe6g`. No subagents, invented sessions, teammate approval or user-study results are claimed. #8 was open, with RIOne1 and Rae404 both assigned and no comments; no assignment was changed and Rae's approval of a handover was not inferred.
 
 - Read current #8, its comments (none), parent #4, repository instructions (no applicable `AGENTS.md`), the existing app/adapter/contracts/handler/tests, #5 frozen mapping/B0, #6/#7 records and the preserved OpenAPI.
 - Inspected local worktrees and branches; no #8 implementation branch/PR existed. Original local worktrees and their changes were left alone.
@@ -42,7 +42,7 @@ The PR is reviewable, not automatically merged. It does not close the parent, ch
 
 ## PR #24 review repair — 16 October 2026 (NZDT)
 
-Continued the same actual OpenCode session/tool disclosures above. Initially stopped because the PR branch was occupied in the existing Issue #8 worktree. The maintainer completed the handover: the original checkout was clean on `feat/8-billing-pagination-recovery` at `8aaa073`, and the other checkout was on `chore/park-issue-8-checkout`. Verified this with status/worktree inspection and fetched PR state; the PR was still open at the reviewed SHA. **All repair work uses the original checkout.** No new worktree/clone, stash, forced checkout, detach, pruning or modification of the parked branch/worktree.
+Continued the same actual OpenCode session as above. Initially stopped because the PR branch was occupied in the existing Issue #8 worktree. The maintainer completed the handover: the original checkout was clean on `feat/8-billing-pagination-recovery` at `8aaa073`, and the other checkout was on `chore/park-issue-8-checkout`. Verified this with status/worktree inspection and fetched PR state; the PR was still open at the reviewed SHA. **All repair work uses the original checkout.** No new worktree/clone, stash, forced checkout, detach, pruning or modification of the parked branch/worktree.
 
 - Reread #8, its comments, relevant #4 evidence/intent/stale-state contracts and current implementation/tests. No applicable `AGENTS.md` was present. The untouched inherited suite independently passed **113/113**.
 - Reproduced both reviewer paths through the real loopback handler/adapter with injected transport: USD header, first item 503, then delayed EUR item evidence. Cost-view retry left old unavailable evidence actionable; decision-view retry kept Keep/Confirm enabled. Both could save Keep with old unavailable coverage and false conflict flags. No real SAP transport was used.

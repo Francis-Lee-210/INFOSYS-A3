@@ -10,8 +10,8 @@
 | Branch | `feat/9-three-screen-integration` (published as [PR #26](https://github.com/Francis-Lee-210/INFOSYS-A3/pull/26)) |
 | Base / dependency | `7a368f529b60edae730afe2b8b1a0f9513d65e5e` — merged #8 review head, PR #24 (16 October 2026) |
 | Inherited baseline at that base | 125/125 PASS (all #5–#8 scenarios including the review groups) |
-| Tested head | `973acac` (fix, test and second-review commits on base `7a368f5`) — second-review rework of 16 October 2026; K05 strengthened, S08 added |
-| New module | `app/tests/issue-9.mjs` (855 lines, 20 groups), registered by `app/tests/browser.mjs` |
+| Initial tested head | `973acac` (fix, test and second-review commits on base `7a368f5`) — second-review rework of 16 October 2026; K05 strengthened, S08 added |
+| Initial module | `app/tests/issue-9.mjs` (855 lines, 20 groups), registered by `app/tests/browser.mjs` |
 | Evidence | 29 `issue-9-*.png` captures; [browser test results](issue-9-browser-test-results.txt) (final unfiltered run and focused re-run) |
 
 All #9 changes are committed on the branch as the fix (`3c48fe8`), test (`5f1d12f`), redaction (`7fe272f`, reverted by `25ba1ed` during PR review), evidence (`ce6a81c`), record (`b322c72`), line-count (`1eb70e5`), second-review encoding (`d9d7a3e`) and second-review test (`973acac`) commits, plus this second-review documentation update: `app/app.mjs`, `app/index.html`, `app/styles.css`, `app/tests/browser.mjs` modified; `app/tests/issue-9.mjs` and the screenshots added. The branch is published as PR #26 and awaits team approval. Original #5–#8 commits, evidence and screenshots are preserved unchanged: the F3 redaction of three earlier evidence files was reverted during PR review (section below). No history was rewritten.
@@ -24,13 +24,20 @@ Windows, **Node v24.14.1**, **Playwright 1.62.1** (declared devDependency in `ap
 
 ```powershell
 # From the repository root; complete unfiltered suite (base port 6285):
+Remove-Item Env:TEST_FILTER -ErrorAction SilentlyContinue
+Remove-Item Env:CAPTURE_ISSUE8_SCREENSHOTS -ErrorAction SilentlyContinue
+Remove-Item Env:CAPTURE_ISSUE9_SCREENSHOTS -ErrorAction SilentlyContinue
 npm --prefix app test
 
-# Focused Issue #9 diagnostics (from app/): 20 new groups plus the runner's always-included first test:
+# Focused Issue #9 diagnostics (from app/):
+Push-Location app
 $env:TEST_FILTER='issue 9'; npm test
+Remove-Item Env:TEST_FILTER -ErrorAction SilentlyContinue
 
 # Evidence capture (from app/) that refreshes the 29 docs/validation/issue-9-*.png screenshots:
 $env:CAPTURE_ISSUE9_SCREENSHOTS='1'; npm test
+Remove-Item Env:CAPTURE_ISSUE9_SCREENSHOTS -ErrorAction SilentlyContinue
+Pop-Location
 ```
 
 **Inherited baseline: 125/125 PASS** on the untouched base before editing, matching the merged #8 review head. The first-pass focused run passed **20/20**; the first-pass unfiltered run passed **144/144 PASS**, exit 0 (125 inherited + 19 Issue #9 groups); the screenshot-capture run also passed 144/144 with no `TEST_FILTER` and produced every `issue-9-*.png` image. After the first rework, the complete suite was re-run on `5f1d12f` (capture flags, no `TEST_FILTER`) and passed **144/144**, exit 0, re-capturing all 29 screenshots. After the second-review rework, the complete suite was re-run on the code-bearing head `973acac` (capture flags, no `TEST_FILTER`) and passed **145/145**, exit 0 (125 inherited + 20 Issue #9 groups), with the focused run at **21/21** and all 29 screenshots re-captured. Detailed output is recorded in [issue-9-browser-test-results.txt](issue-9-browser-test-results.txt).
@@ -41,9 +48,9 @@ $env:CAPTURE_ISSUE9_SCREENSHOTS='1'; npm test
 |---|---|---|---|
 | Integrate [#7](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/7)'s receipt lifecycle with [#8](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/8)'s connection/navigation recovery. A new selection, refresh or source change clears the old pending snapshot and unconfirmed choice; Back preserves only appropriate context. | One journey spans receipt lifecycle and recovery; new page/reload/selection/source clear the pending snapshot and unconfirmed choice; Back keeps only same-evidence context. | N01 (Back keeps exact figures and the Keep choice; next page, Reload detail and source change show `Chosen intent: None yet`, Confirm disabled); N02 (reload recovers only the stored receipt; Return to list clears the session); F01/F02 (recovery completes or preserves the journey); K01; T01/T03. | PASS. Tested at the injected public boundary; no upstream refactor. |
 | Superseded or delayed API responses cannot restore an older selection, credential state or decision after navigation/reset. Existing confirmed receipts remain historical and are not silently rewritten by new data. | Gated late responses for list, key, disconnect, detail, items and fixture modes never restore older rows, provenance, snapshot or decision; receipt bytes stay identical. | S01 (stale live list vs newer synthetic source), S02 (superseded key), S03 (after Disconnect), S04 (stale detail vs newer selection; Confirm disabled), S05 (stale items), S06 (fixture detail vs synthetic selection), S07 (open historical receipt byte-stable while live loads), S08 (after a confirmed Reset; rows, provenance, key and storage stay cleared). | PASS. Every stale case asserts current rows/provenance/storage; `safeCalls` bounds each request. |
-| Drive the entire connection → selection → explanation → intention → save/reopen/reset workflow by keyboard, including error and retry controls; ensure labelled controls, visible focus, useful loading/error announcements and understandable navigation. | Keyboard-only Tab/Shift+Tab/arrow/Enter/Space journey through all three screens, error/retry paths included. | K01 (full journey to read-back-verified receipt and reset), K02 (live failure → focused recovery → retry), K03 (detail retry returns to cost entry), K04 (write-failure Retry saves the preserved Later choice), K05 (labels, live regions, 3px focus rings; per-screen tab order fully visited with no repeated stop and Shift+Tab reversal); screenshots at 1280/1366/390. | PASS. Three real keyboard defects found and fixed (next section); no keyboard-only dead end remains in the tested paths. |
-| Verify persistent storage contains only the minimal receipt with provenance. Check observable requests and shared fixtures/logs/screenshots/source package for credentials or raw response dumps; record and fix any findings. | Storage assertions in every group; explicit audit of requests, fixtures, screenshots and tracked files. | T02 (exactly one key — the 15-field receipt — for fixture, live and synthetic journeys; `/SENTINEL/` absent); `expectNoStorage`/`expectOnlyReceipt` across K/S/N/F groups; the [storage and privacy audit](#storage-and-privacy-audit-ac23) below records F1/F2/F3 and their handling. | PASS. F2 remains a packaging instruction (`git archive`), not an application change. |
-| Add integration regressions at the same public browser boundary for stale response, refresh, selection/source change, historical receipt preservation, failures during navigation and keyboard recovery. Do not introduce separate internal-helper test contracts. | New groups exercise the real loopback handler/adapter with injected transport and DOM-level assertions. | The 20 groups in `app/tests/issue-9.mjs`, registered by `app/tests/browser.mjs`: K01–K05, S01–S08 (stale), N01–N02 (navigation/refresh), F01–F02 (navigation failure), T01–T03 (three-screen integrity/storage). No new exposed helper API; assertions read visible state. | PASS. Injected servers use `TEST_PORT + 500`; no external destination is contacted. |
+| Drive the entire connection → selection → explanation → intention → save/reopen/reset workflow by keyboard, including error and retry controls; ensure labelled controls, visible focus, useful loading/error announcements and understandable navigation. | Keyboard-only Tab/Shift+Tab/arrow/Enter/Space journey through all three screens, error/retry paths included. | K01 (full journey to read-back-verified receipt and reset), K02 (live failure → focused recovery → retry), K03 (detail retry returns to cost entry), K04 (write-failure Retry saves the preserved Later choice), K06 (direct reload/items success, failure and user-moved focus); K05 (labels, live regions, 3px focus rings; per-screen tab order fully visited with no repeated stop and Shift+Tab reversal); screenshots at 1280/1366/390. | PASS. Three original defects and two direct-action focus gaps were corrected; no keyboard-only dead end remains in the tested paths. |
+| Verify persistent storage contains only the minimal receipt with provenance. Check observable requests and shared fixtures/logs/screenshots/source package for credentials or raw response dumps; record and fix any findings. | Storage assertions in every group; explicit audit of requests, fixtures, screenshots and tracked files. | T02/T03 (exactly one key — the 15-field receipt — for fixture, injected live and synthetic journeys; `/SENTINEL/` absent); `expectNoStorage`/`expectOnlyReceipt` across K/S/N/F groups; the [storage and privacy audit](#storage-and-privacy-audit-ac23) below records F1/F2/F3 and their handling. | PASS. F2 remains a packaging instruction (`git archive`), not an application change. |
+| Add integration regressions at the same public browser boundary for stale response, refresh, selection/source change, historical receipt preservation, failures during navigation and keyboard recovery. Do not introduce separate internal-helper test contracts. | New groups exercise the real loopback handler/adapter with injected transport and DOM-level assertions. | The current 21 groups in `app/tests/issue-9.mjs`, registered by `app/tests/browser.mjs`: K01–K06, S01–S08 (stale), N01–N02 (navigation/refresh), F01–F02 (navigation failure), T01–T03 (three-screen integrity/storage). No new exposed helper API; assertions read visible state. | PASS. Injected servers use `TEST_PORT + 500`; no external destination is contacted. |
 | Record an actual usability review against the course's ten heuristics, with observed problems and corrections; do not fabricate participant feedback or claim population-level usability. | Expert heuristic walkthrough with observed problems and corrections. | [Usability review](#usability-review-against-the-ten-heuristics) below: method, ten-heuristic table, remaining observations; three defects corrected. Explicitly no participant testing. | PASS for the required review. No population or user-study claim is made. |
 | Publish a reproducible coverage/result table for the combined fixture suite covering AC02–24, with each result traceable to this or an upstream slice and unresolved defects disclosed. Tests have already accompanied each feature; this ticket delivers the integrated user behavior. | One crosswalk for AC02–AC24 with concrete test identifiers and disclosed limits. | The [AC02–AC24 combined coverage](#ac02ac24-combined-coverage) table and [issue-9-browser-test-results.txt](issue-9-browser-test-results.txt); unresolved items are F2 (packaging) and the #10 live boundary. | PASS. |
 | Record primary AC17, AC23–24 evidence and demonstrate an uninterrupted three-screen flow. No fourth comparison screen, Care portal or recommendation engine is added. | Primary evidence for AC17/AC23/AC24 plus one uninterrupted flow. | N01/N02 (AC17), T02 + audit (AC23), K01–K05 + fixes + usability review (AC24); T01 asserts exactly three `section.screen` elements and a single visible screen per step (`three-screen-flow` screenshots). | PASS. No fourth screen, portal, engine or real account change exists or is claimed. |
@@ -127,11 +134,11 @@ Read-only audit of the working tree before it was committed: static inspection o
 | Check | Result |
 |---|---|
 | Storage writes in shipped code | Exactly one: the minimal receipt (`planReviewSnapshot.receipt`, `issue-7-receipt-v2`) |
-| Receipt content | Exact 15-field whitelist verified in T02 (identity, provenance, document, amounts, date context, coverage/assessment/missing flags, intent, confirmation time). No key, raw response, names or contacts |
+| Receipt content | Exact 15-field whitelist verified in T02/T03 (identity, provenance, document, amounts, date context, coverage/assessment/missing flags, intent, confirmation time). No key, raw response, names or contacts |
 | API key lifetime | Request headers only during live mode; never in URLs, storage, files or logs; cleared on correction, fixture modes, Disconnect/reset and reload; `/SENTINEL/` absent from stored bytes |
 | Observable requests | `safeCalls` in every live group: HTTPS GET, fixed SAP origin, `redirect: manual`, no sentinel in any URL |
 | Fixtures and screenshots | Fully synthetic/sentinel data; none of the 29 captures contains a real credential or raw live response |
-| Test harness | Writes no files during test execution; injected loopback servers only |
+| Test harness | Default runs write no files; explicit screenshot capture writes synthetic fixture images; injected loopback servers only |
 | Repository scan | No secrets found in the 138 tracked files |
 
 | Finding | Detail | Handling |
@@ -198,3 +205,44 @@ All screenshots are fixture or injected live-mode captures with sentinel keys �
 - **Documented behaviour.** In-app Back semantics and the contained horizontal scroll of the amounts table at 390px are intended choices, not defects.
 
 See also the [Issue #9 development record](../development/issue-9-opencode.md) and the raw [browser test results](issue-9-browser-test-results.txt).
+
+## PR #26 independent review repair — 16 October 2026
+
+The original head 2b75a6d independently passed 145/145. A focused runtime check
+then found that activating Reload detail or Check optional items by Tab/Enter
+left focus on BODY after the read, despite the full suite passing. Both explicit
+handlers now request the existing guarded outcome focus; user-moved focus is retained.
+
+The current module has 888 lines and 21 groups. K06 uses real keyboard events
+and gated public HTTP responses for both direct actions: successful reads focus
+cost entry, failed reads focus recovery, and a user who moves to the key input
+keeps focus there. T03 now shares the exact 15-field receipt whitelist assertion
+with T02. No new internal test API or real SAP read was introduced.
+
+Final independent run on 16 October at approximately 11:52 NZDT: **146/146 PASS**,
+exit 0, unfiltered (125 inherited + 21 issue-9 groups), macOS Node v26.0.0,
+Playwright 1.62.1 and Chromium 151.0.7922.34. The captured output is appended to
+[the existing results file](issue-9-browser-test-results.txt). The historical
+Windows 145/145 and 29 screenshots remain labelled by their original tested head.
+
+### Standards
+
+One reproducibility finding resolved: PowerShell diagnostics now clear TEST_FILTER
+before subsequent full/capture runs and correctly enter/leave app/. The screenshot
+write claim is qualified as default no-write versus explicit synthetic capture.
+No remaining blocking standard finding or actionable heuristic smell was found.
+
+### Spec
+
+One blocking focus finding resolved for the two direct entrances. K06 covers the
+six success/failure/no-focus-steal cases. The synthetic receipt whitelist evidence
+is now directly asserted. No remaining blocking requirement or scope issue was found.
+
+Earlier authors' evidence is preserved. The new record concerns this review repair;
+GitHub approval/merge remains separately verified. #10 still owns live workflow
+and source-package independent-run evidence; parent #4 remains open.
+
+Tested code SHA-256:
+
+- app/app.mjs: 65cd026d118a54801227e4c35f4eb2a0120d27792113f0f451f6d2d2ee5ee301
+- app/tests/issue-9.mjs: 6f4d4d571aa69ec278134b7011e6e1ef47fa05aaa347a4ab37258e1e0ada14c9

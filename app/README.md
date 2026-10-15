@@ -117,10 +117,10 @@ receipt — with no fourth comparison screen.
   save Retry, reopen and reset. Controls keep their labels; status, error and
   recovery text is announced (`role="status"`/`role="alert"` live regions);
   both scrollable tables are named regions with a visible 3px focus ring.
-- **Focus is never dropped.** Loading a source, retrying a read and saving a
-  receipt move focus deliberately to the next meaningful control (list heading,
-  recovery title, saved heading). The #9 fixes cover the source-button load and
-  the missing-key error path, which now focuses the labelled key input.
+- **Read outcomes restore focus.** Source loading, direct Reload detail / Check
+  optional items and Retry read return focus to a useful result or recovery
+  control when the user has not moved elsewhere. Saving focuses the saved
+  heading; a missing-key error focuses the labelled key input.
 - **Stale responses clear, they never restore.** A new page, reload, selection
   or source change invalidates the pending snapshot and unconfirmed choice;
   superseded live or fixture responses cannot restore old rows, provenance,
@@ -174,6 +174,9 @@ then passed **125/125 unfiltered** (all 113 retained + 12 item-retry lifecycle g
 Issue #9 extended that baseline with 20 integration groups: **145/145 unfiltered
 PASS** (125 inherited + 20 new), with `TEST_FILTER='issue 9'` passing 21/21 for
 focused diagnostics and the screenshot run also passing 145/145.
+The PR #26 review repair adds K06 for direct Reload detail / Check optional
+items outcomes and user-moved focus: **146/146 unfiltered PASS** (125 inherited
++ 21 issue-9 groups); synthetic receipt fields are now asserted exactly too.
 Runtime/browser and individual test identifiers are recorded in the
 [Issue #9 acceptance matrix](../docs/validation/issue-9-acceptance.md) and
 [Issue #9 browser output](../docs/validation/issue-9-browser-test-results.txt);

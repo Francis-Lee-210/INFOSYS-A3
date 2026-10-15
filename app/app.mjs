@@ -1041,9 +1041,9 @@ document.getElementById('use-synthetic')?.addEventListener('click', () => loadLi
 document.getElementById('use-fixture').addEventListener('click', () => loadList('fixture'));
 document.getElementById('disconnect').addEventListener('click', resetSession);
 document.getElementById('reload-detail').addEventListener('click', () => {
-  if (state.selectedKey) selectRecord(state.selectedKey);
+  if (state.selectedKey) selectRecord(state.selectedKey, true);
 });
-document.getElementById('check-items').addEventListener('click', () => loadOptionalItems());
+document.getElementById('check-items').addEventListener('click', () => loadOptionalItems(true));
 document.getElementById('check-evidence').addEventListener('click', loadEvidence);
 apiKeyInput.addEventListener('input', updateReadControls);
 nextPageButton.addEventListener('click', () => {

@@ -41,7 +41,7 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
    `app/index.html` + `app/styles.css`: the records scroll region gained `role="region" aria-label="Loaded billing records table"` and a `.table-wrap:focus-visible` 3px
    outline, matching the amounts region. No other application behaviour changed.
 4. **AC23 storage/privacy audit (read-only).** Exactly one storage write exists in shipped code — the minimal receipt with whitelisted fields; keys travel only in request
-   headers, never URLs; fixtures are synthetic; the harness writes no files during tests. Findings: **F1** development scratch probes were deleted before final (confirmed
+   headers, never URLs; fixtures are synthetic; default test runs write no files; explicit capture writes synthetic screenshots. Findings: **F1** development scratch probes were deleted before final (confirmed
    absent); **F2** `tools/sap_api_probe_result.json` (gitignored, 61 KB) contains live-sandbox sample data — packaging must use `git archive`, never a folder copy; **F3**
    earlier evidence files contained local machine paths — first redacted with placeholders, then reverted during PR review because paths are neither credentials
    nor raw API responses (see the PR review follow-up below).
@@ -97,3 +97,13 @@ requirement) remain open. Earlier #5–#8 evidence is preserved unchanged; the F
 See [Issue #9 acceptance](../validation/issue-9-acceptance.md) and `issue-9-*.png`. Runtime: Windows, Node v24.14.1, Playwright 1.62.1 (declared devDependency); the harness
 reported Chromium/Chrome 151.0.7922.34 (bundled headless Chromium; installed Google Chrome 155.0.8059.40 is used only when `CHROME_EXECUTABLE_PATH` is set). No local SAP
 credential files were read and no authenticated SAP requests were made.
+
+## OpenCode review repair — 16 October 2026
+
+OpenCode session ses_ebe3f1f68ffe5MMlpojcPT6Fsi (A3 PR26 review repairs)
+applied the reviewed repair: both direct read actions use guarded outcome focus;
+K06 covers six public keyboard/read cases; T03 uses the shared exact receipt
+field whitelist; reproduction commands and screenshot-write wording are corrected.
+OpenCode syntax checks passed for app/app.mjs and app/tests/issue-9.mjs.
+The independent acceptance results are recorded in the validation document,
+separate from this OpenCode development record. Earlier history remains intact.

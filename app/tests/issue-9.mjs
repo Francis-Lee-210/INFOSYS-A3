@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
 const RECEIPT = 'planReviewSnapshot.receipt';
+const RECEIPT_FIELDS = ['amounts', 'assessmentScope', 'assessmentStatus', 'confirmedAt', 'context', 'coverage', 'date', 'document', 'intent', 'materialInconsistency', 'missing', 'reasons', 'receiptId', 'reviewId', 'version'];
 const KEY = 'SENTINEL-ISSUE9';
 const rawRecord = (key, currency = 'USD', amount = '250.000') => ({
   BillingDocumentRequest: key, BillingDocumentDate: '/Date(1728950400000)/',
@@ -389,6 +390,38 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
       await checkTabbing('decision screen');
       assert.equal(calls.length, 0);
     });
+  });
+
+  test('issue 9 K06: direct reload and optional-item keyboard actions restore outcome focus without stealing moved focus', async () => {
+    for (const action of ['reload-detail', 'check-items']) {
+      for (const outcome of ['success', 'failure', 'moved']) {
+        await scenario(() => { assert.fail('A fixture action sent an upstream request'); }, async ({ p }) => {
+          await p.locator('#use-fixture').click(); await row(p, '9000000001');
+          await select(p, '9000000001');
+          const pathname = '/api/billing-requests/9000000001' + (action === 'check-items' ? '/items' : '');
+          const held = gate(), release = gate();
+          await p.route(url => url.pathname === pathname, async route => {
+            held.release(); await release.promise;
+            if (outcome === 'failure') await route.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ error: { code: 'CONTRACT', message: 'Injected direct keyboard read failure.' } }) });
+            else await route.continue();
+          });
+          try {
+            await tabTo(p, action);
+            assert.equal(await p.evaluate(id => document.activeElement.id === id, action), true);
+            const arrived = p.waitForResponse(r => new URL(r.url()).pathname === pathname);
+            await p.keyboard.press('Enter'); await held.promise;
+            if (outcome === 'moved') await tabTo(p, 'api-key');
+            release.release(); await (await arrived).finished();
+            if (outcome === 'failure') await p.locator('#read-recovery').waitFor({ state: 'visible' });
+            else await p.waitForFunction(kind => document.querySelector('#status').textContent.includes(kind === 'reload-detail' ? 'Detail loaded' : 'Optional item coverage:'), action);
+            const expected = outcome === 'moved' ? 'api-key' : (outcome === 'failure' ? 'read-recovery-title' : 'review-cost-evidence');
+            assert.equal(await p.evaluate(() => document.activeElement.id), expected, `${action}/${outcome}`);
+            assert.equal(await p.locator('#' + expected).isVisible(), true);
+            await expectNoStorage(p);
+          } finally { release.release(); }
+        });
+      }
+    }
   });
 
   test('issue 9 S01: a stale live list response cannot replace a newer source selection', async () => {
@@ -795,14 +828,13 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
   });
 
   test('issue 9 T02: after journeys only the minimal receipt with provenance is persisted', async () => {
-    const expectedKeys = ['amounts', 'assessmentScope', 'assessmentStatus', 'confirmedAt', 'context', 'coverage', 'date', 'document', 'intent', 'materialInconsistency', 'missing', 'reasons', 'receiptId', 'reviewId', 'version'];
     await scenario(() => { assert.fail('A fixture journey sent an upstream request'); }, async ({ p }) => {
       await saveFixture(p);
       await expectOnlyReceipt(p);
       const receipt = await p.evaluate(key => JSON.parse(localStorage.getItem(key)), RECEIPT);
       assert.equal(receipt.version, 'issue-7-receipt-v2');
       assert.equal(receipt.document.provenance, 'fixture-demonstration');
-      assert.deepEqual(Object.keys(receipt).sort(), expectedKeys);
+      assert.deepEqual(Object.keys(receipt).sort(), RECEIPT_FIELDS);
       assert.doesNotMatch(await receiptBytes(p), /SENTINEL/);
       await p.locator('#reset-demo').click(); await p.locator('#confirm-reset').click();
       await p.waitForFunction(() => !localStorage.getItem('planReviewSnapshot.receipt'));
@@ -818,7 +850,7 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
       await expectOnlyReceipt(p);
       const receipt = await p.evaluate(key => JSON.parse(localStorage.getItem(key)), RECEIPT);
       assert.equal(receipt.document.provenance, 'live-sap-sandbox');
-      assert.deepEqual(Object.keys(receipt).sort(), expectedKeys);
+      assert.deepEqual(Object.keys(receipt).sort(), RECEIPT_FIELDS);
       assert.doesNotMatch(await receiptBytes(p), /SENTINEL/);
       assert.equal(receipt.document.key, 'LIVEKEY9');
       await p.locator('#reset-demo').click(); await p.locator('#confirm-reset').click();
@@ -844,6 +876,7 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
       await text(p, '#receipt-status', /Saved/);
       await expectOnlyReceipt(p);
       const receipt = await p.evaluate(key => JSON.parse(localStorage.getItem(key)), RECEIPT);
+      assert.deepEqual(Object.keys(receipt).sort(), RECEIPT_FIELDS);
       assert.equal(receipt.document.provenance, 'synthetic-fixture');
       assert.equal(receipt.intent, 'keep');
       assert.equal(receipt.assessmentStatus, 'consistent');

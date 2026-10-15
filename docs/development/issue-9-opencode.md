@@ -11,7 +11,7 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
   browser suite. No applicable `AGENTS.md` was present.
 - Created `feat/9-three-screen-integration` from the merged #8 review head **`7a368f529b60edae730afe2b8b1a0f9513d65e5e`** (PR #24 merge, 16 October 2026). That base is
   the dependency this slice was authorised to build on; no other branch or worktree was modified and no history was rewritten.
-- The #9 work is committed on that base as the fix `3c48fe8`, test `5f1d12f` (code-bearing head), F3 redaction `7fe272f` and evidence `ce6a81c` commits, plus this record:
+- The #9 work is committed on that base as the fix `3c48fe8`, test `5f1d12f`, F3 redaction `7fe272f`, evidence `ce6a81c`, development record `b322c72` and line-count correction `1eb70e5` commits, plus the second-review commits — encoding fix `d9d7a3e`, test `973acac` (new code-bearing head) and the documentation commit that carries this record:
   modified `app/app.mjs`, `app/index.html`, `app/styles.css`, `app/tests/browser.mjs`, new `app/tests/issue-9.mjs`, and 29 `docs/validation/issue-9-*.png` captures.
   The branch has no upstream ref; nothing was pushed and no PR was made, and the commits await team review.
 - Depended on, without refactoring: #7's receipt v2 lifecycle (single `planReviewSnapshot.receipt` key, exact validated schema, write-plus-read-back verification, historical
@@ -23,13 +23,13 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
    preserves only same-evidence context; superseded or delayed responses can never restore an older selection, credential state, rows, provenance or a pending decision;
    confirmed receipts stay historical and their stored bytes are never rewritten by new data. Exactly three screens exist; no fourth comparison screen, Care portal or
    recommendation engine is added.
-2. **One public-boundary regression module.** `app/tests/issue-9.mjs` (769 lines, 19 groups) is registered by `app/tests/browser.mjs` and drives the real loopback
+2. **One public-boundary regression module.** `app/tests/issue-9.mjs` (855 lines, 20 groups) is registered by `app/tests/browser.mjs` and drives the real loopback
    handler/adapter with injected local transport, sentinel keys and deterministic gates; assertions read DOM/UI state and no internal-helper contracts were introduced.
    Injected servers use `TEST_PORT + 500` to avoid inherited offsets and Chromium's blocked-port list.
    - **K01–K05** keyboard: full Tab/arrow/Enter/Space journey to a receipt and through reset; live/detail failures with focused recovery; write-failure Retry preserving
-     the choice; labels, live regions, visible focus, no trap.
-   - **S01–S07** stale/superseded responses: newer source, newer key, Disconnect, newer page selection, newer item selection, fixture-to-synthetic and an open
-     historical receipt — none can restore old rows, evidence, decisions or receipt bytes.
+     the choice; labels, live regions, visible focus; per-screen focus-stop coverage with no trap (10 stops on the list screen, 8 on cost, 8 on decision).
+   - **S01–S08** stale/superseded responses: newer source, newer key, Disconnect, newer page selection, newer item selection, fixture-to-synthetic, an open
+     historical receipt and a confirmed Reset — none can restore old rows, evidence, decisions, keys, provenance or receipt bytes.
    - **N01–N02** navigation: Back keeps only same-evidence context; new page, Reload detail, source change and page reload clear the pending snapshot and unconfirmed
      choice; reload recovers only the stored receipt.
    - **F01–F02** failure during navigation: a failed Next page keeps no old rows, focuses recovery, retries the same `$skip` and completes to a receipt; an open
@@ -48,8 +48,8 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
 ## Verification and defects found
 
 - Independently ran the untouched inherited suite before editing: **125/125 PASS** at the branch base, matching the merged #8 review head.
-- Focused run with the new module: `TEST_FILTER='issue 9'` → **20/20 PASS** (19 new groups plus the runner's always-included first test). No inherited assertion was weakened.
-- **Final unfiltered integrated result: 144/144 PASS**, exit 0 (125 inherited + 19 Issue #9 groups). The screenshot-capture run (`CAPTURE_ISSUE9_SCREENSHOTS=1`) also passed
+- First-pass focused run with the new module: `TEST_FILTER='issue 9'` → **20/20 PASS** (19 new groups plus the runner's always-included first test). No inherited assertion was weakened.
+- **First-pass unfiltered integrated result: 144/144 PASS**, exit 0 (125 inherited + 19 Issue #9 groups). The screenshot-capture run (`CAPTURE_ISSUE9_SCREENSHOTS=1`) also passed
   144/144 and refreshed the 29 `issue-9-*.png` files: the keyboard journey at 1280/1366/390px, the stale-source, navigation-failure, historical-receipt and
   three-screen-flow states at 1366/390px, and the remaining recovery/stale states at 1366px. Detailed output: [browser test results](../validation/issue-9-browser-test-results.txt).
 - The three defects above were found during the keyboard journey and fixed before the final run; K01 asserts the load-focus fix directly and K05 the named regions and 3px
@@ -65,6 +65,14 @@ This work was performed in OpenCode 2.0.29 on Windows by DeepSeek V4.1 Flash Fre
 - The review raised five points, all addressed in this rework: the wrong attribution on this record; missing tool/model/session information; no automated coverage for the missing-key focus fix; mixed encoding (BOM/CRLF) in the results file; and out-of-scope edits to #7/#8 evidence files (the F3 redactions, now isolated in their own commit).
 - Rework changes: attribution corrected to Kevin (Xuan Zeng, `wanyan2333`); tool/model/session details added above; a missing-key focus assertion added at the start of K02 (no new group — the total stays 144); the results file normalised to UTF-8 without BOM and LF line endings; the F3 redactions split into a dedicated commit; and the acceptance record updated for the Reset/Disconnect shared `resetSession()` path and the new K02 assertion.
 - The complete suite was re-run on the code-bearing head `5f1d12f` with screenshot capture: **144/144 PASS, exit 0**; the raw output is appended to [browser test results](../validation/issue-9-browser-test-results.txt) as the rework section.
+
+## Second review rework (16 October 2026)
+
+- Claude Code (Claude Opus 5.5) performed the second independent review on 2026-10-16 and re-ran the complete suite on `1eb70e5`: 144/144 PASS; the first rework was accepted and the remaining points were fixed in this round.
+- The results file's console-encoding artifacts were restored: three T01 test-name arrows and nine multiplication signs had been decoded through a GBK console code page during capture. Captures now pipe the raw UTF-8 bytes through Node straight into the log file, so no console code page is involved.
+- K05 was strengthened from a 45-Tab smoke check to per-screen verification: the expected focus stops are computed from the rendered page (10 on the list screen, 8 on cost, 8 on decision — one stop per radio group, hidden screens and hidden controls excluded), every expected stop must be reached within one full cycle plus a wrap, no stop may repeat consecutively, and Shift+Tab must return to the previous stop. The no-repeat check is scoped to consecutive in-set steps because Chromium moves focus to `<body>` when Tab passes the last stop.
+- S08 was added: a gated live list released after `Reset demo` → `Confirm reset` cannot restore rows, provenance, the key or storage; focus stays on `use-fixture` and the list shows `No records loaded`.
+- The complete suite was re-run on the new code-bearing head `973acac` with screenshot capture: **145/145 PASS, exit 0** (125 inherited + 20 Issue #9 groups); the focused run passed **21/21**. Both raw outputs are appended to [browser test results](../validation/issue-9-browser-test-results.txt) as the second-review section. The capture run re-generated all 29 screenshots; the 17 that changed byte-wise were re-committed.
 
 ## Scope and handoff
 

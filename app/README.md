@@ -171,9 +171,9 @@ CAPTURE_ISSUE9_SCREENSHOTS=1 npm test
 The initial inherited baseline passed **71/71** and the original Issue #8 suite
 passed **113/113**. The PR #24 review repair independently reran that baseline,
 then passed **125/125 unfiltered** (all 113 retained + 12 item-retry lifecycle groups).
-Issue #9 extended that baseline with 19 integration groups: **144/144 unfiltered
-PASS** (125 inherited + 19 new), with `TEST_FILTER='issue 9'` passing 20/20 for
-focused diagnostics and the screenshot run also passing 144/144.
+Issue #9 extended that baseline with 20 integration groups: **145/145 unfiltered
+PASS** (125 inherited + 20 new), with `TEST_FILTER='issue 9'` passing 21/21 for
+focused diagnostics and the screenshot run also passing 145/145.
 Runtime/browser and individual test identifiers are recorded in the
 [Issue #9 acceptance matrix](../docs/validation/issue-9-acceptance.md) and
 [Issue #9 browser output](../docs/validation/issue-9-browser-test-results.txt);

@@ -1285,8 +1285,15 @@ function saveReceipt() {
 }
 
 function reopenStoredReceipt() {
+  let storage;
   try {
-    const stored = localStorage.getItem(RECEIPT_KEY);
+    storage = window.localStorage;
+  } catch {
+    document.getElementById('storage-unavailable').hidden = false;
+    return;
+  }
+  try {
+    const stored = storage.getItem(RECEIPT_KEY);
     if (stored === null) return;
     receipt = validateReceipt(JSON.parse(stored));
     setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');

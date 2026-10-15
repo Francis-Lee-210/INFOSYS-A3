@@ -4,7 +4,7 @@
 
 Francis要求“PR 已经合并，继续做 #6”，沿用明确授权的本机OpenCode CLI路线。
 远端已核实#18于04:53:50 UTC合并为e7a06fef11a38a68f77fd46958751312c592a876，
-#5随后关闭。从该main建立codex/issue-6-cost-evidence独立worktree。
+#5随后关闭。从该main建立issue-6-cost-evidence独立worktree。
 原A3目录14份dirty/untracked课程文件逐份SHA-256保持不变，未混入提交。
 
 ## 实际CLI与分工
@@ -12,8 +12,8 @@ Francis要求“PR 已经合并，继续做 #6”，沿用明确授权的本机O
 - CLI：/opt/homebrew/bin/opencode 2.0.28，沿用现有账号/模型配置。
 - 实际session：ses_ec20e5c06ffeXF1kE0n6VRKiZt；标题A3 Issue 6 - cost evidence。
 - OpenCode完成首轮实现，并在同一session执行主代理审查的定点修复脚本。
-  Codex负责需求核对、独立审查、结果核验、界面截图、文档及GitHub整合。
-- Native Luna审查验收，Sol审查实现完整性。补充测试草稿经主代理审查后，
+  需求核对、独立审查、结果核验、界面截图、文档及GitHub整合由主代理负责。
+- 验收审查与实现完整性审查分别独立完成。补充测试草稿经主代理审查后，
   同样由OpenCode写入工程；没有用其他执行冒称OpenCode开发。
 - 首轮controller曾用宽泛进程清理中断6286预览；主代理停止该轮并恢复6286。
   后续限定为审查过的定点脚本，测试harness持有并清理自己的进程句柄。

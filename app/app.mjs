@@ -21,6 +21,7 @@ const costLimits = document.getElementById('cost-limits');
 const costUpdateStatus = document.getElementById('cost-update-status');
 const apiKeyInput = document.getElementById('api-key');
 const screenDecision = document.getElementById('screen-decision');
+const pageHeading = document.querySelector('.title-row h1');
 const receiptStatus = document.getElementById('receipt-status');
 const intentOptions = document.getElementById('intent-options');
 const confirmIntentButton = document.getElementById('confirm-intent');
@@ -43,6 +44,19 @@ let storageUnavailable = false;
 let chosenIntent = '';
 let pendingReceipt = null;
 let decisionSnapshot = null;
+const screenNames = [
+  { screen: screenList, heading: 'Choose a document to review', title: 'Choose a document – Plan Review Snapshot' },
+  { screen: screenCost, heading: 'Review cost evidence', title: 'Cost evidence – Plan Review Snapshot' },
+  { screen: screenDecision, heading: 'Decide and save a receipt', title: 'Decision and receipt – Plan Review Snapshot' }
+];
+function syncScreenName() {
+  const active = screenNames.find(({ screen }) => !screen.hidden);
+  if (!active) return;
+  pageHeading.textContent = active.heading;
+  document.title = active.title;
+}
+new MutationObserver(syncScreenName).observe(screenList.parentElement, { attributes: true, attributeFilter: ['hidden'], subtree: true });
+syncScreenName();
 Object.defineProperty(window, '__issue7Receipt', { get: () => receipt ? structuredClone(receipt) : undefined });
 
 const state = {

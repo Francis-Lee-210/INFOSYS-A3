@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plan Review Snapshot - Billing Review Lite</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="title-row">
+      <div>
+        <p class="eyebrow">Plan Review Snapshot - cost evidence</p>
+        <h1>Choose a request to review</h1>
+        <p class="lead">Connect to the fixed SAP sandbox or choose an explicitly labelled fixture, select one billing request, and inspect the returned amount, basis, date and currency.</p>
+      </div>
+      <div id="provenance" class="badge" aria-live="polite">Not connected</div>
+    </header>
+
+    <section class="connection-panel" aria-labelledby="connection-title">
+      <h2 id="connection-title">Connection</h2>
+      <div class="connection-grid">
+        <div class="field">
+          <label for="api-key">SAP sandbox API key (session only)</label>
+          <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste key for this browser connection only">
+          <p class="hint">The key lasts only for this connection, is held in JavaScript memory, and is cleared on Disconnect/reset. It is never written to storage, files or logs.</p>
+        </div>
+        <div class="actions">
+          <button id="connect-live" type="button">Connect to live SAP sandbox</button>
+          <button id="use-fixture" type="button" class="secondary">Use fixture demonstration</button>
+          <button id="disconnect" type="button" class="ghost">Disconnect / reset</button>
+        </div>
+      </div>
+      <div id="status" class="status" role="status" aria-live="polite">Ready. No network request has been made.</div>
+      <div id="error" class="error" role="alert" hidden></div>
+    </section>
+
+    <section class="workspace" aria-labelledby="records-title">
+      <aside class="ledger-panel">
+        <div class="panel-head">
+          <h2 id="records-title">Loaded billing requests</h2>
+          <p id="coverage" class="coverage">Loaded records, not complete history.</p>
+          <p class="hint">Source API: API_BILLING_DOCUMENT_REQUEST_SRV (version 1.1.0). SAP sandbox records are demonstration data; they are not Spark customer bills, payments or service-history evidence.</p>
+        </div>
+        <div class="table-wrap" tabindex="0">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Kind</th>
+                <th scope="col">Request ID</th>
+                <th scope="col">Billing date</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Basis</th>
+                <th scope="col">Currency</th>
+              </tr>
+            </thead>
+            <tbody id="records-body">
+              <tr><td colspan="6" class="empty">No records loaded.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p id="list-meta" class="meta">No list request has returned.</p>
+      </aside>
+
+      <article class="detail-panel" aria-labelledby="detail-title">
+        <div class="panel-head">
+          <h2 id="detail-title">Selected request detail</h2>
+          <p class="coverage">Selected row is never reused as detail; a separate by-key GET validates the same key.</p>
+        </div>
+        <div id="detail" class="detail empty-detail">
+          <p>Select a billing request to load its detail.</p>
+        </div>
+        <div id="detail-actions" class="actions" hidden>
+          <button id="reload-detail" type="button" class="secondary">Reload detail</button>
+          <button id="check-items" type="button" class="ghost">Check optional items</button>
+          <button id="check-evidence" type="button" class="ghost">B0 evidence</button>
+        </div>
+        <div id="evidence" class="evidence" hidden></div>
+      </article>
+    </section>
+  </main>
+  <script type="module" src="/app.mjs"></script>
+</body>
+</html>

@@ -550,11 +550,12 @@ async function reviewCost() {
     return;
   }
   if (token !== state.costToken || state.selectedKey !== record.key) return;
+  const enteringCostScreen = screenCost?.hidden === true;
   state.costSnapshot = snapshot;
   renderCost(snapshot);
   if (screenList) screenList.hidden = true;
   if (screenCost) screenCost.hidden = false;
-  if (backToListButton) backToListButton.focus();
+  if (enteringCostScreen && backToListButton) backToListButton.focus();
   setStatus(`Cost evidence opened for document ${record.key}.`);
 }
 

@@ -1317,39 +1317,63 @@ test('unknown or conflicting source profiles are rejected on list/detail/items w
   assert.equal((await fetch(`http://127.0.0.1:${port}/api/health`)).status, 200);
 });
 
-test('matching item response arriving on cost screen atomically refreshes visible and exported assessment', async () => {
+test('item completion refreshes cost evidence without stealing the current keyboard focus', async () => {
   const profile = issue6RegressionProfiles[0];
   const seed = await issue6RegressionSeed(profile);
-  const context = await browser.newContext();
-  const p = await context.newPage();
-  let release;
-  const gate = new Promise(resolve => { release = resolve; });
   const pathname = `/api/billing-requests/${profile.key}/items`;
-  try {
-    await issue6RegressionOpen(p, profile);
-    const requested = p.waitForRequest(request => new URL(request.url()).pathname === pathname);
-    await p.route(url => url.pathname === pathname, async route => {
-      await gate;
-      const payload = issue6RegressionCoverage(seed, 'ISSUE6-ACTIVE-CONFLICT');
-      payload.rows[0].currency = 'EUR';
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(payload) });
-    });
-    await p.locator('#check-items').click();
-    await requested;
-    let snapshot = await issue6RegressionReview(p);
-    assert.equal(snapshot.linkedDetail.status, 'checking');
-    assert.equal(snapshot.materialInconsistency, false);
-    release();
-    await p.waitForFunction(() => window.__issue6CostSnapshot?.materialInconsistency === true);
-    snapshot = await p.evaluate(() => window.__issue6CostSnapshot);
-    assert.equal(snapshot.assessmentStatus, 'inconsistent');
-    assert.equal(snapshot.linkedDetail.currencyConflict, true);
-    assert.equal(snapshot.linkedDetail.rows.length, 0);
-    await expectText(p, '#cost-consistency', 'Needs review');
-    assert.match(await p.locator('#cost-reasons').innerText(), /different currency/i);
-    assert.doesNotMatch(await p.locator('#cost-items').innerText(), /11\.125/);
-    await issue6RegressionAmount(p, 'Total net amount', seed.record.amounts.net);
-  } finally { release(); await context.close(); }
+  for (const responseStatus of [200, 503]) {
+    const context = await browser.newContext();
+    const p = await context.newPage();
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    try {
+      await issue6RegressionOpen(p, profile);
+      const requested = p.waitForRequest(request => new URL(request.url()).pathname === pathname);
+      await p.route(url => url.pathname === pathname, async route => {
+        await gate;
+        const payload = responseStatus === 200
+          ? issue6RegressionCoverage(seed, 'ISSUE6-ACTIVE-CONFLICT')
+          : { error: { code: 'SERVER', message: 'Optional item service is unavailable.' } };
+        if (responseStatus === 200) payload.rows[0].currency = 'EUR';
+        await route.fulfill({ status: responseStatus, contentType: 'application/json', body: JSON.stringify(payload) });
+      });
+      await p.locator('#check-items').click();
+      await requested;
+      let snapshot = await issue6RegressionReview(p);
+      assert.equal(snapshot.linkedDetail.status, 'checking');
+      assert.equal(snapshot.materialInconsistency, false);
+      assert.equal(await p.locator('#back-to-list').evaluate(element => element === document.activeElement), true);
+
+      const input = p.locator('#api-key');
+      await input.fill('FOCUS-TEST');
+      release();
+      await p.waitForFunction(() => {
+        const coverage = window.__issue6CostSnapshot?.linkedDetail;
+        return coverage && coverage.status !== 'checking';
+      });
+      snapshot = await p.evaluate(() => window.__issue6CostSnapshot);
+      if (responseStatus === 200) {
+        assert.equal(snapshot.materialInconsistency, true);
+        assert.equal(snapshot.assessmentStatus, 'inconsistent');
+        assert.equal(snapshot.linkedDetail.currencyConflict, true);
+        await expectText(p, '#cost-consistency', 'Needs review');
+        assert.match(await p.locator('#cost-reasons').innerText(), /different currency/i);
+      } else {
+        assert.equal(snapshot.materialInconsistency, false);
+        assert.equal(snapshot.linkedDetail.status, 'unavailable');
+        await expectText(p, '#cost-fields', 'Optional item service is unavailable.');
+      }
+      assert.equal(snapshot.linkedDetail.rows.length, 0);
+      assert.doesNotMatch(await p.locator('#cost-items').innerText(), /11\.125/);
+      await issue6RegressionAmount(p, 'Total net amount', seed.record.amounts.net);
+      assert.equal(await input.evaluate(element => element === document.activeElement), true, `HTTP ${responseStatus} completion moved input focus`);
+      await p.keyboard.type('-continued');
+      assert.equal(await input.inputValue(), 'FOCUS-TEST-continued');
+      await p.keyboard.press('Enter');
+      assert.equal(await p.locator('#screen-cost').isVisible(), true, 'Enter in the input must not activate Back');
+      assert.equal(await p.locator('#screen-list').isVisible(), false);
+    } finally { release(); await context.close(); }
+  }
 });
 
 test('document switching preserves each currency and exact figures on both fixture kinds', async () => {

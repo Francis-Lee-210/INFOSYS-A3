@@ -78,3 +78,10 @@ PR base 为 `codex/receipt-recovery-source-sync`。负责人：Rae（Rae404）�
   （`plan-review-snapshot-billing-lite-77cf744.zip`），17 个 payload 与 freeze `463e409f…` 逐字节一致。
 
 本回归只重跑打包套件；既有 40/49、56/56、33/33、167/167 与 161/161 结果保留原版本与范围，未重新标记为新运行。
+
+### 文档更正（17 October 2026 NZDT）
+
+- `docs/validation/issue-33-debugger-regression.json` 中 E 用例的 `prefix` 值误记为 `FAIL`，已按保留的原始输出
+  `issue-33-debugger-regression-prefix-results.txt`（`ok debugger property division …`）更正为 `PASS`。
+- 仅文档更正：未改动扫描器、测试、ZIP 或历史原始输出，也未重跑打包/浏览器/SAP；A、B、D 为修复前失败，合计 58/61。
+- 更正提交由本次 OpenCode 续做完成（provider/model `opencode/deepseek-v4.1-flash-free`）。

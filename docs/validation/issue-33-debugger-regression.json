@@ -46,7 +46,7 @@
       "id": "E",
       "name": "debugger property division retains a real literal dynamic import",
       "expected": "rejected before outputs",
-      "prefix": "FAIL",
+      "prefix": "PASS",
       "postfix": "PASS"
     }
   ],

@@ -43,6 +43,7 @@ let resetUncertain = false;
 let storageUnavailable = false;
 let chosenIntent = '';
 let pendingReceipt = null;
+let pendingWriteAttempted = false;
 let decisionSnapshot = null;
 const screenNames = [
   { screen: screenList, heading: 'Choose a document to review', title: 'Choose a document – Plan Review Snapshot' },
@@ -1278,12 +1279,54 @@ function currentDecisionEvidence() {
   return !screenDecision.hidden && decisionSnapshot === state.costSnapshot && currentCostEvidenceReady();
 }
 
+// Snapshot current localStorage readability and receipt bytes without latching a
+// stale startup flag. Returns { available: boolean, stored: string | null }.
+// available is false only when the storage object itself or getItem throws.
+function currentStoredReceipt() {
+  let storage;
+  try { storage = window.localStorage; } catch { return { available: false, stored: null }; }
+  let stored;
+  try { stored = storage.getItem(RECEIPT_KEY); } catch { return { available: false, stored: null }; }
+  return { available: true, stored };
+}
+
 function saveReceipt() {
   if (receipt || receiptRecovery || !currentDecisionEvidence() || !Object.hasOwn(INTENTS, chosenIntent)) return;
   if (state.costSnapshot.materialInconsistency && !['help', 'later'].includes(chosenIntent)) return;
   pendingReceipt ||= receiptFromSnapshot(state.costSnapshot, chosenIntent);
   try {
     validateReceipt(pendingReceipt);
+    const snapshot = currentStoredReceipt();
+    if (!snapshot.available) {
+      // Still unreadable: never write. Keep the honest notice and stay retryable.
+      storageUnavailable = true;
+      document.getElementById('storage-unavailable').hidden = false;
+      receiptStatus.textContent = 'Unsaved — browser storage is unavailable, so receipts cannot be saved in this browser. Your chosen intent is preserved. Retry to save it.';
+      retryReceiptButton.hidden = false;
+      return;
+    }
+    const wasUnavailable = storageUnavailable;
+    // Storage is readable now: clear any stale startup flag/notice.
+    storageUnavailable = false;
+    document.getElementById('storage-unavailable').hidden = true;
+    if (wasUnavailable && snapshot.stored !== null && !pendingWriteAttempted) {
+      // UNKNOWN pre-existing bytes from startup-unavailable and no pending write
+      // has been attempted yet: preserve them, never overwrite. Route to
+      // valid-history or corrupt/version/provenance recovery.
+      try {
+        receipt = validateReceipt(JSON.parse(snapshot.stored));
+        setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
+        openDecision();
+      } catch {
+        receipt = null;
+        receiptRecovery = true;
+        openDecision();
+      }
+      return;
+    }
+    // Normal save: write the pending intent + read-back + verify exact equality
+    // (established retry semantics; never adopt different stored bytes/intent).
+    pendingWriteAttempted = true;
     const serialized = JSON.stringify(pendingReceipt);
     localStorage.setItem(RECEIPT_KEY, serialized);
     const readBack = validateReceipt(JSON.parse(localStorage.getItem(RECEIPT_KEY)));
@@ -1302,25 +1345,18 @@ function saveReceipt() {
 }
 
 function reopenStoredReceipt() {
-  let storage;
-  try {
-    storage = window.localStorage;
-  } catch {
+  const snapshot = currentStoredReceipt();
+  if (!snapshot.available) {
     storageUnavailable = true;
     document.getElementById('storage-unavailable').hidden = false;
     return;
   }
-  let stored;
+  // Storage is readable now: never keep a stale unavailable flag or notice.
+  storageUnavailable = false;
+  document.getElementById('storage-unavailable').hidden = true;
+  if (snapshot.stored === null) return;
   try {
-    stored = storage.getItem(RECEIPT_KEY);
-  } catch {
-    storageUnavailable = true;
-    document.getElementById('storage-unavailable').hidden = false;
-    return;
-  }
-  if (stored === null) return;
-  try {
-    receipt = validateReceipt(JSON.parse(stored));
+    receipt = validateReceipt(JSON.parse(snapshot.stored));
     setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
     openDecision();
   } catch {
@@ -1337,6 +1373,7 @@ intentOptions.addEventListener('change', event => {
   if (!Object.hasOwn(INTENTS, event.target.value)) return;
   chosenIntent = event.target.value;
   pendingReceipt = null;
+  pendingWriteAttempted = false;
   renderDecision();
 });
 confirmIntentButton.addEventListener('click', saveReceipt);
@@ -1360,7 +1397,16 @@ document.getElementById('cancel-reset').addEventListener('click', () => {
   document.getElementById('reset-demo').focus();
 });
 document.getElementById('confirm-reset').addEventListener('click', () => {
-  if (storageUnavailable) {
+  let storage;
+  try { storage = window.localStorage; } catch {
+    // Storage object wholly inaccessible.
+    if (receipt || receiptRecovery) {
+      // A validated or invalid stored receipt is already known: preserve the truthful uncertain-reset
+      // + retry path instead of discarding the known receipt or returning to Screen1.
+      showUncertainReset();
+      return;
+    }
+    // No known receipt: permanent property denial at startup → honest session/key clear.
     receipt = null;
     receiptRecovery = false;
     resetUncertain = false;
@@ -1372,9 +1418,9 @@ document.getElementById('confirm-reset').addEventListener('click', () => {
     document.getElementById('use-fixture').focus();
     return;
   }
-  try {
-    localStorage.removeItem(RECEIPT_KEY);
-  } catch {
+  // Storage object is accessible: attempt removal even if getItem fails, then
+  // validate the outcome with truthful uncertain/preserved states.
+  try { localStorage.removeItem(RECEIPT_KEY); } catch {
     // A thrown removal is not itself proof that the old receipt survived.
     try {
       const stored = localStorage.getItem(RECEIPT_KEY);
@@ -1394,6 +1440,9 @@ document.getElementById('confirm-reset').addEventListener('click', () => {
     showUncertainReset();
     return;
   }
+  // Successful verified reset clears the stale unavailable flag/notice as well.
+  storageUnavailable = false;
+  document.getElementById('storage-unavailable').hidden = true;
   receipt = null;
   receiptRecovery = false;
   resetUncertain = false;

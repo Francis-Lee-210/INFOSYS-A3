@@ -239,7 +239,8 @@ function scanPayload(blobs) {
 function scanPayloadImports(blobs) {
   const payload = new Set(PAYLOAD);
   const missing = [];
-  const specifierPattern = /\bimport\s*(?:\(\s*(['"])([^'"\n]+)\1\s*\)|(['"])([^'"\n]+)\3|[\s\S]*?\bfrom\s*(['"])([^'"\n]+)\5)|\bexport\s*[\s\S]*?\bfrom\s*(['"])([^'"\n]+)\7/g;
+  // Import/export clauses contain no quotes, semicolons, or parentheses before `from`.
+  const specifierPattern = /\bimport\s*(?:\(\s*(['"])([^'"\n]+)\1\s*\)|(['"])([^'"\n]+)\3|[^;'"()]*?\bfrom\s*(['"])([^'"\n]+)\5)|\bexport\s*[^;'"()]*?\bfrom\s*(['"])([^'"\n]+)\7/g;
   for (const path of PAYLOAD) {
     if (!/\.(?:js|mjs)$/.test(path)) continue;
     const text = blobs.get(path).toString('utf8');

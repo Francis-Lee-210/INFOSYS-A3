@@ -236,6 +236,42 @@ ok('clean repo produces ZIP and manifest', () => {
   console.log(`    archive ${zipName} (${archiveBytes.length} bytes), manifest verified`);
 });
 
+function assertImportRejected(name, source, expectedSpecifier, expectedPath = expectedSpecifier) {
+  ok(name, () => {
+    const dir = initRepoWithPayload();
+    appendFile(join(dir, 'app/tests/browser.mjs'), `\n${source}\n`);
+    assert(git(dir, ...authorFlags(), 'add', '--', 'app/tests/browser.mjs').status === 0);
+    assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add missing import').status === 0);
+    const out = join(dir, 'out');
+    const result = packager(dir, '--output-dir', out);
+    assert(result.status !== 0, 'missing local import should fail');
+    assert(result.stderr.includes('browser.mjs') && result.stderr.includes(expectedSpecifier), `diagnostic omitted importing file or specifier: ${result.stderr}`);
+    assert(result.stderr.includes(expectedPath), `diagnostic omitted resolved path: ${result.stderr}`);
+    assert(readDirectory(out).length === 0, 'output created despite missing import refusal');
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Import integrity
+// ---------------------------------------------------------------------------
+
+assertImportRejected('missing static import is rejected before outputs', "import './issue-28.mjs';", './issue-28.mjs', 'app/tests/issue-28.mjs');
+assertImportRejected('missing side-effect import is rejected', "import './x.mjs';", './x.mjs', 'app/tests/x.mjs');
+assertImportRejected('missing re-export is rejected', "export * from './y.js';", './y.js', 'app/tests/y.js');
+assertImportRejected('missing dynamic string import is rejected', "import('./z.mjs');", './z.mjs', 'app/tests/z.mjs');
+assertImportRejected('import escaping repository root is rejected', "import '../../../outside.mjs';", '../../../outside.mjs', '../outside.mjs');
+
+ok('bare, built-in and variable imports are ignored', () => {
+  const dir = initRepoWithPayload();
+  appendFile(join(dir, 'app/tests/browser.mjs'), "\nimport 'node:fs';\nimport 'playwright';\nimport(variable);\n");
+  assert(git(dir, ...authorFlags(), 'add', '--', 'app/tests/browser.mjs').status === 0);
+  assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add external imports').status === 0);
+  const out = join(dir, 'out');
+  const result = packager(dir, '--output-dir', out);
+  assert(result.status === 0, `valid non-local imports failed: ${result.stderr.trim()}`);
+  assert(readDirectory(out).some((file) => file.endsWith('.zip')), 'successful packaging produced no ZIP');
+});
+
 // ---------------------------------------------------------------------------
 // Refusal behaviors
 // ---------------------------------------------------------------------------

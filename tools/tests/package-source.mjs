@@ -236,14 +236,27 @@ ok('clean repo produces ZIP and manifest', () => {
   console.log(`    archive ${zipName} (${archiveBytes.length} bytes), manifest verified`);
 });
 
-function assertImportRejected(name, source, expectedSpecifier, expectedPath = expectedSpecifier) {
+function assertModuleSyntax(dir) {
+  const result = spawnSync(process.execPath, ['--check', join(dir, 'app/tests/browser.mjs')], { encoding: 'utf8' });
+  assert(result.status === 0, `regression fixture must be valid module syntax: ${result.stderr}`);
+  console.log('    fixture node --check: exit 0');
+}
+
+function logFixturePackageResult(result, out) {
+  const files = readDirectory(out);
+  console.log(`    actual packager: exit ${result.status}; ZIP ${files.some(file => file.endsWith('.zip')) ? 'present' : 'absent'}; manifest ${files.some(file => file.endsWith('.manifest.json')) ? 'present' : 'absent'}`);
+}
+
+function assertImportRejected(name, source, expectedSpecifier, expectedPath = expectedSpecifier, checkSyntax = false) {
   ok(name, () => {
     const dir = initRepoWithPayload();
     appendFile(join(dir, 'app/tests/browser.mjs'), `\n${source}\n`);
     assert(git(dir, ...authorFlags(), 'add', '--', 'app/tests/browser.mjs').status === 0);
     assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add missing import').status === 0);
+    if (checkSyntax) assertModuleSyntax(dir);
     const out = join(dir, 'out');
     const result = packager(dir, '--output-dir', out);
+    if (checkSyntax) logFixturePackageResult(result, out);
     assert(result.status !== 0, 'missing local import should fail');
     assert(result.stderr.includes('browser.mjs') && result.stderr.includes(expectedSpecifier), `diagnostic omitted importing file or specifier: ${result.stderr}`);
     assert(result.stderr.includes(expectedPath), `diagnostic omitted resolved path: ${result.stderr}`);
@@ -310,16 +323,19 @@ ok('multiline import list with a comment, import.meta and export default package
 // URL query/fragment, member access). Issue #33 review regressions.
 // ---------------------------------------------------------------------------
 
-function assertImportAccepted(name, source) {
+function assertImportAccepted(name, source, checkSyntax = false) {
   ok(name, () => {
     const dir = initRepoWithPayload();
     appendFile(join(dir, 'app/tests/browser.mjs'), `\n${source}\n`);
     assert(git(dir, ...authorFlags(), 'add', '--', 'app/tests/browser.mjs').status === 0);
     assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add accepted import').status === 0);
+    if (checkSyntax) assertModuleSyntax(dir);
     const out = join(dir, 'out');
     const result = packager(dir, '--output-dir', out);
+    if (checkSyntax) logFixturePackageResult(result, out);
     assert(result.status === 0, `valid source should package: ${result.stderr.trim() || result.stdout.trim()}`);
     assert(readDirectory(out).some((file) => file.endsWith('.zip')), 'accepted source produced no ZIP');
+    assert(readDirectory(out).some((file) => file.endsWith('.manifest.json')), 'accepted source produced no manifest');
   });
 }
 
@@ -343,6 +359,16 @@ assertImportRejected('genuine nested import inside a non-literal dynamic import 
 assertImportAccepted('regex import text after a control condition is not a reference', "if (true) /import('.\\x2Freview-missing.mjs')/.test('');");
 assertImportRejected('division after a function expression before a real import is detected', "const __pr34_ratio = function () {} / (await import('./review-missing.mjs'));", './review-missing.mjs', 'app/tests/review-missing.mjs');
 assertImportRejected('division after a class expression before a real import is detected', "const __pr34_ratio = class {} / (await import('./review-missing.mjs'));", './review-missing.mjs', 'app/tests/review-missing.mjs');
+
+// DebuggerStatement has no operand: ASI leaves a following slash in regex
+// context, unlike an ordinary property named debugger. Check every new fixture
+// as a whole .mjs module, then invoke the actual packager on its committed blob.
+assertImportAccepted('debugger ASI before regex containing a closing brace packages successfully', "debugger\n/}/.test('');", true);
+assertImportAccepted('debugger ASI before regex import text does not invent a dependency', String.raw`debugger
+/import('.\x2Freview-missing.mjs')/.test('');`, true);
+assertImportAccepted('debugger explicit-semicolon regex control packages successfully', "debugger;\n/}/.test('');", true);
+assertImportRejected('real missing import after debugger ASI and regex is detected before outputs', "debugger\n/}/.test('');\nawait import('./review-missing.mjs');", './review-missing.mjs', 'app/tests/review-missing.mjs', true);
+assertImportRejected('debugger property division retains a real literal dynamic import', "const __pr34_debuggerObject = { debugger: 8 };\n__pr34_debuggerObject.debugger / (await import('./review-missing.mjs'));", './review-missing.mjs', 'app/tests/review-missing.mjs', true);
 
 // ---------------------------------------------------------------------------
 // Refusal behaviors

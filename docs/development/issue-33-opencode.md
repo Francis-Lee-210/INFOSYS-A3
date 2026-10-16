@@ -59,3 +59,22 @@ PR base 为 `codex/receipt-recovery-source-sync`。负责人：Rae（Rae404）�
 - 未调用 SAP，未使用 key，未运行 npm 或浏览器。
 
 独立 33 用例夹具、真实仓库打包与浏览器验收由 parent 在[验收矩阵](../validation/issue-33-acceptance.md)中另行记录。
+
+## debugger 语句扫描回归（本次续做，17 October 2026 NZDT）
+
+- Session：本次续做在 OpenCode 中进行，provider/model `opencode/deepseek-v4.1-flash-free`；
+  本记录不虚构 session id，独立复核证据仍由验收文档另行保存。
+- 缺陷：`tools/lib/scan-imports.mjs` 把 `debugger` 语句当作普通 operand，ASI 之后紧跟的正则字面量被当作除法扫描。
+  `debugger` / `/}/.test('')` 报 "Unbalanced brace"；`debugger` / `/import('.\x2Freview-missing.mjs')/.test('')`
+  误报缺失依赖 `./review-missing.mjs`。两者都通过 `node --check`，显式分号对照 `debugger;` 修复前即正常。
+- 修复：非属性、未转义的 `debugger` 视为语句边界（`expressionAllowed = statementAllowed = true`），
+  `obj.debugger` 与作为成员名的 `debugger` 仍为普通 operand；仅改 `tools/lib/scan-imports.mjs`。
+- 回归：沿用既有 throwaway-repo 助手在 `tools/tests/package-source.mjs` 新增 5 条黑盒用例
+  （A–C 接受并产出 ZIP+manifest，D–E 在产出前拒绝）；每条 fixture 先通过 `node --check`，再走真实打包器。
+- 红测（修复前扫描器）：**58/61**，3 失败（A、B、D），退出码 1。
+- 绿测（修复后）：**61/61**，0 失败，退出码 0。
+- 运行：Node `v24.20.0`，`git version 2.50.1 (Apple Git-155)`，macOS；未用 SAP/key，未跑 npm 或浏览器。
+- 提交：`ad4903f`（fix）、`77cf744`（test）；真实仓库 ZIP 固定到 `77cf744`
+  （`plan-review-snapshot-billing-lite-77cf744.zip`），17 个 payload 与 freeze `463e409f…` 逐字节一致。
+
+本回归只重跑打包套件；既有 40/49、56/56、33/33、167/167 与 161/161 结果保留原版本与范围，未重新标记为新运行。

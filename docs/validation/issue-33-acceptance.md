@@ -1,10 +1,17 @@
 # Issue #33 acceptance evidence
 
-17 October 2026 (NZDT). Current checks pin code commit `87aaaa42db00ccb8972d89b8af786d9f4e6bafc7` on PR #34,
-which preserves Rae/Xuan's original head `b9bb772ab9ad3ec570259b3ec9f94d2eac3e9a52`
-and integrates `main` at `28aee9d7390ce69a2a3476d151abe0f9458e2831`.
+17 October 2026 (NZDT). Two code checkpoints are recorded here on PR #34, both preserving
+Rae/Xuan's original head `b9bb772ab9ad3ec570259b3ec9f94d2eac3e9a52` and integrating `main` at
+`28aee9d7390ce69a2a3476d151abe0f9458e2831`:
+
+- **Guard baseline** `87aaaa42db00ccb8972d89b8af786d9f4e6bafc7`: 56/56 packaging suite, 33/33 independent
+  reproductions, 167/167 browser groups.
+- **Debugger-statement scanner fix** `77cf74482a3ec91770be11066b546523aaa3b3d0`: 61/61 packaging suite
+  (five new cases). Details in the section below.
+
 A later evidence-only commit may update this document and logs; the tested maintainer-file hashes are in
-[the independent run record](issue-33-independent-run.json).
+[the independent run record](issue-33-independent-run.json) and
+[the debugger regression record](issue-33-debugger-regression.json).
 
 ## Current results
 
@@ -24,6 +31,41 @@ The first unfiltered browser attempt used base port 9300 and passed 166/167; one
 [That complete failed-attempt output is retained](issue-33-browser-port-conflict-results.txt).
 After preflighting ports 18100–19000, the same extracted package was rerun unfiltered with `PORT=18100`
 and passed 167/167, exit 0. Both attempts are recorded in the machine record; no source or ZIP bytes changed.
+
+## Debugger-statement scanner regression (latest)
+
+Follow-up review found `tools/lib/scan-imports.mjs` handled a `debugger` statement as an ordinary operand.
+With automatic semicolon insertion, a following regex literal was then scanned as division:
+
+- `debugger` / `/}/.test('')` was rejected with an "Unbalanced brace" scanner error.
+- `debugger` / `/import('.\x2Freview-missing.mjs')/.test('')` invented `./review-missing.mjs` as a dependency,
+  so the real packager refused a valid package.
+
+Both are valid JavaScript: each fixture passes `node --check` as a whole `.mjs` module. The explicit-semicolon
+control `debugger;` behaved correctly before the fix, confirming the defect is the missing statement boundary.
+
+The fix treats a non-property, unescaped `debugger` as a statement boundary (no operand), so its following slash
+returns to regex context; `obj.debugger` and a `debugger` member name remain ordinary operands. Five
+actual-packager cases were added through the existing test harness:
+
+| Case | Fixture intent | Expected | Pre-fix | Post-fix |
+|---|---|---|---|---|
+| A | `debugger` ASI then regex containing `}` | packages | FAIL | PASS |
+| B | `debugger` ASI then regex containing import-like text | packages, no invented dependency | FAIL | PASS |
+| C | explicit-semicolon control | packages | PASS | PASS |
+| D | genuine missing local `import()` after debugger/regex | rejected before outputs | FAIL | PASS |
+| E | ordinary `debugger` property then division with a real literal dynamic import | rejected, real import kept | PASS | PASS |
+
+- Pre-fix scanner (`23de94d`): **58/61**, 3 FAIL (A, B, D), exit 1;
+  [prefix output](issue-33-debugger-regression-prefix-results.txt).
+- Fixed scanner (`77cf744`): **61/61**, 0 FAIL, exit 0;
+  [complete output](issue-33-debugger-regression-test-results.txt).
+- Machine record with changed-file hashes, ZIP identity and payload comparison:
+  [issue-33-debugger-regression.json](issue-33-debugger-regression.json).
+
+Tested code commit `77cf74482a3ec91770be11066b546523aaa3b3d0`; runtime Node `v24.20.0`,
+`git version 2.50.1 (Apple Git-155)`, macOS. The fix and its tests are additive commits on the existing branch.
+The scanner is unchanged in scope: a bounded lexical extractor, not a validator, no parser dependency added.
 
 ## Original defect and review fixes
 
@@ -64,6 +106,15 @@ This is a **guard verification artifact**, pinned to `87aaaa42db00ccb8972d89b8af
 - All 17 file bytes match the tested commit, current integrated main and the existing accepted application freeze
   `463e409f6174e66b3438cad7a756b4bd24e96853`; source and archive hashes remained unchanged after browser tests.
 
+The debugger fix is separately verified by a guard ZIP pinned to `77cf74482a3ec91770be11066b546523aaa3b3d0`:
+
+- `plan-review-snapshot-billing-lite-77cf744.zip`: 100344 bytes; SHA-256 `87716e3a8e48194a6730d4d0790d636767ce516f32df3f1c1bbc113b414503b1`.
+- ZIP CRC (`unzip -t` exit 0), exactly 17 regular payload entries and the manifest sizes/SHA-256 were checked.
+- Each of the 17 extracted files equals its pinned `git cat-file blob` at `77cf744`; every payload path has the same
+  blob hash as freeze `463e409f6174e66b3438cad7a756b4bd24e96853` (no payload bytes changed).
+- The scanner fix only touches maintainer files under `tools/`, which are outside the packaged payload, so the
+  previously accepted application bytes — and its 167/167 browser acceptance — are preserved by identity.
+
 Issue #10's accepted application package/freeze and its SAP evidence remain the existing delivery record.
 This maintainer-tool verification does not replace that delivery or assert a repeated live SAP run.
 The machine record includes commands' exit codes, environment scope and verification-artifact identity.
@@ -82,3 +133,10 @@ passed 37/37 and the unchanged application passed 167/167. This showed why passi
 OpenCode then added 12 actual-packager regressions: the old guard passed 40/49 and failed nine; the current green
 result is the version pinned above. The OpenCode record contains its own work and runs only:
 [development record](../development/issue-33-opencode.md).
+
+The debugger regression is a later, narrower checkpoint: the earlier guard results (56/56 packaging, 33/33
+independent reproductions, 167/167 browser, and the original 161/161 run) are **not** rerun here. Only the
+packaging suite was re-executed, from 58/61 pre-fix to 61/61 post-fix, plus the fresh pinned guard ZIP and its
+payload/freeze comparison. The 167/167 browser result keeps its own scope and identity; it is preserved because
+the 17 payload bytes are unchanged, not because the browser suite was re-run. No new live SAP call or API key was
+used, and no credentials were accessed.

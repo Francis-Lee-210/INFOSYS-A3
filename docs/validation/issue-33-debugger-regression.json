@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "issue-33-debugger-regression-v1",
+  "testedCommit": "77cf74482a3ec91770be11066b546523aaa3b3d0",
+  "originalReviewHead": "23de94d0cdf65bfdefe3a7fb1e10b9cbec514e30",
+  "defect": "tools/lib/scan-imports.mjs treated a `debugger` statement as an ordinary operand in the lexical fallback, so a following slash was read as division instead of a regular-expression literal; unbalanced-brace errors or false import dependencies resulted.",
+  "triggerSource": [
+    "debugger\\n/}/.test('');",
+    "debugger\\n/import('.\\x2Freview-missing.mjs')/.test('');"
+  ],
+  "fix": "A non-property, unescaped `debugger` name now resets expressionAllowed/statementStart to true (statement boundary), so ASI leaves the next line's slash in regex context; obj.debugger and `debugger` member names stay operands.",
+  "changedFiles": {
+    "tools/lib/scan-imports.mjs": "8c5d1c9829edc91ad8a7fb20cc3d209a3f3a808674d21ffa3e5a558320c2e632",
+    "tools/tests/package-source.mjs": "30254c1a0fdc142624dd3569f07b8312aec76003699f070b4112b33fbe04c511",
+    "tools/package-source.mjs": "115aadd774ce739a8c55eeba62a98688f0c2b548774d4b68c53b941a98af8760"
+  },
+  "newRegressionCases": [
+    {
+      "id": "A",
+      "name": "debugger ASI before regex containing a closing brace packages successfully",
+      "expected": "packages (accept)",
+      "prefix": "FAIL",
+      "postfix": "PASS"
+    },
+    {
+      "id": "B",
+      "name": "debugger ASI before regex import text does not invent a dependency",
+      "expected": "packages (accept)",
+      "prefix": "FAIL",
+      "postfix": "PASS"
+    },
+    {
+      "id": "C",
+      "name": "debugger explicit-semicolon regex control packages successfully",
+      "expected": "packages (accept)",
+      "prefix": "PASS",
+      "postfix": "PASS"
+    },
+    {
+      "id": "D",
+      "name": "real missing import after debugger ASI and regex is detected before outputs",
+      "expected": "rejected before outputs",
+      "prefix": "FAIL",
+      "postfix": "PASS"
+    },
+    {
+      "id": "E",
+      "name": "debugger property division retains a real literal dynamic import",
+      "expected": "rejected before outputs",
+      "prefix": "FAIL",
+      "postfix": "PASS"
+    }
+  ],
+  "allFixturesNodeSyntaxValid": true,
+  "prefixRun": {
+    "scanner": "pre-fix (23de94d)",
+    "command": "TMPDIR=<tmp> node tools/tests/package-source.mjs",
+    "passed": 58,
+    "failed": 3,
+    "of": 61,
+    "exitCode": 1,
+    "output": "issue-33-debugger-regression-prefix-results.txt"
+  },
+  "postfixRun": {
+    "scanner": "fixed",
+    "command": "TMPDIR=<tmp> node tools/tests/package-source.mjs",
+    "passed": 61,
+    "failed": 0,
+    "of": 61,
+    "exitCode": 0,
+    "output": "issue-33-debugger-regression-test-results.txt"
+  },
+  "runtime": {
+    "node": "v24.20.0",
+    "git": "git version 2.50.1 (Apple Git-155)",
+    "platform": "macOS"
+  },
+  "verificationZip": {
+    "basename": "plan-review-snapshot-billing-lite-77cf744.zip",
+    "bytes": 100344,
+    "sha256": "87716e3a8e48194a6730d4d0790d636767ce516f32df3f1c1bbc113b414503b1",
+    "sourceCommit": "77cf74482a3ec91770be11066b546523aaa3b3d0",
+    "entries": 17
+  },
+  "payloadComparison": {
+    "regularEntries": 17,
+    "crcOk": true,
+    "manifestSizesAndHashesOk": true,
+    "extractedEqualsPinnedBlobs": true,
+    "freezeCommit": "463e409f6174e66b3438cad7a756b4bd24e96853",
+    "payloadDiffersFromFreeze": []
+  },
+  "historicalEvidence": {
+    "packageSuite": "56/56",
+    "independentRepros": "33/33",
+    "browserGroups": "167/167"
+  },
+  "notRerun": [
+    "browser suite (167/167)",
+    "independent repro executions (33/33)",
+    "live SAP",
+    "application acceptance"
+  ],
+  "reasonsNotRerun": [
+    "Maintainer guard files (tools/) are outside the packaged application payload; the 17 payload bytes are identical to the accepted freeze, so prior browser acceptance is preserved by identity, not re-executed."
+  ]
+}

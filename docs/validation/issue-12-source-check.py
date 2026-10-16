@@ -74,7 +74,7 @@ def validate(source, target):
         assert anchor in {slug(x) for x in headings}, f"Missing anchor: {source.name} -> {target}"
     targets += 1
 
-authored = [*sorted((ROOT / "docs/design").glob("issue-12-*.md")), ROOT / "docs/validation/issue-12-walkthrough.md", ROOT / "docs/validation/issue-12-acceptance.md", *sorted((ROOT / "docs/development").glob("issue-12-*.md"))]
+authored = [*sorted((ROOT / "docs/design").glob("issue-12-*.md")), *sorted((ROOT / "docs/validation").glob("issue-12-*.md")), *sorted((ROOT / "docs/development").glob("issue-12-*.md"))]
 for path in authored:
     assert path.exists(), path
     for target in re.findall(r"!?\[[^\]]*\]\((<[^>]+>|[^\s)]+)\)", path.read_text()):
@@ -85,10 +85,18 @@ for element in svg.iter():
     if "href" in element.attrib:
         validate(ROOT / "docs/design/issue-12-process-adaptation.svg", element.attrib["href"])
 for path, marker in [
+    (ROOT / "decisions/A3_Candidate_Comparison.md", "## 8. Authentic decision status and Issue #11 acceptance"),
     (ROOT / "decisions/A3_Candidate_Comparison.md", "## 11. Dated confirmation update"),
     (ROOT / "decisions/A3_选题工作表.md", "## 8. 2026-10-16"),
 ]:
     text = path.read_text().split(marker, 1)[1]
+    for target in re.findall(r"!?\[[^\]]*\]\((<[^>]+>|[^\s)]+)\)", text):
+        validate(path, target.strip("<>"))
+for path, text in [
+    (ROOT / "README.md", next(line for line in (ROOT / "README.md").read_text().splitlines() if line.startswith("> **16 October 2026 current decision/design checkpoint:"))),
+    (ROOT / "decisions/A3_Candidate_Comparison.md", (ROOT / "decisions/A3_Candidate_Comparison.md").read_text().split("**Proposal date:", 1)[0]),
+    (ROOT / "decisions/A3_选题工作表.md", (ROOT / "decisions/A3_选题工作表.md").read_text().split("**更新：", 1)[0]),
+]:
     for target in re.findall(r"!?\[[^\]]*\]\((<[^>]+>|[^\s)]+)\)", text):
         validate(path, target.strip("<>"))
 print(f"PASS {targets} authored relative file/anchor links (historical unbundled references not re-audited)")

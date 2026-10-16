@@ -35,7 +35,9 @@
 
 ## 3. Required human model construction / export
 
-**Status: Pending — not performed in Signavio.** The agent has produced a change specification/map only. Under the Option 2 working route, the model owner should reuse/duplicate the applicable member model and disclose all changes, not edit the authentic A1/A2 archive. No two new models are demanded merely by the words “Option 3”; the [route rule](issue-12-design-rationale.md#3-route-and-model-decision-not-automatic-justification) distinguishes another member's existing solution from a wholly new solution.
+**Status: model-owner verification/reuse decision not yet recorded; no Signavio operation performed by this task.** Checked current #11/#12/#15 comments and PR #28 reviews/comments on 16 October: no later review of this model/change package is present there. Rae's #11 direction confirmation predates these artifacts and is not model approval. The precise remaining owner decision is (1) whether the original title/source above is correctly identified, (2) whether the retained/changed/deferred map faithfully reflects her proposal, and (3) whether the readable original export plus disclosed adaptation suffices for this route or a formal revision is required/adopted. This bounded review can precede final #15 ratification; it does not require the entire #15 audit to finish.
+
+The agent has produced a change specification/map only. Under the Option 2 working route, disclose changes to the applicable member model; if a formal revision is needed, reuse/duplicate it rather than editing the authentic A1/A2 archive. No two new models are demanded merely by the words “Option 3”; the [route rule](issue-12-design-rationale.md#3-route-and-model-decision-not-automatic-justification) distinguishes another member's existing solution from a wholly new solution.
 
 **Requirement limit:** this is a precise plan *if a formal revised Signavio/BPMN artifact is required/adopted for the final submission*, not an invented universal requirement to rebuild models for Option 2. The original export plus disclosed adaptation map already provide readable source/change evidence. The human model/course owner and #15 must decide and record whether that reuse/change package is sufficient or the formal revision below is necessary. Do not claim a new tool operation/export either way; if no new operation is required, record the actual basis for that decision. The absence of an editable project still limits independent verification.
 
@@ -56,10 +58,11 @@ Ready-to-run human instructions:
 
 | Human evidence | Current state |
 |---|---|
+| Owner verifies original identification, mapping fidelity and reuse sufficiency versus formal revision | Not recorded in the checked issue/PR discussion; precise #12 model-review dependency |
 | Model owner, actual session/date and original editable model identity | Pending — not yet supplied |
-| A3 adapted model identity/version and disclosed change list | Pending — not yet constructed/verified in Signavio |
-| Actual validation result / resolved exceptions | Pending — not yet conducted |
-| Readable overview/detail export and machine-readable model where available | Pending — not yet supplied |
-| Team review against final source/build and Option route (#15) | Pending — not yet ratified |
+| A3 adapted model identity/version and disclosed change list | Agent map/change list supplied; formal model only if required/adopted by the owner/route decision |
+| Actual validation result / resolved exceptions | No new operation claimed; supply if formal revision is required/adopted |
+| Readable overview/detail export and machine-readable model where available | Original PNG and simplified map supplied; new formal exports conditional on that decision |
+| Team review against final source/build and Option route (#15) | Pending in #15, downstream of this design handoff |
 
 Keep the source/research limitation in view: R2's original 17 August GenAI-design date refers to later-dated interviews. Ask the author to explain that provenance; do not rewrite the original or imply these new artifacts resolve it. Human construction above is not a new round of Spark customer research.

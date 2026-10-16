@@ -1,8 +1,10 @@
 # Issue #12 walkthrough: protocol, observations and evidence separation
 
-**Artifact:** [standalone wireframe](../design/issue-12-wireframes.html). [Rationale/source map](../design/issue-12-design-rationale.md) · [Model handoff](../design/issue-12-model-handoff.md). A bounded manual walkthrough report from Francis is now recorded; detailed H1–H8 observations remain incomplete. Agent inspection and automated interaction checks are recorded separately below and are not human evidence.
+**Artifact:** [standalone wireframe](../design/issue-12-wireframes.html). [Rationale/source map](../design/issue-12-design-rationale.md) · [Model handoff](../design/issue-12-model-handoff.md). **One group-member manual walkthrough report received; detailed observations are limited.** Francis's four-task report and no-change finding are retained below; agent inspection and automated checks are separate. H1–H8 is the prepared project protocol, not a teacher-mandated requirement for eight detailed transcripts. Do not restart the whole walkthrough by default.
 
 ## Ready-to-run human session
+
+**Retained protocol, not an outstanding recruitment request.** Francis has already reported evaluating the standalone wireframe. Use the protocol only as a reference or for a genuinely needed targeted supplement; do not infer that every variant below was attempted. Optional metadata may remain “not recorded”. A no-change result is legitimate and does not require a fabricated defect or post-change recheck.
 
 **Suggested session:** one consenting teammate/classmate or other suitable consumer proxy, moderated by a different person if practicable. This is formative, not a representative sample or Spark customer/employee study. Do not recruit Spark employees or ask for account/key/contact information. A teammate may have prior implementation knowledge; record that confound. The suggested 10–15-minute slot is planning, not an observed task duration or success threshold.
 
@@ -43,7 +45,7 @@ An action/statement can be recorded as correct, ambiguous or mistaken **for this
 
 ## Human results — bounded report received; detailed fields incomplete
 
-A report is now recorded from Francis, a group member, on 16 October 2026. It covers the four broad step groups Ryan requested and says all worked normally, with no wireframe change needed. See the [manual walkthrough record](issue-12-francis-manual-walkthrough-2026-10-16.md). This is a summary, not a complete H1–H8 observer record: the session context, step-specific actions/comments, assistance and recheck were not supplied. #11 comments and Rae's archived A1 interviews remain separate evidence.
+A report from Francis, a group member, was received on **16 October 2026 NZDT (report date, not an established session date)**. It covers the four broad step groups Ryan requested and says all worked normally, with no wireframe change needed. See the [unchanged manual report](issue-12-francis-manual-walkthrough-2026-10-16.md), preserved at [remote commit `5974528`](https://github.com/Francis-Lee-210/INFOSYS-A3/blob/5974528c38907caca858846416bec407fcb2c9ff/docs/validation/issue-12-francis-manual-walkthrough-2026-10-16.md). That is the report's repository identity, **not the tested artifact commit**. No step-specific actions/comments or assistance details were supplied. #11 comments and Rae's archived A1 interviews remain separate evidence.
 
 | Result field | Reported value |
 |---|---|
@@ -53,15 +55,26 @@ A report is now recorded from Francis, a group member, on 16 October 2026. It co
 | Tasks attempted / assistance | Ryan's four step groups listed in the linked record; assistance details not recorded |
 | Observed behaviour / comments | Summary only: all steps worked normally; no step-specific notes or verbatim comments supplied |
 | Change needed | None, according to Francis's report |
-| Actual recheck / remaining issue | No post-change recheck reported; no change was requested |
+| Actual recheck / remaining issue | No change requested, so no post-change recheck required; the specific missing/error/changed-evidence scenario and outcome are not recorded |
 
-### Copy-ready per-task record
+### Summary record (not eight reconstructed transcripts)
 
 | Report date / role / artifact details | Task / scenario | Observable action | Attributable result | Interpretation / limitation | Change made | Actual recheck |
 |---|---|---|---|---|---|---|
-| 16 October 2026 report; Francis, group member; session date and artifact version/commit not recorded | Ryan's four requested step groups; see [manual record](issue-12-francis-manual-walkthrough-2026-10-16.md) | Step-level actions not recorded | Summary report: all steps worked normally; no verbatim comments supplied | No wireframe change needed, per Francis; summary only | None reported | No post-change recheck reported |
+| 16 October 2026 report; Francis, group member; session date and artifact version/commit not recorded | Ryan's four requested step groups; see [manual record](issue-12-francis-manual-walkthrough-2026-10-16.md) | Step-level actions not recorded | Summary report: all steps worked normally; no verbatim comments supplied | No wireframe change requested on those groups; summary only | None | Not applicable: no change made on this report |
 
-Any further evaluation record must include only what actually occurred, without unnecessary PII or retrospective quotes. If a task was skipped or no recheck occurred, say so; attach annotated screenshots only with permission. Rerun artifact checks affected by any design change. Keep this PR draft until mandatory human/model evidence is addressed and #12 acceptance is reviewed; do not mark #9/#10 complete.
+### 16 October evidence assessment against actual #12 criterion 7
+
+This assessment is documentation review, **not a new human observation or clarification**. The original report is unchanged.
+
+| Required design evidence | What the report supports | Remaining limit |
+|---|---|---|
+| Who evaluated / scenario | Francis, group member; Ryan's standalone HTML and four listed task groups | Exact tested artifact/session/runtime details not recorded; useful optional metadata, not grounds alone for a full rerun |
+| Select → explain → intention/receipt and correction/Back | Reported select/explain, return/change selection, record intention/revisit receipt all worked normally | Assistance and detailed actions are not recorded; do not claim independent task success or comprehension of all financial meanings |
+| A missing/error state | Third group reports missing data, failed read **or** changed evidence | **Material clarification:** which specific state was attempted and what happened? “Or” is not evidence of each H4–H7 variant or necessarily the required missing/error case |
+| Observations / resulting changes | Summary finding: all four groups worked normally, no wireframe change needed | No verbatim comments or detailed behaviour; no change requested on this finding. No post-change recheck is due |
+
+Only the specific third-group scenario/outcome is needed to resolve the current walkthrough-coverage ambiguity. If the recollection/notes establish a missing/error case, record that as a dated supplement with its source and whether it is recollection or contemporaneous notes. If no such case was attempted or can be established, propose **one short missing/error-and-recovery task**, not a repeat of the whole session. Date/browser/artifact identity, assistance, interpretation of amount/intention and further support for the no-change conclusion are useful **if known**; otherwise retain “not recorded” and bounded claims. Never provide desired answers or reconstruct quotes. Keep the PR draft for the precise unresolved #12 evidence, not for eight transcripts or the entire #15 audit. No new session is requested by this document.
 
 ## Agent inspection and automated artifact checks
 
@@ -78,7 +91,7 @@ Any further evaluation record must include only what actually occurred, without 
 
 Automated checks are reproducible with `node docs/validation/issue-12-artifact-check.mjs` using Playwright and an installed browser (instructions in the acceptance record). They stage ten synthetic variants at desktop/mobile widths, test correction/choice/receipt/pending guards, inspect layout/contrast and render the complete SVG. The final command output is linked from acceptance. **Neither a pass nor agent visual inspection fills the human-results table above.**
 
-Final artifact run on `1b69b5e81e2611ba548f30833895dbcee6eebd5f`: **39/39 PASS**, with 81 authored relative links/source/markup checks passing separately. Node v24.20.0, Playwright 1.62.1 and installed headless Chrome 155.0.8059.80 on macOS. Zero external requests and browser-storage records. Full diagram and all state variants were visually inspected, with representative captures retained; a bounded manual report is now recorded; detailed human-result fields remain incomplete.
+Historical artifact run on `1b69b5e81e2611ba548f30833895dbcee6eebd5f`: **39/39 PASS**, with 81 authored relative links/source/markup checks passing separately. Node v24.20.0, Playwright 1.62.1 and installed headless Chrome 155.0.8059.80 on macOS. Zero external requests and browser-storage records. Full diagram and all state variants were visually inspected, with representative captures retained. These are retained historical agent results, separate from Francis's later-received manual report and any live SAP/package run; the documentation continuation does not rerun them or extend their tested identity.
 
 ### Handoff to #9 / #15—not changes to another member's work
 

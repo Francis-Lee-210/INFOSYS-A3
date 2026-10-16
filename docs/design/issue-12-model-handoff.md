@@ -2,6 +2,8 @@
 
 16 October 2026 NZDT. [Rationale/map](issue-12-design-rationale.md#2-original-to-lite-mechanism-map) · [New simplified process map](issue-12-process-adaptation.svg) · [Walkthrough](../validation/issue-12-walkthrough.md).
 
+**Visual repair checkpoint:** SVG footer status and full PNG export corrected at `b1d4cb378e9f12e7450ff3ceae56445c3999e418`, without changing L1–L8/E1–E4, original provenance or the mapping. [Repair closeout](../validation/issue-12-reconciliation.md#16-october-visual-review-repair-closeout) records the new checks/visual inspection. No later owner review was found in the rechecked PR #28/#11/#12/#15 discussion. The precise identification/mapping/reuse decision below remains outstanding; no formal revision/export is unconditionally demanded or represented as performed.
+
 ## 1. Original evidence—not a recreated “original”
 
 - Rae's [A1-D2](../../references/Rae/A1-D2/A1-D2_Spark_Financial_Rae_Huang_xhua725.docx), **§8.2, Figure 4a** displays the title **`INFOSYS704_A1-D2_TO-BE_Spark_Financial_Optimised_v2`**. Figures 4b/4c enlarge dispatch/KPI/change-exception and customer-choice/assistance paths. Section 8.2 explicitly specifies main flow 1–16.

@@ -4,9 +4,11 @@
 
 **Integrated main:** `f829c6c` (concurrent PR #26/#9), included conflict-free by normal merge `f885d082bccad9814754032178f16ee6a8f17802`. Its application/earlier evidence changes are preserved, not authored or retested by #12. Final checks below concern only this design package; new repository instructions are applied, with [tool disclosure kept separately](../development/issue-12-tool-disclosure.md).
 
-**Continuation:** fast-forwarded the existing checkout from `0b36c40` to remote `5974528c38907caca858846416bec407fcb2c9ff`, preserving Francis's three commits and original report; merged main `203b200fd81cde6c49cb52d5be0afc5f1e4b89b5` normally as `c1a88ae425293f0cb7594e6bbae3980c815e79a3`. No app/source/visual artifact edits. [Current implementation evidence checkpoint](../design/issue-12-design-rationale.md#7-implementation-cross-reference-read-only-inspection) distinguishes merged #30, closed-unmerged #31 and open #32/#34 with immutable identities. Older live/package evidence does not validate later repairs.
+**Earlier documentation continuation at `70a157b`:** fast-forwarded the existing checkout from `0b36c40` to remote `5974528c38907caca858846416bec407fcb2c9ff`, preserving Francis's three commits and original report; merged main `203b200fd81cde6c49cb52d5be0afc5f1e4b89b5` normally as `c1a88ae425293f0cb7594e6bbae3980c815e79a3`. No app/source/visual artifact edits in that continuation. [Current implementation evidence checkpoint](../design/issue-12-design-rationale.md#7-implementation-cross-reference-read-only-inspection) distinguishes merged #30, closed-unmerged #31 and open #32/#34 with immutable identities. Older live/package evidence does not validate later repairs.
 
 Documentation-only checks on **`05a3817c4d739910c8845a855806c167ede7275b`** are recorded separately in [issue-12-reconciliation.md](issue-12-reconciliation.md): **157 relative-link target checks**, source/hash/markup checks, preserved report/10 visual-artifact byte comparisons, protected-scope/ancestry checks and `git diff --check` passed. The original browser output and Francis report are retained unchanged; no browser/app/SAP/package execution was repeated.
+
+**Current visual repair, 16 October:** fixed stale SVG status and the PNG's clipped bottom/duplicated heading; capture routine now establishes full 1440×1840 viewport before navigation, waits for fonts and stable frames, verifies consecutive captures and writes the PNG directly. Tested repair identity **`b1d4cb378e9f12e7450ff3ceae56445c3999e418`**: **39/39 artifact groups and 157 link-target checks passed**, plus source/hash/markup/syntax/whitespace checks. Full-size visual inspection confirms one heading, complete bottom status panel, readable model/source link and final footer, no clipping/duplicate band/overlap/scaling. [Repair closeout](issue-12-reconciliation.md#16-october-visual-review-repair-closeout) contains actual commands/output and preserved-scope checks. Earlier automation/byte equality did not establish PNG correctness. Only SVG/footer, PNG and capture script changed; business flow, HTML, original report and frozen sources did not. No human clarification has arrived, so the two precise draft conditions remain; #15 is still downstream.
 
 ## Artifact index and independent use
 
@@ -55,7 +57,7 @@ git diff --check
 
 `ISSUE12_QA_TMP` optionally selects a scratch directory for the inline-script syntax check. This execution used OpenCode's approved temporary directory, not repository build output. Runtime/browser, tested artifact identity, actual pass counts, source/link checks and visual notes are recorded with the final run below and in the [output file](issue-12-artifact-check-results.txt). Automated checks are not an actual human walkthrough or full accessibility audit.
 
-### Historical executed artifact checks — unchanged visual/code artifacts
+### Historical executed artifact checks — before the visual repair
 
 Tested artifact/code identity: **`1b69b5e81e2611ba548f30833895dbcee6eebd5f`**, after integration of main `f829c6c`. macOS; **Node v24.20.0**, **Playwright 1.62.1**, installed headless **Chrome 155.0.8059.80**. The earlier development iterations used Chrome 155.0.8059.40; the final captured browser reports .80. No version is inferred from the old app logs.
 

@@ -117,11 +117,14 @@
       <text x="951" y="1117">Automatic 30-day outcome / annual KPI</text>
       <text x="951" y="1147">Proven savings / retained-margin gains</text>
     </g>
-    <rect x="60" y="1650" width="1290" height="135" rx="10" fill="#f3f0f8" stroke="#c9c1d6"/>
-    <text x="82" y="1683" font-size="20" font-weight="bold">Adaptation claim: a narrower mechanism, not the original annual-review outcome</text>
-    <text x="82" y="1715" font-size="18">Retained: validated evidence and explicit choice. Modified: unit of evidence, actor scope, intention and local receipt.</text>
-    <text x="82" y="1744" font-size="18">Human Signavio adaptation/export and human walkthrough remain pending. The wireframe is synthetic simulation only.</text>
-    <a href="issue-12-model-handoff.md"><text x="82" y="1772" font-size="17" fill="#542c83" text-decoration="underline">Source/model identity, text equivalent and precise human construction instructions: issue-12-model-handoff.md</text></a>
-    <text x="60" y="1818" font-size="17">Authored 16 October 2026 NZDT · Issue #12 design evidence · No new live SAP, Signavio operation or human-test claim</text>
+    <rect x="60" y="1650" width="1290" height="150" rx="10" fill="#f3f0f8" stroke="#c9c1d6"/>
+    <text x="82" y="1680" font-size="20" font-weight="bold">Adaptation claim: a narrower mechanism, not the original annual-review outcome</text>
+    <text x="82" y="1707" font-size="18">Retained: validated evidence and explicit choice. Modified: unit of evidence, actor scope, intention and local receipt.</text>
+    <g id="current-status" font-size="18">
+      <text x="82" y="1734">Francis's walkthrough report received; missing/error scenario clarification and model-owner review pending.</text>
+      <text x="82" y="1761">Formal revision/export only if required by route and recorded owner decision. Wireframe: synthetic simulation.</text>
+    </g>
+    <a href="issue-12-model-handoff.md"><text x="82" y="1788" font-size="17" fill="#542c83" text-decoration="underline">Source/model identity, text equivalent and conditional construction/export handoff: issue-12-model-handoff.md</text></a>
+    <text x="60" y="1825" font-size="17">Updated 16 October 2026 NZDT · Issue #12 design evidence · No new SAP or Signavio operation; human report recorded separately</text>
   </g>
 </svg>

@@ -9,6 +9,11 @@ import { join } from 'node:path';
 const htmlURL = new URL('../design/issue-12-wireframes.html', import.meta.url);
 const svgURL = new URL('../design/issue-12-process-adaptation.svg', import.meta.url);
 const source = await readFile(htmlURL, 'utf8');
+const svgSource = await readFile(svgURL, 'utf8');
+const svgSize = svgSource.match(/<svg\b[^>]*\bwidth="(\d+)"[^>]*\bheight="(\d+)"/);
+assert.ok(svgSize, 'SVG must declare integer canvas dimensions');
+const svgCanvas = { width:Number(svgSize[1]), height:Number(svgSize[2]) };
+assert.ok(svgCanvas.width>0 && svgCanvas.height>0);
 const inline = [...source.matchAll(/<script>([\s\S]*?)<\/script>/g)];
 assert.equal(inline.length, 1);
 const scratch = await mkdtemp(join(process.env.ISSUE12_QA_TMP || tmpdir(), 'issue12-artifact-'));
@@ -164,16 +169,40 @@ try {
     }finally{await context.close();}
   });
   await check('complete process SVG renders with all text within its canvas',async()=>{
-    const context=await browser.newContext({viewport:{width:1440,height:1000}}),p=await context.newPage();
+    // Set the final canvas BEFORE navigation. Resizing a rendered standalone SVG
+    // can leave stale compositor bands even when its DOM text bounds look valid.
+    const context=await browser.newContext({viewport:svgCanvas,deviceScaleFactor:1}),p=await context.newPage();
+    await context.route(/^https?:/,route=>{network.push(route.request().url());return route.abort();});
+    p.on('pageerror',e=>errors.push(e.message));
     try{
-      await p.goto(svgURL.href);assert.match(await p.locator('svg title').textContent(),/Billing Review Lite/);
+      await p.goto(svgURL.href,{waitUntil:'load'});
+      async function stableRender(){
+        await p.evaluate(async()=>{
+          await document.fonts.ready;
+          await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        });
+      }
+      await stableRender();
+      assert.match(await p.locator('svg title').textContent(),/Billing Review Lite/);
+      assert.deepEqual(await p.locator('svg').evaluate(e=>({width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height})),svgCanvas);
       const outside=await p.locator('svg text').evaluateAll(es=>{const root=document.querySelector('svg').getBoundingClientRect();return es.filter(e=>{const b=e.getBoundingClientRect();return b.left<root.left||b.right>root.right||b.top<root.top||b.bottom>root.bottom;}).map(e=>e.textContent);});
       assert.deepEqual(outside,[]);
-      // Standalone SVG has no HTML body: capture its complete canvas with a
-      // matching viewport instead of Playwright's HTML full-page calculation.
-      if(process.env.CAPTURE_ISSUE12==='1'){
-        await p.setViewportSize({width:1440,height:1840});
-        await p.screenshot({path:fileURLToPath(new URL('issue-12-process-adaptation.png',import.meta.url)),fullPage:false});
+      const status=await p.locator('#current-status').textContent();
+      assert.match(status,/Francis's walkthrough report received/);
+      assert.match(status,/missing\/error scenario clarification and model-owner review pending/);
+      assert.match(status,/Formal revision\/export only if required by route and recorded owner decision/);
+      assert.equal(await p.locator('a[href="issue-12-model-handoff.md"]').count(),1);
+      // CAPTURE_ISSUE12_SVG captures only this repaired export, not the unchanged
+      // wireframe screenshots. Pixel correctness still needs visual inspection.
+      if(process.env.CAPTURE_ISSUE12==='1'||process.env.CAPTURE_ISSUE12_SVG==='1'){
+        const options={fullPage:false,animations:'disabled',scale:'css'};
+        const png=await p.screenshot(options);
+        await stableRender();
+        assert.ok(png.equals(await p.screenshot(options)),'SVG capture must be stable across consecutive rendered frames');
+        assert.equal(png.readUInt32BE(16),svgCanvas.width,'PNG width must match the full canvas');
+        assert.equal(png.readUInt32BE(20),svgCanvas.height,'PNG height must match the full canvas');
+        await writeFile(fileURLToPath(new URL('issue-12-process-adaptation.png',import.meta.url)),png);
+        console.log(`Process PNG: ${svgCanvas.width}x${svgCanvas.height}; viewport set before navigation; fonts ready; two stable captures identical. Visual inspection required.`);
       }
     }finally{await context.close();}
   });

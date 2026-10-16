@@ -42,7 +42,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, posix, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
 const SCHEMA_VERSION = '1.0.0';
@@ -234,6 +234,29 @@ function scanPayload(blobs) {
   return findings;
 }
 
+// Keep this deliberately small: local ES module imports/exports are covered;
+// require()/createRequire() are not used for local modules in this payload.
+function scanPayloadImports(blobs) {
+  const payload = new Set(PAYLOAD);
+  const missing = [];
+  const specifierPattern = /\bimport\s*(?:\(\s*(['"])([^'"\n]+)\1\s*\)|(['"])([^'"\n]+)\3|[\s\S]*?\bfrom\s*(['"])([^'"\n]+)\5)|\bexport\s*[\s\S]*?\bfrom\s*(['"])([^'"\n]+)\7/g;
+  for (const path of PAYLOAD) {
+    if (!/\.(?:js|mjs)$/.test(path)) continue;
+    const text = blobs.get(path).toString('utf8');
+    specifierPattern.lastIndex = 0;
+    let match;
+    while ((match = specifierPattern.exec(text)) !== null) {
+      const specifier = match[2] ?? match[4] ?? match[6] ?? match[8];
+      if (!specifier.startsWith('./') && !specifier.startsWith('../')) continue;
+      const resolved = posix.normalize(posix.join(posix.dirname(path), specifier));
+      if (resolved === '..' || resolved.startsWith('../') || !payload.has(resolved)) {
+        missing.push({ path, specifier, resolved });
+      }
+    }
+  }
+  return missing;
+}
+
 // Ancestor directories (repo-relative, without the archive prefix) of a file.
 function ancestorDirs(path) {
   const parts = path.split('/');
@@ -389,6 +412,14 @@ function main() {
       console.error(`Reject: ${finding.path}: ${finding.category}`);
     }
     fail(`content check found ${findings.length} issue(s); refusing to create packaged outputs`);
+  }
+
+  const missingImports = scanPayloadImports(blobs);
+  if (missingImports.length > 0) {
+    for (const item of missingImports) {
+      console.error(`payload module ${item.path} imports ${item.specifier} -> ${item.resolved}, which is not in the payload`);
+    }
+    fail(`import integrity check found ${missingImports.length} missing module(s); refusing to create packaged outputs`);
   }
 
   const outDir = resolve(ROOT, outputDir);

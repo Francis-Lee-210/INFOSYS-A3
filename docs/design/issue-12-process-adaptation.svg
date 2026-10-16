@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1840" viewBox="0 0 1440 1840" role="img" aria-labelledby="title desc">
+  <title id="title">Rae annual-review mechanism adapted to Billing Review Lite</title>
+  <desc id="desc">New simplified process map, not BPMN or a Signavio export. L1 manual connection and record selection; L2 approved GET and required-header validation with recovery E1; L3 explain exact amounts, source, date and optional limits; L4 correct or refresh, blocking stale decisions in E2; L5 evidence conflict restricts Help/Later; L6 deliberate intention confirmation; L7 validated local receipt or unsaved retry E3; L8 historical reopen and confirmed reset E4. Annual plan fit, eligibility, fulfilment, Care execution and KPI outcomes are deferred. Text equivalent and original provenance are in issue-12-model-handoff.md.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#344356"/></marker>
+    <marker id="read-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#176489"/></marker>
+  </defs>
+  <rect width="1440" height="1840" fill="#fff"/>
+  <g font-family="Arial, Helvetica, sans-serif" fill="#212336">
+    <text x="60" y="50" font-size="29" font-weight="bold">From annual plan review to one-record evidence review</text>
+    <text x="60" y="85" font-size="20">New simplified process map — NOT BPMN, NOT a Signavio export or proof of a tool operation</text>
+    <text x="60" y="117" font-size="17">Original: Rae A1-D2 §8.2 / Figure 4a–c; later A2-D1 §4.4 / Figure 2 / Table 3. Originals remain unchanged.</text>
+    <text x="60" y="143" font-size="17">Working Option 2: retained evidence-first mechanism, substantially reduced data/process scope; final route ratification is #15.</text>
+    <rect x="60" y="165" width="1290" height="60" rx="8" fill="#f3f0f8" stroke="#c9c1d6"/>
+    <text x="82" y="191" font-size="17">Legend: solid arrows = interaction/control; dashed blue = read-only query/response.</text>
+    <text x="82" y="214" font-size="17">L = new Lite step; E = exception/return. Numbered returns avoid crossing lines. Grey panel = deferred, not executed.</text>
+
+    <g stroke="#344356" stroke-width="2" fill="none" marker-end="url(#arrow)">
+      <path d="M470 360V390"/><path d="M470 510V560"/><path d="M470 680V730"/>
+      <path d="M470 840V900"/><path d="M470 1040V1100"/><path d="M470 1220V1280"/><path d="M470 1400V1460"/>
+      <path d="M820 480H930"/><path d="M820 785H930"/>
+      <path d="M930 880H870V620H820"/>
+      <path d="M120 785H60V305H120"/>
+      <path d="M120 1160H88V620H120"/>
+      <path d="M820 1340H930"/><path d="M930 1380H875V1300H820"/>
+      <path d="M820 1540H930"/>
+    </g>
+    <path d="M820 420H865V305H930" stroke="#176489" stroke-width="2.5" stroke-dasharray="8 5" fill="none" marker-start="url(#read-arrow)" marker-end="url(#read-arrow)"/>
+    <g font-size="16">
+      <text x="510" y="542">required contract passes</text>
+      <text x="827" y="468">failure</text>
+      <text x="880" y="654" transform="rotate(90 880 654)">current result → L3</text>
+      <text x="42" y="650" transform="rotate(-90 42 650)">Back / change selection → L1</text>
+      <text x="108" y="1020" transform="rotate(-90 108 1020)">Back / correct → L3</text>
+      <text x="510" y="1260">confirm current review</text>
+      <text x="831" y="1328">failure</text><text x="880" y="1290">Retry</text>
+      <text x="842" y="375" transform="rotate(-90 842 375)" fill="#176489">GET / response</text>
+    </g>
+
+    <g fill="#f6f3fb" stroke="#542c83" stroke-width="2">
+      <rect x="120" y="250" width="700" height="110" rx="14"/>
+      <rect x="120" y="390" width="700" height="120" rx="14"/>
+      <rect x="120" y="560" width="700" height="120" rx="14"/>
+      <rect x="120" y="730" width="700" height="110" rx="14"/>
+      <rect x="120" y="900" width="700" height="140" rx="14"/>
+      <rect x="120" y="1100" width="700" height="120" rx="14"/>
+      <rect x="120" y="1280" width="700" height="120" rx="14"/>
+      <rect x="120" y="1460" width="700" height="140" rx="14"/>
+    </g>
+    <g font-size="21" font-weight="bold">
+      <text x="145" y="283">L1 · Reviewer — start, connect, select one key</text>
+      <text x="145" y="423">L2 · GET adapter — matching header + required gate</text>
+      <text x="145" y="593">L3 · Browser — evidence before the decision</text>
+      <text x="145" y="763">L4 · Reviewer — inspect, correct or refresh</text>
+      <text x="145" y="933">L5 · Browser — evidence conflict, NOT plan suitability</text>
+      <text x="145" y="1133">L6 · Reviewer — choose, review, explicitly confirm</text>
+      <text x="145" y="1313">L7 · Browser — minimal receipt + valid read-back</text>
+      <text x="145" y="1493">L8 · Reviewer / browser — historical reopen</text>
+    </g>
+    <g font-size="18">
+      <text x="145" y="314">MODIFIED: manual start and bounded page, not an annual timer.</text>
+      <text x="145" y="341">Source/profile and loaded scope visible; no Spark identity claim.</text>
+      <text x="145" y="455">MODIFIED: required source/key/date/amount/currency gate.</text>
+      <text x="145" y="485">Source, provenance and selection must match before explanation.</text>
+      <text x="145" y="625">Exact reported amount / basis / currency / processing date / source.</text>
+      <text x="145" y="653">Optional gaps stay visible; no payment or complete-history claim.</text>
+      <text x="145" y="795">Back corrects context; refresh clears any unconfirmed intention.</text>
+      <text x="145" y="822">Only current matching evidence may resume the review.</text>
+      <text x="145" y="966">Known currency/source/parent conflict → Help or Later only.</text>
+      <text x="145" y="994">Otherwise Keep / Review options / Help / Later are intentions.</text>
+      <text x="145" y="1022">No fit verdict, recommendation, eligibility or change execution.</text>
+      <text x="145" y="1166">Same record/evidence and intention summary; correction before save.</text>
+      <text x="145" y="1195">No account change, submitted ticket or scheduled reminder.</text>
+      <text x="145" y="1346">Identity, source, amounts/date, limitations, intent and timestamps.</text>
+      <text x="145" y="1375">No key/raw responses/names/contacts; no A2 KPI claim.</text>
+      <text x="145" y="1526">Keep original provenance and limitations; no mandatory reconnect.</text>
+      <text x="145" y="1554">New reads never rewrite a confirmed historical receipt.</text>
+      <text x="145" y="1582">Local record only — not proof of Spark fulfilment or payment.</text>
+    </g>
+
+    <rect x="930" y="250" width="420" height="110" rx="10" fill="#edf6fb" stroke="#176489" stroke-width="2"/>
+    <g font-size="17" fill="#173c53">
+      <text x="951" y="279" font-weight="bold">External SAP sandbox · GET only</text>
+      <text x="951" y="306">API_BILLING_DOCUMENT_REQUEST_SRV</text>
+      <text x="951" y="334">v1.1.0 / training requests, not Spark bills</text>
+    </g>
+    <g fill="#fff7e6" stroke="#804500" stroke-width="2">
+      <rect x="930" y="390" width="420" height="140" rx="10"/>
+      <rect x="930" y="730" width="420" height="190" rx="10"/>
+      <rect x="930" y="1280" width="420" height="140" rx="10"/>
+      <rect x="930" y="1460" width="420" height="140" rx="10"/>
+    </g>
+    <g font-size="18" fill="#653800">
+      <text x="951" y="421" font-weight="bold">E1 · No usable read / selection</text>
+      <text x="951" y="450">Failure → correct key / Retry at L1.</text>
+      <text x="951" y="478">Valid empty → no rows, not zero spending.</text>
+      <text x="951" y="507">No financial snapshot or receipt.</text>
+      <text x="951" y="763" font-weight="bold">E2 · Evidence refresh is pending</text>
+      <text x="951" y="794">Clear choice / unsaved receipt cache.</text>
+      <text x="951" y="824">Block Continue and stale confirmation.</text>
+      <text x="951" y="854">Current result → re-review at L3.</text>
+      <text x="951" y="884">Obsolete response → ignore, no restore.</text>
+      <text x="951" y="1313" font-weight="bold">E3 · Save not verified = Unsaved</text>
+      <text x="951" y="1344">Manual retry of current choice only.</text>
+      <text x="951" y="1374">Changed evidence returns to L3/L4;</text>
+      <text x="951" y="1402">never reuse a stale cached intention.</text>
+      <text x="951" y="1493" font-weight="bold">E4 · Deliberate reset</text>
+      <text x="951" y="1524">Cancel keeps data; verified delete → L1.</text>
+      <text x="951" y="1554">Clear local review / session key.</text>
+      <text x="951" y="1582">Uncertain result cannot claim Saved.</text>
+    </g>
+    <g id="step-5-note" font-size="17" fill="#3f4754">
+      <rect x="930" y="550" width="420" height="155" rx="10" fill="#f3f4f6" stroke="#697382"/>
+      <text x="951" y="577" font-weight="bold">L2/E1 · MODIFIED original step 5</text>
+      <text x="951" y="602">Original invalid data → basic summary,</text>
+      <text x="951" y="627">labelled; available details / assistance.</text>
+      <text x="951" y="652">Lite required failure → error, no summary.</text>
+      <text x="951" y="677">Valid header + optional gaps → L3.</text>
+    </g>
+    <rect x="930" y="990" width="420" height="190" rx="10" fill="#f3f4f6" stroke="#697382" stroke-width="2"/>
+    <g font-size="18" fill="#3f4754">
+      <text x="951" y="1024" font-weight="bold">DEFERRED / OUTSIDE LITE</text>
+      <text x="951" y="1057">Annual usage / GB allowance / plan fit</text>
+      <text x="951" y="1087">Eligibility / fulfilment / Care execution</text>
+      <text x="951" y="1117">Automatic 30-day outcome / annual KPI</text>
+      <text x="951" y="1147">Proven savings / retained-margin gains</text>
+    </g>
+    <rect x="60" y="1650" width="1290" height="150" rx="10" fill="#f3f0f8" stroke="#c9c1d6"/>
+    <text x="82" y="1680" font-size="20" font-weight="bold">Adaptation claim: a narrower mechanism, not the original annual-review outcome</text>
+    <text x="82" y="1707" font-size="18">Retained: validated evidence and explicit choice. Modified: unit of evidence, actor scope, intention and local receipt.</text>
+    <g id="current-status" font-size="18">
+      <text x="82" y="1734">Francis's guided missing/error walkthrough recorded; Rae accepts reuse with the disclosed step-5 modification.</text>
+      <text x="82" y="1761">Rae: no formal Signavio revision required for current Option 2. Final team/API-fit ratification remains #15.</text>
+    </g>
+    <a href="issue-12-model-handoff.md"><text x="82" y="1788" font-size="17" fill="#542c83" text-decoration="underline">Source/model identity, text equivalent and conditional construction/export handoff: issue-12-model-handoff.md</text></a>
+    <text x="60" y="1825" font-size="17">Updated 16 October 2026 NZDT · Issue #12 design evidence · No new SAP or Signavio operation; human report recorded separately</text>
+  </g>
+</svg>

@@ -1,4 +1,10 @@
-# A3 four-candidate comparison and proposed selection
+# A3 four-candidate comparison and team-confirmed selection
+
+**Current selection — 16 October 2026 NZDT:** **Billing Review Lite is team-confirmed**, with **Xuan's Knowledge Handover the preferred fallback** and Rae's qualification that **A2 projected benefits must not be presented as prototype results**. The four actual accounts, signatures, timestamps and direct confirmation links are in [§11](#11-dated-confirmation-update--16-october-2026-nzdt). This is asynchronous direction agreement, not a meeting or approval of later design artifacts. #11's final canonical-update criterion is supplied by this PR and is satisfied on merge; it does not wait for #12's walkthrough or #15's final API-fit/route ratification.
+
+**Current concise rationale:** The team compared four authentic Spark proposals using common qualitative enterprise impact/effort definitions, then assessed A3 feasibility separately. It selected Billing Review Lite to explain one billing-request record's reported amounts, source and evidence gaps before recording an intention and local receipt. This preserves a narrowed evidence-first mechanism from Rae's Financial proposal, not annual usage, plan fit, recommendation, savings or account execution. #5's historical live reader evidence is not full workflow validation or proof of superior enterprise value. Xuan's Knowledge Handover remains the fallback; Option 2 is a working classification for #15's later final ratification. Rae's projected benefits are not prototype outcomes.
+
+**Historical 15 October proposal baseline follows.** Its pending statements are retained as then-current evidence, superseded for selection status by §§8/11 below, not requests for the team to confirm again.
 
 **Proposal date:** 2026-10-15 (Pacific/Auckland). **Selection status: Proposed by Francis; pending confirmation by the full team.** This is not a team meeting record, vote or Staff endorsement. The date records Francis's confirmation of this proposal in the current discussion, not full-team confirmation.
 
@@ -138,11 +144,15 @@ Same company **Spark NZ**, same **Financial** domain, with an evidence-first sco
 
 Issue #12 must show the applicable original model and readable changed flow, with retained/changed/deferred mapping and a real walkthrough; #15 must ratify final route against live/integration evidence. If reviewers find this is essentially a generic billing tool with no credible continuation of Rae's evidence-first review, the change may be a **wholly new solution (Option 3)**, requiring new AS-IS/TO-BE and change details. Selecting another member's existing solution instead uses its applicable model under Staff clarification; not every Option 3 automatically requires two wholly new models. No extension or specific Staff approval is inferred. External Live Master location is not established: synchronisation is a follow-up dependency, not an invented repository file. Personal A1/A2 chains and candidate originals remain unchanged.
 
-### Reusable concise English rationale
+### Historical concise English rationale — 15 October proposal
 
 > We compared four Spark A1/A2 proposals using common qualitative definitions of expected business impact and enterprise implementation effort, then assessed A3 prototype feasibility separately. Francis proposes Billing Review Lite, pending full-team confirmation. The narrowed Financial-domain workflow presents one billing-request record, explains its amounts and evidence gaps, and will record an explicit review intention. Historical Issue #5 evidence validates the selected SAP reader; Issue #6 adds controlled explanation tests, not new live acceptance. This preserves Rae's evidence-first mechanism while deferring annual usage, plan suitability, recommendations, savings and real changes. It is not proof of superior enterprise value or customer outcomes. Knowledge Handover is the preferred fallback, subject to suitable employment sandbox evidence. Full workflow acceptance and final API-fit/model ratification remain outstanding.
 
 ## 8. Authentic decision status and Issue #11 acceptance
+
+**Current status, 16 October:** the four asynchronous confirmations establish one team-selected direction (Billing Review Lite), the stated fallback and benefit qualification; see §11 for original links/dates. No dissent is recorded in those comments, and no separate vote/meeting is inferred. Issue #11's own progress record marks criteria 1–7 satisfied and criterion 8 waiting only for this PR's canonical update to merge. The personal A1/A2 chain and original candidates remain untouched. #12's later human evidence and #15's final route/build audit are separate tasks, not additional #11 completion conditions.
+
+### Historical 15 October decision snapshot
 
 | Decision-record field | Actual status |
 |---|---|
@@ -156,18 +166,20 @@ Issue #12 must show the applicable original model and readable changed flow, wit
 
 Current-state check on 15 October: #4/#11/#12 open; #5/#6 closed following merges. **#7 and #8 both open and assigned to Rae404 (Rae)**. PR #21 is open on `issue-7-intent-receipt` (observed head `498e15d2fcfd22e26f50c99d3d864258c63da599`); its claimed controlled receipt acceptance is branch evidence, not merged main or live acceptance. Implementation/archived evidence not modified here. Historical #5/#6 reports retain their then-pending PR wording; current state is reconciled here rather than rewriting frozen records.
 
+### Current Issue #11 acceptance mapping — 16 October
+
 | Issue #11 criterion (original order) | Status | Evidence / remaining dependency |
 |---|---|---|
 | 1. Four authors/domains/authentic A1/A2 provenance and attribution conflict | **Satisfied** | §1 and primary-source index §9; member manifests/hashes verified; correction PR #3. |
 | 2. Common strengths/weaknesses/business relevance; enterprise versus A3 | **Satisfied** | Definitions §2; original comparison §3; separate feasibility §6. |
 | 3. Actual justified matrix/framework without invented weights | **Satisfied** | SVG + text equivalent and source-supported positions §4. |
 | 4. API Pool v4, listed versus live capabilities, #5 linkage | **Satisfied** | Unchanged verified v4, A–D ladder/table §5 and bounded historical #5/#6 evidence. No team vote inferred. |
-| 5. Real participants/date/single choice/disagreement; actual confirmation | **Pending authentic team confirmation** | Only Francis's dated proposal exists. Real team confirmation/date/participants and any disagreement resolution must be added by the team. This criterion remains open. |
+| 5. Real participants/date/single choice/disagreement; actual confirmation | **Satisfied** | §11 preserves Francis, Rae, Xuan and Ryan's actual comments/signatures/timestamps. Final confirmation 15 October UTC / 16 October NZDT. No dissent in the comments; no invented meeting or resolution process. |
 | 6. Conditional pre-#5 selection and failure/reselection path; #12/#15 boundaries | **Satisfied for current state** | #5 already passed/merged before this proposal; no invented pre-B0 team decision. §§5–7 preserve failure/reselection route and outstanding design/final-live ratification. Not a full live-workflow claim. |
 | 7. Concise qualified English rationale with separate evidence | **Satisfied** | Reusable paragraph §7; supporting analysis/index retained here, not final slides/recording. |
-| 8. Only warranted A3 decision/canonical change record; preserve personal chain/classify cascade | **Partially satisfied** | Repository worksheet records proposal and scope adaptation; originals untouched. Authentic final cascade/route decision and any external Live Master synchronisation remain follow-up dependencies. |
+| 8. Only warranted A3 decision/canonical change record; preserve personal chain/classify cascade | **Satisfied by this PR on merge** | This dated canonical update and worksheet §8 record the actual decision and bounded A3 scope. Cascade class: A3 selection/design record only; personal Strategic/Competitive A1/A2 and candidates unchanged. External Live Master location is not established; no edit/synchronisation claimed. Final route/build ratification is #15, not a missing #11 confirmation. |
 
-Documentation completion is **not completion of Issue #11**. Do not close the issue, change its assignee, merge this PR or approve for other members.
+All eight #11 criteria are supported for closure **when the canonical record merges** (consistent with the issue's current progress note). PR #28 may therefore say **Closes #11**, independently of its precise outstanding #12 evidence. Do not manually close, merge, change assignees or approve for other members.
 
 ## 9. Traceable source index
 
@@ -223,6 +235,8 @@ Dates below are the source's stated version/date when available; **copied 14 Oct
 
 ## 10. Validation record and limitations
 
+**Historical record from the 15 October comparison task.** Its pending confirmation/build statements describe that baseline, not current status. Current selection evidence is §11; later design/human/implementation evidence is linked separately, not backdated into these checks.
+
 This is AI-assisted source synthesis and documentation/Git work executed in OpenCode; Francis's stated analytical choices are recorded as his proposal. Other members' review and any course-required disclosure/authorial review remain necessary. No new interviews, customer tests, team meeting or measured business outcome were created.
 
 - Verified all four original cover identities/domains and README/manifest versions; checked archived assignment hashes against member manifests. Ryan's actual Concise slides and the historical filename correction were used.
@@ -233,3 +247,18 @@ This is AI-assisted source synthesis and documentation/Git work executed in Open
 - Scope/security review is limited to the seven intended changed files: comparison, SVG, worksheet, v4 workbook, resource manifest/README and root README. No app, candidate, reference, archived evidence/specification or individual workspace changes. No credentials/raw SAP records or personal local paths added to the text/manifest; unchanged workbook metadata is explicitly noted. `git diff --check` passes after removing new trailing whitespace. No repository documentation-specific suite was found; unrelated application tests were not rerun and no documentation-mirroring tests were added.
 
 Remaining evidence limits: no new SAP authentication/request; official field review is bounded; no new browser application/live receipt acceptance; no independent reproduction of PR #21; no final design/models, ZIP, slides, recording or Canvas receipt. Full-team confirmation remains an explicit open Issue #11 criterion.
+
+## 11. Dated confirmation update — 16 October 2026 NZDT
+
+The proposal/history above is preserved, not rewritten as an earlier team decision. Rechecked actual #11 comments on 16 October NZDT: **four posted confirmations of Billing Review Lite as scoped in PR #22 are present**. This is asynchronous confirmation, not evidence of a team meeting, attendance or a recorded vote on every matrix judgement.
+
+| Posted account / signed participant | Actual posted UTC time | Direct confirmation and conditions |
+|---|---|---|
+| `Francis-Lee-210` / Francis | 2026-10-15 08:59:24Z | [Comment](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/11#issuecomment-6188389540): agrees with one-record amounts/evidence/gaps → intended next action; explicitly his own confirmation, final API fit subject to #15. |
+| `Rae404` / Rae | 2026-10-15 10:06:21Z | [Comment](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/11#issuecomment-6189567067): confirms Billing Review Lite, Xuan fallback; **narrowed adaptation must not present her A2 projected benefits as prototype results**. |
+| `wanyan2333` / Xuan (Kevin) | 2026-10-15 10:10:22Z | [Comment](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/11#issuecomment-6189638526): confirms Lite and own Knowledge Handover fallback. His employment-API statement is self-reported evidence, not an independently rerun fallback gate here. |
+| `RIOne1` / signed Ryan Li | 2026-10-15 13:59:04Z | [Comment](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/11#issuecomment-6193873105): confirms one billing-request record → reported amount/source/limits → intention/minimal receipt, Xuan fallback, Rae benefit caveat and final Option 2/API-fit ratification in #15. |
+
+Completion of the four-comment set is **15 October 2026 UTC / 16 October 2026 NZDT** (last comment 02:59:04 NZDT). Participants are identified by the actual posted accounts/signatures; no proxy approval is posted by this task. No dissent is present in these four comments; that is not evidence of a separate disagreement-resolution meeting. Confirmed scope: one-record financial evidence explanation and local intention/receipt; no annual fit/compliance, real Spark account or achieved-benefit claim. **Option 2 remains a working classification, not Staff approval; #15 final ratification is pending.**
+
+This supplies the genuine team-decision record and warranted A3-only canonical cascade for §8 criteria 5/8; #11 can close when this record merges. External Live Master location is not established and no synchronisation is claimed. These confirmations predate the [Issue #12 artifacts](../docs/design/issue-12-design-rationale.md) and are **not** a walkthrough or later-model approval. Separately, [Francis's initial report and committed guided supplement](../docs/validation/issue-12-francis-manual-walkthrough-2026-10-16.md) now cover the bounded journey including correction, optional absence, failed read, pending/conflict and historical receipt, with guidance/evidence limits explicit. [Rae404's later 16 October model-owner review](https://github.com/Francis-Lee-210/INFOSYS-A3/pull/28#issuecomment-6210567463) accepts identification/mapping and adopts reuse without formal revision, subject to the now-explicit **Modified original-step-5 fallback**. These resolve #12's former two questions; no interaction change or replay is justified. #11/#12 closure on merge does not complete #15. Main `203b200` includes #30; #31 closed unmerged. Earlier open-branch implementation results retain their immutable identities in the [design checkpoint](../docs/design/issue-12-design-rationale.md#7-implementation-cross-reference-read-only-inspection), not a current-source certification. No manual closure, assignee change or approval on anyone's behalf is performed.

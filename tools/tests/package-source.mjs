@@ -272,6 +272,38 @@ ok('bare, built-in and variable imports are ignored', () => {
   assert(readDirectory(out).some((file) => file.endsWith('.zip')), 'successful packaging produced no ZIP');
 });
 
+ok('imports after function exports, declarations, and import.meta are detected', () => {
+  const dir = initRepoWithPayload();
+  const cases = [
+    ['app/tests/browser.mjs', "export function f() {\n  return import('./miss-function.mjs');\n}\nexport * from './issue-27.mjs';"],
+    ['app/tests/issue-8.mjs', "export const a = 1;\nimport './miss-declaration.mjs';\nimport z from './issue-27.mjs';"],
+    ['app/tests/issue-9.mjs', "const u = import.meta.url;\nimport './miss-meta.mjs';\nimport y from './issue-27.mjs';"],
+  ];
+  for (const [path, content] of cases) {
+    appendFile(join(dir, path), `\n${content}\n`);
+    assert(git(dir, ...authorFlags(), 'add', '--', path).status === 0);
+  }
+  assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add imports after declarations').status === 0);
+  const out = join(dir, 'out');
+  const result = packager(dir, '--output-dir', out);
+  assert(result.status !== 0, 'missing imports should fail');
+  for (const target of ['miss-function.mjs', 'miss-declaration.mjs', 'miss-meta.mjs']) {
+    assert(result.stderr.includes(target), `diagnostic omitted ${target}: ${result.stderr}`);
+  }
+  assert(readDirectory(out).length === 0, 'output created despite missing imports');
+});
+
+ok('multiline import list and import.meta/export default package successfully', () => {
+  const dir = initRepoWithPayload();
+  appendFile(join(dir, 'app/tests/browser.mjs'), "\nimport {\n a,\n b\n} from './issue-27.mjs';\nconst url = import.meta.url;\nexport default function () {}\n");
+  assert(git(dir, ...authorFlags(), 'add', '--', 'app/tests/browser.mjs').status === 0);
+  assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add multiline import').status === 0);
+  const out = join(dir, 'out');
+  const result = packager(dir, '--output-dir', out);
+  assert(result.status === 0, `valid multiline import failed: ${result.stderr.trim()}`);
+  assert(readDirectory(out).some((file) => file.endsWith('.zip')), 'successful packaging produced no ZIP');
+});
+
 // ---------------------------------------------------------------------------
 // Refusal behaviors
 // ---------------------------------------------------------------------------

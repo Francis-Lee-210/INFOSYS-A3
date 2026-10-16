@@ -1,10 +1,10 @@
 {
-  "schemaVersion": "issue-10-independent-run-v1",
-  "verifiedAt": "2026-10-16T00:27:21.635471+00:00",
-  "verifiedAtLocal": "2026-10-16T13:27:21.635471+13:00",
-  "sourceCommit": "c9914cc4f1158fb46244ae7e5c03ec2b60ef6878",
-  "archiveSha256": "5ae2d5a14c806d8a76cd3de28e4828f29dc19a456db046ef9b770784cabaa7c7",
-  "archiveBytes": 92630,
+  "schemaVersion": "issue-10-independent-run-v3",
+  "verifiedAt": "2026-10-16T09:25:50.433521+00:00",
+  "verifiedAtLocal": "2026-10-16T22:25:50.433521+13:00",
+  "sourceCommit": "463e409f6174e66b3438cad7a756b4bd24e96853",
+  "archiveSha256": "2ee02b2e46799907d086ad87037127a75ccf2286a8c9a2d8a0eba85fb4caff80",
+  "archiveBytes": 100344,
   "environment": {
     "os": "macOS 15.7.5",
     "node": "v26.0.0",
@@ -12,13 +12,21 @@
     "playwright": "1.62.1",
     "chromium": "151.0.7922.34"
   },
-  "cleanDirectory": "/private/tmp/a3-issue10-clean-c9914cc/plan-review-snapshot-billing-lite",
+  "cleanDirectory": "/private/tmp/a3-issue10-clean-463e409/plan-review-snapshot-billing-lite",
   "startup": {
-    "command": "PORT=6289 npm start",
-    "origin": "http://127.0.0.1:6289/",
+    "command": "PORT=6291 npm start",
+    "origin": "http://127.0.0.1:6291/",
     "beforeDependencyInstall": true,
+    "observedAt": "2026-10-16T09:19:58.317Z",
     "noRuntimeDependenciesOrBuild": true,
-    "observed": "Source/connection screen rendered; no automatic SAP request."
+    "observed": "Empty initial connection/list screen, correct h1/title, no automatic SAP request.",
+    "checks": {
+      "h1Correct": true,
+      "titleCorrect": true,
+      "noAutomaticRequest": true,
+      "noRecords": true,
+      "passwordEmpty": true
+    }
   },
   "testSetup": {
     "npmCiExitCode": 0,
@@ -27,14 +35,14 @@
     "browserInstallExitCode": 0
   },
   "fixtureBrowserSuite": {
-    "command": "PORT=7269 npm test",
+    "command": "PORT=8800 npm test",
     "testFilterUnset": true,
     "captureFlagsUnset": true,
     "externalPlaywrightModuleAndChromeOverridesUnset": true,
-    "groupsPassed": 146,
+    "groupsPassed": 167,
     "groupsFailed": 0,
     "exitCode": 0,
-    "coverage": "Full inherited suite, including K01 full keyboard fixture save/reopen/reset, N02 receipt reload, T02/T03 exact storage, and all injected failure/recovery scenarios."
+    "coverage": "All inherited 146 groups plus 21 Issue #27 groups; full keyboard fixture journey, exact receipt schema/identity and injected storage/network/recovery failures. No filter, capture or external module/browser/Chrome overrides."
   },
   "packagingSuite": {
     "casesPassed": 28,
@@ -42,7 +50,9 @@
     "exitCode": 0
   },
   "postRunPayloadHashCheck": {
-    "all16FilesUnchanged": true
+    "at": "2026-10-16T09:25:50.433521+00:00",
+    "all17FilesUnchanged": true,
+    "archiveBytesAndSha256Unchanged": true
   },
   "parentSpecification": {
     "state": "OPEN",
@@ -51,11 +61,11 @@
   },
   "liveWorkflow": {
     "status": "PASS",
-    "startedAt": "2026-10-16T00:37:15.667Z",
-    "completedAt": "2026-10-16T01:34:05.346Z",
-    "completedAtLocal": "2026-10-16T14:34:05.346+13:00",
+    "startedAt": "2026-10-16T09:20:39.330Z",
+    "completedAt": "2026-10-16T09:22:31.550Z",
+    "completedAtLocal": "2026-10-16T22:22:31.550000+13:00",
     "evidence": "issue-10-live-evidence.json",
-    "transport": "Unchanged default adapter from the inspected final ZIP extraction; actual SAP sandbox, no injection.",
+    "transport": "Default GET-only adapter from the inspected 17-file final ZIP extraction; actual SAP sandbox, no injection.",
     "loadedRecords": 10,
     "usableRecords": 10,
     "sameSelectedKeyAndReportedEvidence": true,
@@ -64,19 +74,68 @@
     "cancelAndConfirmResetVerified": true,
     "resetSurvivesReload": true,
     "directLiveStorageInspection": false,
-    "storageEvidenceScope": "Live DOM save/reopen/reset plus unchanged validator and packaged exact-schema/storage regressions. No raw live receipt exported.",
+    "storageEvidenceScope": "Live DOM save/reopen/reset plus unchanged receipt validator and packaged 167-group storage/schema regressions. No direct live-storage inspection or raw live receipt export.",
     "AC25": "PASS",
     "AC26": "PASS"
   },
   "screenshots": {
-    "cleanStartup": "issue-10-clean-start.png",
+    "cleanStartup": "issue-10-clean-start.jpg",
     "confirmedResetAndReload": "issue-10-reset-complete.jpg"
   },
   "independentClosureReview": {
-    "result": "No blocking finding",
-    "scope": "Final live/independent records and acceptance crosswalk; identity, timestamps, links and AC23/25/26 evidence boundaries.",
+    "result": "No blocking discrepancy",
+    "scope": "Final ZIP/manifest/frozen Git/current/extracted 17-file byte identity; 100344-byte archive and SHA-256; 167 PASS = 146 inherited + 21 Issue #27; 28 ok; actual live times, 10/10 and 23 true checks; historical build boundaries; no direct live-storage inspection; future import guard separate; all26AC original wording and local links. Read-only: no test/live repetition, key/browser/GitHub access.",
     "readOnly": true,
     "noKeyOrBrowserAccess": true,
-    "passingSuitesNotRepeated": true
+    "passingSuitesNotRepeated": true,
+    "reviewedAt": "2026-10-16T09:29:14.069625+00:00"
+  },
+  "integration": {
+    "mergedMain": "203b200fd81cde6c49cb52d5be0afc5f1e4b89b5",
+    "reviewedRepairCommit": "463e409f6174e66b3438cad7a756b4bd24e96853",
+    "PR29MergedAt": "2026-10-16T03:06:26Z",
+    "PR30MergedAt": "2026-10-16T03:20:30Z",
+    "note": "Both original PRs merged during the earlier review; PR #32 carries subsequent fixes. This source includes ee51431 and the independently reviewed failed-reset preservation repair. No follow-up repair is attributed to the old merged heads.",
+    "reviewedTeammateCommit": "ee514313fb736d0fd2a8878247a619b85768303f",
+    "priorReviewedRepairCommit": "81099ce4ff37564dec7099687726a3ed5dd10e41"
+  },
+  "historicalAcceptance": {
+    "previous17FileBuild": {
+      "sourceCommit": "093f5f02879494979c0cda3b0bd1dedc01697666",
+      "recordCommit": "f6281c9a99d61c5bb87a8c712e8cff070fb4b1be",
+      "payloadFiles": 17,
+      "archiveBytes": 98618,
+      "archiveSha256": "c25057ab068854765681e6c0109c9fff42eced9af5db33e7dbe7eda6c8cad17d",
+      "browserGroups": 161,
+      "scope": "Previous valid evidence applies to the old payload only; not reused for this new build."
+    },
+    "original16FileBuild": {
+      "sourceCommit": "c9914cc4f1158fb46244ae7e5c03ec2b60ef6878",
+      "recordCommit": "2dc5ce4dfc8c10c0489f5521d10341cb9df65fe4",
+      "payloadFiles": 16,
+      "browserGroups": 146,
+      "scope": "Previous valid clean-run/live evidence applies to that old payload only; not reused for this new build."
+    }
+  },
+  "remainingToolingImprovement": "Rae will add local import-reference completeness checks and regression tests separately; this run does not claim that future guard exists.",
+  "codeReviewClosure": {
+    "sourceCommit": "463e409f6174e66b3438cad7a756b4bd24e96853",
+    "standards": {
+      "initialUniqueP2": 1,
+      "resolvedP2": 1,
+      "remainingBlockers": 0
+    },
+    "spec": {
+      "initialP2": 1,
+      "resolvedP2": 1,
+      "remainingBlockers": 0
+    },
+    "sameDefectAcrossBothAxes": true,
+    "actualCodeMatchesReviewedPatch": true,
+    "parentIndependentOriginalRepro": "Both next-confirm and second-reset-unreadable variants now pass.",
+    "openCodeSession": "ses_ebc03cd83ffesb3EreZKTOskCE",
+    "focusedChecks": 22,
+    "focusedIssue27Groups": 21,
+    "focusedInheritedFixtureCheck": 1
   }
 }

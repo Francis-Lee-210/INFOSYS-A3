@@ -39,6 +39,7 @@ const PAYLOAD = [
   'app/tests/browser.mjs',
   'app/tests/issue-8.mjs',
   'app/tests/issue-9.mjs',
+  'app/tests/issue-27.mjs',
 ];
 
 const PREFIX = 'plan-review-snapshot-billing-lite/';

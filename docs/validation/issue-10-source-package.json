@@ -2,13 +2,13 @@
   "schemaVersion": "issue-10-source-package-v2",
   "package": {
     "schemaVersion": "1.0.0",
-    "sourceCommit": "093f5f02879494979c0cda3b0bd1dedc01697666",
-    "sourceCommitShort": "093f5f0",
-    "packagedAt": "2026-10-16T03:36:47.420Z",
+    "sourceCommit": "463e409f6174e66b3438cad7a756b4bd24e96853",
+    "sourceCommitShort": "463e409",
+    "packagedAt": "2026-10-16T09:16:29.775Z",
     "archive": {
-      "basename": "plan-review-snapshot-billing-lite-093f5f0.zip",
-      "bytes": 98618,
-      "sha256": "c25057ab068854765681e6c0109c9fff42eced9af5db33e7dbe7eda6c8cad17d"
+      "basename": "plan-review-snapshot-billing-lite-463e409.zip",
+      "bytes": 100344,
+      "sha256": "2ee02b2e46799907d086ad87037127a75ccf2286a8c9a2d8a0eba85fb4caff80"
     },
     "payload": [
       {
@@ -18,8 +18,8 @@
       },
       {
         "path": "app/app.mjs",
-        "bytes": 83647,
-        "sha256": "6d97f0ba259e47b78b46aa241c88caf66445b54a26f6163e66ec5619bcf60278"
+        "bytes": 84983,
+        "sha256": "8bcc0c3ec4716a41aa35bd72946827971a3ae161ba61de7c403a86968afdba48"
       },
       {
         "path": "app/index.html",
@@ -83,8 +83,8 @@
       },
       {
         "path": "app/tests/issue-27.mjs",
-        "bytes": 28498,
-        "sha256": "dfca1b98958015a98eb09213f0f91de9a86e973cd7609133851807b7923783a1"
+        "bytes": 43675,
+        "sha256": "1fbeab3c70e75013cfb1d8398a203e0921ae1e5ecd2e092463e9bfbb47b1b54c"
       },
       {
         "path": "app/tests/issue-8.mjs",
@@ -99,15 +99,19 @@
     ]
   },
   "independentInspection": {
-    "at": "2026-10-16T03:36:53.322884+00:00",
+    "at": "2026-10-16T09:16:55.068689+00:00",
     "zipCrcValid": true,
     "exactPayloadFiles": 17,
     "allManifestGitBlobAndExtractedBytesMatch": true,
     "regularFilesOnly": true,
     "noPrivateKeyOrRawOdataDumpFound": true,
     "noGitOrDependenciesInExtraction": true,
-    "scope": "Independent exact allowlist, CRC, modes, source-blob/manifest/extracted byte comparison and conservative private-key/raw-dump scan; packager credential-literal scan also passed. Not a universal secret detector.",
-    "postRunAll17PayloadFilesUnchanged": true,
-    "postRunVerifiedAt": "2026-10-16T03:42:20.286324+00:00"
+    "scope": "Independent exact allowlist, CRC, modes, source-blob/manifest/extracted byte comparison and conservative private-key/raw-dump scan; packager credential-literal scan also passed. Not a universal secret detector."
+  },
+  "postRunVerification": {
+    "at": "2026-10-16T09:25:50.433521+00:00",
+    "atLocal": "2026-10-16T22:25:50.433521+13:00",
+    "all17CheckoutAndExtractedFilesMatchFrozenGitAndManifest": true,
+    "archiveBytesAndSha256Unchanged": true
   }
 }

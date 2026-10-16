@@ -101,3 +101,55 @@ OpenCode performed the production/test edits in session
 [separate](../development/issue-27-opencode.md). Independent review, final
 unfiltered execution and Git operations were performed outside that session.
 No real key, SAP response or live receipt is present in this record or output.
+
+
+## Independent PR #32 review and current source freeze — 16 October 2026
+
+Fixed review base `f6281c9a99d61c5bb87a8c712e8cff070fb4b1be`; reviewed teammate
+head `ee514313fb736d0fd2a8878247a619b85768303f`. Its session-wide write-attempt memory and no-known-data/no-write
+escape from permanently unreadable storage are preserved in the current repair.
+
+### Standards review
+
+One P2: a one-off startup read failure hides pre-existing valid/corrupt receipt
+bytes; when confirmed reset fails to delete but reads those bytes, their known
+presence was forgotten. A later confirmation could overwrite history, or a
+second unreadable reset could falsely finish. The original two-variant repro
+failed both protections. The actual OpenCode repair `463e409f6174e66b3438cad7a756b4bd24e96853` preserves known
+presence, restores valid historical provenance, retains corrupt-data recovery
+and keeps subsequent unverifiable deletion retryable. Final read-only review of
+the actual frozen app/test bytes closes this P2; no new Standards blocker.
+
+### Spec review
+
+One overlapping P2 is the same unique defect, not an additional defect. The
+repair meets the parent requirement that historical receipts are not silently
+rewritten, AC18's valid write/read-back rule, and AC22's cancel-preserves and
+verified-delete reset behavior. This session's own unverified wrong-intent
+write is never adopted as Saved. Final read-only review of the actual frozen
+bytes closes this P2; no new Spec blocker. Screen headings/titles remain intact.
+
+### Independent execution and source handoff
+
+The primary agent re-ran the original two-variant repro on the actual patch:
+old bytes survive failed reset/next confirmation, and subsequent unreadable
+reset retains uncertainty/retry; both variants pass, exit 0. Actual production
+and test bytes were independently matched to the reviewed repair, then frozen
+at `463e409f6174e66b3438cad7a756b4bd24e96853`. OpenCode session `ses_ebc03cd83ffesb3EreZKTOskCE` performed the
+app/test edits and focused **22/22** checks: **21 Issue #27 groups plus one
+inherited fixture/provenance check**, not 22 Issue #27 groups.
+
+The primary agent generated a new 17-file ZIP and independently ran its clean
+extraction with package-local Playwright/Chromium: **167/167 unfiltered browser
+groups** (146 inherited + 21 Issue #27), exit 0; packaging **28/28**, exit 0.
+The six additional Issue #27 groups since the previous 161 run comprise three
+teammate groups and three reviewed-repair groups. Current repair regressions
+cover valid/corrupt old data, cancellation/overwrite protection, later read or
+property denial, recovery/verified deletion, and own wrong-intent partial writes.
+
+See [complete current browser output](issue-10-browser-test-results.txt),
+[current package identity, independent run and real SAP acceptance](issue-10-acceptance.md),
+and [actual OpenCode development](../development/issue-27-opencode.md).
+Earlier 153/161 results above retain their historical source scope. Current
+fixture/injected failures remain separate from the new real SAP run and B0.
+No key, raw response or raw live receipt is retained.

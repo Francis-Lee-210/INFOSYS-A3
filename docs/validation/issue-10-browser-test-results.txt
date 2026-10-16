@@ -166,9 +166,15 @@ PASS issue 27: one-off startup read failure recovers to a saved receipt, notice 
 PASS issue 27: one-off startup read failure with pre-existing valid receipt preserves original bytes on Confirm
 PASS issue 27: one-off startup read failure with pre-existing corrupt/unsupported bytes preserves them until deliberate reset
 PASS issue 27: persistent read failure with writable setItem does not write on Confirm or Retry
-PASS issue 27: known saved receipt, reset first getItem throws then working remove/readback empties it
+PASS issue 27: known saved receipt, reset first getItem throws: removal still happens and a second reset verifies it
 PASS issue 27: recovered storage, reset before any save, clears the stale unavailable notice
 PASS issue 27: schema-valid wrong-intent read-back is never adopted by Retry
 PASS issue 27: known receipt property denial retains uncertain reset and can be verified after recovery
+PASS issue 27: this session's own partial write is never adopted as Saved after the intent changes
+PASS issue 27: persistent getItem failure, reset with no receipt clears the session instead of an uncertain loop
+PASS issue 27: a partial write is still known to reset after leaving the decision
+PASS issue 27: known old bytes survive failed reset, cancellation and another confirmation until verified deletion
+PASS issue 27: known old bytes retain uncertain reset when later read or property access fails
+PASS issue 27: failed reset never promotes this sessions unverified wrong-intent write to Saved
 
-All 161 tests passed.
+All 167 tests passed.

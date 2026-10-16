@@ -1,5 +1,5 @@
 ok git and unzip available, node >= 22
-    archive plan-review-snapshot-billing-lite-4098752.zip (98618 bytes), manifest verified
+    archive plan-review-snapshot-billing-lite-bc9b89a.zip (100344 bytes), manifest verified
 ok clean repo produces ZIP and manifest
 ok dirty payload is refused
 ok untracked required file is refused

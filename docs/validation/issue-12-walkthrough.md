@@ -1,6 +1,6 @@
 # Issue #12 walkthrough: protocol, observations and evidence separation
 
-**Artifact:** [standalone wireframe](../design/issue-12-wireframes.html), v1.0, authored 16 October 2026 NZDT. [Rationale/source map](../design/issue-12-design-rationale.md) · [Model handoff](../design/issue-12-model-handoff.md). This protocol is prepared **before requesting a human evaluation**. Human results: **Pending — not yet conducted**. Agent inspection and automated interaction checks are recorded separately below and do not satisfy that dependency.
+**Artifact:** [standalone wireframe](../design/issue-12-wireframes.html). [Rationale/source map](../design/issue-12-design-rationale.md) · [Model handoff](../design/issue-12-model-handoff.md). A bounded manual walkthrough report from Francis is now recorded; detailed H1–H8 observations remain incomplete. Agent inspection and automated interaction checks are recorded separately below and are not human evidence.
 
 ## Ready-to-run human session
 
@@ -41,27 +41,27 @@ Record whether the participant:
 
 An action/statement can be recorded as correct, ambiguous or mistaken **for this task**, with supporting words/actions, not as a population satisfaction or success percentage. Understanding one record does not demonstrate the original A2 financial/retention benefit.
 
-## Human results — Pending, not yet conducted
+## Human results — bounded report received; detailed fields incomplete
 
-There is **no actual participant for this Issue #12 artifact yet**. #11 direction-confirmation comments and Rae's archived A1 interviews are not a walkthrough of these new wireframes.
+A report is now recorded from Francis, a group member, on 16 October 2026. It covers the four broad step groups Ryan requested and says all worked normally, with no wireframe change needed. See the [manual walkthrough record](issue-12-francis-manual-walkthrough-2026-10-16.md). This is a summary, not a complete H1–H8 observer record: the session context, step-specific actions/comments, assistance and recheck were not supplied. #11 comments and Rae's archived A1 interviews remain separate evidence.
 
-| Result field | Current value |
+| Result field | Reported value |
 |---|---|
-| Actual participant role / prior familiarity | Pending — not yet conducted |
-| Actual moderator / consent / date and timezone | Pending — not yet conducted |
-| Artifact version / commit / browser/device used | Pending — not yet conducted |
-| Tasks actually attempted / assistance given | Pending — not yet conducted |
-| Observed behaviour and attributable comments | Pending — not yet conducted |
-| Evidence-based change (or reason for no change) | Pending — not yet conducted |
-| Actual recheck / outcome / remaining issue | Pending — not yet conducted |
+| Tester role / prior familiarity | Francis, group member; prior familiarity not recorded |
+| Session date/time / moderator / consent | Report received 16 October 2026 NZDT; actual session details not recorded |
+| Artifact version / commit / browser/device | Ryan's standalone HTML wireframe; exact version, commit and runtime details not recorded |
+| Tasks attempted / assistance | Ryan's four step groups listed in the linked record; assistance details not recorded |
+| Observed behaviour / comments | Summary only: all steps worked normally; no step-specific notes or verbatim comments supplied |
+| Change needed | None, according to Francis's report |
+| Actual recheck / remaining issue | No post-change recheck reported; no change was requested |
 
 ### Copy-ready per-task record
 
-| Actual date / role / artifact commit | Task / scenario | Observable action | Verbatim or explicitly paraphrased attributable comment | Interpretation / limitation | Change made and commit | Actual recheck |
+| Report date / role / artifact details | Task / scenario | Observable action | Attributable result | Interpretation / limitation | Change made | Actual recheck |
 |---|---|---|---|---|---|---|
-| Pending — not yet conducted | Pending | Pending | Pending | Pending | Pending | Pending |
+| 16 October 2026 report; Francis, group member; session date and artifact version/commit not recorded | Ryan's four requested step groups; see [manual record](issue-12-francis-manual-walkthrough-2026-10-16.md) | Step-level actions not recorded | Summary report: all steps worked normally; no verbatim comments supplied | No wireframe change needed, per Francis; summary only | None reported | No post-change recheck reported |
 
-The user/team must fill only what actually occurred, keeping role (e.g. teammate/proxy) without unnecessary PII. If a task was skipped or no recheck occurred, say so. Attach useful annotated screenshots only with permission; no account details, real key, names/contacts or retrospective fabricated quotes. Commit the genuine record as a new change, then rerun artifact checks affected by any design change. Keep this PR draft until mandatory human/model evidence is addressed and #12 acceptance is reviewed; do not mark #9/#10 complete.
+Any further evaluation record must include only what actually occurred, without unnecessary PII or retrospective quotes. If a task was skipped or no recheck occurred, say so; attach annotated screenshots only with permission. Rerun artifact checks affected by any design change. Keep this PR draft until mandatory human/model evidence is addressed and #12 acceptance is reviewed; do not mark #9/#10 complete.
 
 ## Agent inspection and automated artifact checks
 
@@ -78,7 +78,7 @@ The user/team must fill only what actually occurred, keeping role (e.g. teammate
 
 Automated checks are reproducible with `node docs/validation/issue-12-artifact-check.mjs` using Playwright and an installed browser (instructions in the acceptance record). They stage ten synthetic variants at desktop/mobile widths, test correction/choice/receipt/pending guards, inspect layout/contrast and render the complete SVG. The final command output is linked from acceptance. **Neither a pass nor agent visual inspection fills the human-results table above.**
 
-Final artifact run on `1b69b5e81e2611ba548f30833895dbcee6eebd5f`: **39/39 PASS**, with 81 authored relative links/source/markup checks passing separately. Node v24.20.0, Playwright 1.62.1 and installed headless Chrome 155.0.8059.80 on macOS. Zero external requests and browser-storage records. Full diagram and all state variants were visually inspected, with representative captures retained; human evaluation is still **Pending — not yet conducted**.
+Final artifact run on `1b69b5e81e2611ba548f30833895dbcee6eebd5f`: **39/39 PASS**, with 81 authored relative links/source/markup checks passing separately. Node v24.20.0, Playwright 1.62.1 and installed headless Chrome 155.0.8059.80 on macOS. Zero external requests and browser-storage records. Full diagram and all state variants were visually inspected, with representative captures retained; a bounded manual report is now recorded; detailed human-result fields remain incomplete.
 
 ### Handoff to #9 / #15—not changes to another member's work
 

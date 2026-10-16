@@ -21,6 +21,7 @@ const costLimits = document.getElementById('cost-limits');
 const costUpdateStatus = document.getElementById('cost-update-status');
 const apiKeyInput = document.getElementById('api-key');
 const screenDecision = document.getElementById('screen-decision');
+const pageHeading = document.querySelector('.title-row h1');
 const receiptStatus = document.getElementById('receipt-status');
 const intentOptions = document.getElementById('intent-options');
 const confirmIntentButton = document.getElementById('confirm-intent');
@@ -39,9 +40,23 @@ const PROVENANCE_LABELS = { 'live-sap-sandbox': 'Live SAP sandbox', 'fixture-dem
 let receipt = null;
 let receiptRecovery = false;
 let resetUncertain = false;
+let storageUnavailable = false;
 let chosenIntent = '';
 let pendingReceipt = null;
 let decisionSnapshot = null;
+const screenNames = [
+  { screen: screenList, heading: 'Choose a document to review', title: 'Choose a document – Plan Review Snapshot' },
+  { screen: screenCost, heading: 'Review cost evidence', title: 'Cost evidence – Plan Review Snapshot' },
+  { screen: screenDecision, heading: 'Decide and save a receipt', title: 'Decision and receipt – Plan Review Snapshot' }
+];
+function syncScreenName() {
+  const active = screenNames.find(({ screen }) => !screen.hidden);
+  if (!active) return;
+  pageHeading.textContent = active.heading;
+  document.title = active.title;
+}
+new MutationObserver(syncScreenName).observe(screenList.parentElement, { attributes: true, attributeFilter: ['hidden'], subtree: true });
+syncScreenName();
 Object.defineProperty(window, '__issue7Receipt', { get: () => receipt ? structuredClone(receipt) : undefined });
 
 const state = {
@@ -1279,15 +1294,32 @@ function saveReceipt() {
     // caused by unrelated connection or optional-evidence activity.
     document.getElementById('decision-title').focus();
   } catch {
-    receiptStatus.textContent = 'Unsaved — storage write or read-back verification failed. Your chosen intent is preserved. Retry to save it.';
+    receiptStatus.textContent = storageUnavailable
+      ? 'Unsaved — browser storage is unavailable, so receipts cannot be saved in this browser. Your chosen intent is preserved. Retry to save it.'
+      : 'Unsaved — storage write or read-back verification failed. Your chosen intent is preserved. Retry to save it.';
     retryReceiptButton.hidden = false;
   }
 }
 
 function reopenStoredReceipt() {
+  let storage;
   try {
-    const stored = localStorage.getItem(RECEIPT_KEY);
-    if (stored === null) return;
+    storage = window.localStorage;
+  } catch {
+    storageUnavailable = true;
+    document.getElementById('storage-unavailable').hidden = false;
+    return;
+  }
+  let stored;
+  try {
+    stored = storage.getItem(RECEIPT_KEY);
+  } catch {
+    storageUnavailable = true;
+    document.getElementById('storage-unavailable').hidden = false;
+    return;
+  }
+  if (stored === null) return;
+  try {
     receipt = validateReceipt(JSON.parse(stored));
     setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
     openDecision();
@@ -1328,6 +1360,18 @@ document.getElementById('cancel-reset').addEventListener('click', () => {
   document.getElementById('reset-demo').focus();
 });
 document.getElementById('confirm-reset').addEventListener('click', () => {
+  if (storageUnavailable) {
+    receipt = null;
+    receiptRecovery = false;
+    resetUncertain = false;
+    reopenReceiptButton.hidden = true;
+    resetSession();
+    document.getElementById('decision-summary').replaceChildren();
+    receiptStatus.textContent = '';
+    setStatus('Browser storage is unavailable, so no receipt could be read or deleted. The review session and key were cleared.');
+    document.getElementById('use-fixture').focus();
+    return;
+  }
   try {
     localStorage.removeItem(RECEIPT_KEY);
   } catch {

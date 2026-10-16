@@ -1400,8 +1400,8 @@ document.getElementById('confirm-reset').addEventListener('click', () => {
   let storage;
   try { storage = window.localStorage; } catch {
     // Storage object wholly inaccessible.
-    if (receipt || receiptRecovery) {
-      // A validated or invalid stored receipt is already known: preserve the truthful uncertain-reset
+    if (receipt || receiptRecovery || (pendingReceipt && pendingWriteAttempted)) {
+      // A receipt is known, invalid, or may have been persisted by a pending write: preserve the truthful uncertain-reset
       // + retry path instead of discarding the known receipt or returning to Screen1.
       showUncertainReset();
       return;

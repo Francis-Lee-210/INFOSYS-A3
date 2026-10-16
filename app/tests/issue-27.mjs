@@ -448,34 +448,52 @@ export function registerIssue27Tests({ test, browser, startInjectedServer, injec
     } finally { await context.close(); }
   });
   test('issue 27: known receipt property denial retains uncertain reset and can be verified after recovery', async () => {
-    const { p, context } = await pageWithInit();
-    try {
-      await p.locator('#use-fixture').click();
-      await p.locator('#records-body tr[data-key="9000000001"]').click();
-      await p.locator('#review-cost-evidence').click();
-      await p.locator('#continue-decision').click();
-      await p.getByRole('radio', { name: 'Later', exact: true }).check();
-      await p.locator('#confirm-intent').click();
-      assert.match(await p.locator('#receipt-status').innerText(), /^Saved/);
-      await p.evaluate(() => {
-        const storage = window.localStorage;
-        window.__issue27RestoreStorage = () => Object.defineProperty(window, 'localStorage', { configurable: true, value: storage });
-        window.__issue27StoredBytes = () => storage.getItem('planReviewSnapshot.receipt');
-        Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new DOMException('Injected property denial', 'SecurityError'); } });
-      });
-      await p.locator('#reset-demo').click();
-      await p.locator('#confirm-reset').click();
-      assert.equal(await p.locator('#screen-decision').isVisible(), true);
-      assert.match(await p.locator('#receipt-status').innerText(), /Deletion could not be verified/);
-      assert.doesNotMatch(await p.locator('#receipt-status').innerText(), /Saved/);
-      assert.equal(await p.evaluate(() => window.__issue27StoredBytes() !== null), true);
-      await p.evaluate(() => window.__issue27RestoreStorage());
-      await p.locator('#confirm-reset').click();
-      assert.equal(await p.locator('#screen-list').isVisible(), true);
-      assert.equal(await p.evaluate(() => localStorage.getItem('planReviewSnapshot.receipt')), null);
-      await p.reload();
-      assert.equal(await p.locator('#screen-decision').isVisible(), false);
-    } finally { await context.close(); }
+    for (const partialWrite of [false, true]) {
+      const { p, context } = await pageWithInit();
+      try {
+        await p.locator('#use-fixture').click();
+        await p.locator('#records-body tr[data-key="9000000001"]').click();
+        await p.locator('#review-cost-evidence').click();
+        await p.locator('#continue-decision').click();
+        await p.getByRole('radio', { name: 'Later', exact: true }).check();
+        if (partialWrite) await p.evaluate(() => {
+          const get = Storage.prototype.getItem, set = Storage.prototype.setItem;
+          let written = false, failed = false;
+          Storage.prototype.setItem = function (key, value) {
+            const result = set.call(this, key, value);
+            if (key === 'planReviewSnapshot.receipt') written = true;
+            return result;
+          };
+          Storage.prototype.getItem = function (key) {
+            if (key === 'planReviewSnapshot.receipt' && written && !failed) {
+              failed = true;
+              throw new Error('Injected read-back failure after successful write');
+            }
+            return get.call(this, key);
+          };
+        });
+        await p.locator('#confirm-intent').click();
+        assert.match(await p.locator('#receipt-status').innerText(), partialWrite ? /^Unsaved/ : /^Saved/);
+        await p.evaluate(() => {
+          const storage = window.localStorage;
+          window.__issue27RestoreStorage = () => Object.defineProperty(window, 'localStorage', { configurable: true, value: storage });
+          window.__issue27StoredBytes = () => storage.getItem('planReviewSnapshot.receipt');
+          Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new DOMException('Injected property denial', 'SecurityError'); } });
+        });
+        await p.locator('#reset-demo').click();
+        await p.locator('#confirm-reset').click();
+        assert.equal(await p.locator('#screen-decision').isVisible(), true);
+        assert.match(await p.locator('#receipt-status').innerText(), /Deletion could not be verified/);
+        assert.doesNotMatch(await p.locator('#receipt-status').innerText(), /Saved/);
+        assert.equal(await p.evaluate(() => window.__issue27StoredBytes() !== null), true);
+        await p.evaluate(() => window.__issue27RestoreStorage());
+        await p.locator('#confirm-reset').click();
+        assert.equal(await p.locator('#screen-list').isVisible(), true);
+        assert.equal(await p.evaluate(() => localStorage.getItem('planReviewSnapshot.receipt')), null);
+        await p.reload();
+        assert.equal(await p.locator('#screen-decision').isVisible(), false);
+      } finally { await context.close(); }
+    }
   });
 
 }

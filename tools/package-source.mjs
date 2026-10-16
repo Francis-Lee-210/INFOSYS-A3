@@ -42,8 +42,10 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { join, posix, resolve } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
+import { collectModuleReferences } from './lib/scan-imports.mjs';
 
 const SCHEMA_VERSION = '1.0.0';
 const ARCHIVE_PREFIX = 'plan-review-snapshot-billing-lite/';
@@ -234,24 +236,33 @@ function scanPayload(blobs) {
   return findings;
 }
 
-// Keep this deliberately small: local ES module imports/exports are covered;
-// require()/createRequire() are not used for local modules in this payload.
+// Lexically collect local ES module references and resolve each relative
+// specifier as the ESM loader would (new URL + fileURLToPath), so query,
+// fragment, percent-encoding or `..` segments cannot hide a missing or
+// repo-escaping target. Bare and built-in specifiers are out of scope.
 function scanPayloadImports(blobs) {
   const payload = new Set(PAYLOAD);
   const missing = [];
-  // Import/export clauses contain no quotes, semicolons, or parentheses before `from`,
-  // except inside // or /* */ comments, which may hold any characters (e.g. "don't").
-  const clause = String.raw`(?:[^;'"()/]|/\*(?:[^*]|\*(?!/))*\*/|//[^\n]*(?![^\n])|/(?![*/]))*?`;
-  const specifierPattern = new RegExp(String.raw`\bimport\s*(?:\(\s*(['"])([^'"\n]+)\1\s*\)|(['"])([^'"\n]+)\3|${clause}\bfrom\s*(['"])([^'"\n]+)\5)|\bexport\s*${clause}\bfrom\s*(['"])([^'"\n]+)\7`, 'g');
   for (const path of PAYLOAD) {
     if (!/\.(?:js|mjs)$/.test(path)) continue;
     const text = blobs.get(path).toString('utf8');
-    specifierPattern.lastIndex = 0;
-    let match;
-    while ((match = specifierPattern.exec(text)) !== null) {
-      const specifier = match[2] ?? match[4] ?? match[6] ?? match[8];
+    let references;
+    try {
+      references = collectModuleReferences(text);
+    } catch (error) {
+      fail(`cannot scan payload module for imports: ${path}: ${error.message}`);
+    }
+    const base = pathToFileURL(resolve(ROOT, path));
+    for (const specifier of references) {
       if (!specifier.startsWith('./') && !specifier.startsWith('../')) continue;
-      const resolved = posix.normalize(posix.join(posix.dirname(path), specifier));
+      let resolved;
+      try {
+        const target = fileURLToPath(new URL(specifier, base));
+        resolved = relative(ROOT, target).split(sep).join('/');
+      } catch (error) {
+        missing.push({ path, specifier, resolved: `unresolvable module URL (${error.message})` });
+        continue;
+      }
       if (resolved === '..' || resolved.startsWith('../') || !payload.has(resolved)) {
         missing.push({ path, specifier, resolved });
       }

@@ -1,82 +1,87 @@
 {
-  "schemaVersion": "issue-10-live-evidence-v1",
-  "startedAt": "2026-10-16T00:37:15.667Z",
-  "completedAt": "2026-10-16T01:34:05.346Z",
-  "completedAtLocal": "2026-10-16T14:34:05.346+13:00",
-  "sourceCommit": "c9914cc4f1158fb46244ae7e5c03ec2b60ef6878",
-  "archiveSha256": "5ae2d5a14c806d8a76cd3de28e4828f29dc19a456db046ef9b770784cabaa7c7",
-  "origin": "http://127.0.0.1:6289/",
-  "source": {
-    "apiId": "API_BILLING_DOCUMENT_REQUEST_SRV",
-    "apiVersion": "1.1.0",
-    "serviceRoot": "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata/sap/API_BILLING_DOCUMENT_REQUEST_SRV",
-    "profile": "billing-document-request-v1",
-    "transport": "Final extracted package default local adapter; no injected transport, fixture or mocked SAP response.",
-    "upstreamPolicy": "Unchanged fixed sandbox allowlist, GET only; source inspection and packaged transport regressions verify this boundary.",
-    "keyHandling": "Existing signed-in SAP session supplied the course key directly to the local password field. Key was not printed, copied to the system clipboard, sent to OpenCode, or written to evidence/files."
-  },
-  "list": {
+  "schemaVersion": "issue-10-live-evidence-v2",
+  "sourceCommit": "093f5f02879494979c0cda3b0bd1dedc01697666",
+  "archiveSha256": "c25057ab068854765681e6c0109c9fff42eced9af5db33e7dbe7eda6c8cad17d",
+  "origin": "http://127.0.0.1:6290/",
+  "sourceApi": "API_BILLING_DOCUMENT_REQUEST_SRV",
+  "sourceVersion": "1.1.0",
+  "transport": "Actual default GET-only adapter from the final ZIP extraction; no injected transport",
+  "startedAt": "2026-10-16T03:38:05.163Z",
+  "connect": {
     "loadedRecords": 10,
     "usableRecords": 10,
-    "liveLabelObserved": true,
-    "coverageQualificationObserved": true,
-    "completeHistoryClaimed": false
+    "checks": {
+      "liveProvenance": true,
+      "partialHistoryQualification": true,
+      "h1Correct": true,
+      "titleCorrect": true
+    }
   },
   "detail": {
-    "separateByKeyReadCompleted": true,
-    "sameSelectedKey": true,
-    "sameSelectedAmount": true,
-    "sameCurrency": true,
-    "requestKind": true,
-    "dateQualification": true
+    "checks": {
+      "sameSelectedKey": true,
+      "sameSelectedDate": true,
+      "sameSelectedAmount": true,
+      "sameSelectedCurrency": true,
+      "requestKind": true,
+      "liveProvenance": true
+    },
+    "separateByKeyRead": true
   },
   "optionalItems": {
-    "readCompleted": true,
-    "coverage": "partial",
-    "continuation": "not reported",
-    "completeHistoryClaimed": false,
-    "monetaryReconciliation": "unassessed"
+    "completed": true,
+    "coveragePartial": true,
+    "monetaryReconciliationUnassessed": true
   },
-  "costScreen": {
-    "visible": true,
-    "sameSelectedKey": true,
-    "sameReportedAmounts": true,
-    "sameCurrency": true,
-    "sameDate": true,
-    "requestKind": true,
-    "dateQualification": true,
-    "independentAmountQualification": true,
-    "liveProvenance": true,
-    "continueEnabled": true
+  "cost": {
+    "reportedAmountFieldNames": [
+      "TotalNetAmount",
+      "TotalTaxAmount",
+      "TotalGrossAmount"
+    ],
+    "checks": {
+      "sameSelectedKey": true,
+      "sameReportedAmounts": true,
+      "sameCurrency": true,
+      "sameDate": true,
+      "requestKind": true,
+      "dateQualification": true,
+      "independentAmounts": true,
+      "liveProvenance": true,
+      "h1Correct": true,
+      "titleCorrect": true
+    }
   },
-  "decisionScreen": {
-    "visible": true,
-    "sameSelectedKey": true,
-    "sameReportedAmounts": true,
-    "sameCurrency": true,
-    "sameDate": true,
-    "requestKind": true,
-    "dateQualification": true,
-    "liveProvenance": true,
-    "intentionOnly": true
+  "decision": {
+    "checks": {
+      "sameSelectedKey": true,
+      "sameReportedAmounts": true,
+      "sameCurrency": true,
+      "sameDate": true,
+      "requestKind": true,
+      "dateQualification": true,
+      "liveProvenance": true,
+      "h1Correct": true,
+      "titleCorrect": true,
+      "intentionOnly": true
+    }
   },
   "save": {
     "intent": "later",
     "checks": {
       "savedReadBackVerified": true,
       "receiptHeading": true,
-      "originalLiveProvenance": true,
       "sameSelectedKey": true,
       "sameReportedAmounts": true,
       "sameCurrency": true,
       "sameDate": true,
       "exactChoice": true,
+      "originalLiveProvenance": true,
       "passwordEmpty": true
     }
   },
   "refreshReopen": {
     "receiptVisible": true,
-    "sameReceiptTitle": true,
     "sameDisplayedEvidence": true,
     "sameIntentAndIdentity": true,
     "sameSelectedKey": true,
@@ -84,12 +89,15 @@
     "sameCurrency": true,
     "sameDate": true,
     "originalLiveProvenance": true,
+    "historicalHeading": true,
     "historicalNotice": true,
     "passwordEmpty": true,
     "requestKind": true,
     "dateQualification": true,
     "noConnectionRequestedAfterReload": true,
-    "keyAbsentFromRenderedPage": true
+    "keyAbsentFromRenderedPage": true,
+    "h1Correct": true,
+    "titleCorrect": true
   },
   "cancelReset": {
     "confirmationHidden": true,
@@ -104,12 +112,15 @@
     "passwordEmpty": true,
     "notConnected": true,
     "noSelectableRecords": true,
+    "h1Correct": true,
+    "titleCorrect": true,
     "stillNoReceiptAfterReload": true
   },
+  "completedAt": "2026-10-16T03:41:22.117Z",
   "storageEvidence": {
-    "liveObservation": "Saved write/read-back verification and exact displayed receipt evidence/identity survived reload. Deliberate reset survived a further reload.",
     "directLiveStorageInspection": false,
-    "scopeNote": "The browser control read-only DOM scope does not expose localStorage. Exact minimal persistent schema/key exclusions are independently covered by the unchanged source validator and packaged 146-group storage regressions; no raw live receipt was exported.",
+    "liveObservation": "Saved write/read-back verification; exact displayed receipt evidence and identity survived reload; deliberate reset survived another reload.",
+    "scopeNote": "Read-only browser DOM scope does not expose localStorage. Exact minimal schema/key exclusions are covered separately by the unchanged validator and packaged 161-group fixture/storage regressions. No raw live receipt was exported.",
     "persistentKey": "planReviewSnapshot.receipt",
     "rootFieldNames": [
       "amounts",
@@ -129,8 +140,8 @@
       "version"
     ]
   },
-  "sharedDataBoundary": "Counts, source/runtime identity, schema field names and booleans only. No key, document ID, amount, party context, raw response or full receipt.",
-  "evidenceSeparation": "Actual current SAP sandbox flow, separate from fixture/injected scenarios and historical Issue #5 B0.",
+  "sharedDataBoundary": "Source/package identity, times, counts, field names and booleans only. No key, document ID, amount, party context, raw response or full receipt.",
+  "evidenceSeparation": "Actual current SAP sandbox workflow, separate from fixture/injected tests and historical B0.",
   "result": "PASS",
   "AC25": "PASS",
   "AC26": "PASS",

@@ -1,30 +1,30 @@
 {
-  "schemaVersion": "issue-10-source-package-v1",
+  "schemaVersion": "issue-10-source-package-v2",
   "package": {
     "schemaVersion": "1.0.0",
-    "sourceCommit": "c9914cc4f1158fb46244ae7e5c03ec2b60ef6878",
-    "sourceCommitShort": "c9914cc",
-    "packagedAt": "2026-10-16T00:20:38.187Z",
+    "sourceCommit": "093f5f02879494979c0cda3b0bd1dedc01697666",
+    "sourceCommitShort": "093f5f0",
+    "packagedAt": "2026-10-16T03:36:47.420Z",
     "archive": {
-      "basename": "plan-review-snapshot-billing-lite-c9914cc.zip",
-      "bytes": 92630,
-      "sha256": "5ae2d5a14c806d8a76cd3de28e4828f29dc19a456db046ef9b770784cabaa7c7"
+      "basename": "plan-review-snapshot-billing-lite-093f5f0.zip",
+      "bytes": 98618,
+      "sha256": "c25057ab068854765681e6c0109c9fff42eced9af5db33e7dbe7eda6c8cad17d"
     },
     "payload": [
       {
         "path": "README-SOURCE.md",
-        "bytes": 9313,
-        "sha256": "9e930e271a4adec969c9a80d9e0d66ef6eb387ae01dc092dc8e18d2df93a8270"
+        "bytes": 10156,
+        "sha256": "23e2e0828a909ac3841fc9c9fd52d1dfa637024eb1d879c86c0619f2976125f4"
       },
       {
         "path": "app/app.mjs",
-        "bytes": 78855,
-        "sha256": "65cd026d118a54801227e4c35f4eb2a0120d27792113f0f451f6d2d2ee5ee301"
+        "bytes": 83647,
+        "sha256": "6d97f0ba259e47b78b46aa241c88caf66445b54a26f6163e66ec5619bcf60278"
       },
       {
         "path": "app/index.html",
-        "bytes": 9349,
-        "sha256": "475147a14a3794d911bb159875ad40918c1bcdb0968f9138a106001b6a697ab4"
+        "bytes": 9563,
+        "sha256": "602811d56a02c2df1fccc293a1902e602966dd1e3a89ad8c70ca55bc461df0fb"
       },
       {
         "path": "app/lib/billingAdapter.js",
@@ -78,8 +78,13 @@
       },
       {
         "path": "app/tests/browser.mjs",
-        "bytes": 123365,
-        "sha256": "670a939111abae24900f9549310a8da036a69faa5837a76dcbd0df5ab90e8066"
+        "bytes": 123525,
+        "sha256": "ac5fce060d27320a517678ad9390a47654dd8815871eb611563d3cfa39f66d08"
+      },
+      {
+        "path": "app/tests/issue-27.mjs",
+        "bytes": 28498,
+        "sha256": "dfca1b98958015a98eb09213f0f91de9a86e973cd7609133851807b7923783a1"
       },
       {
         "path": "app/tests/issue-8.mjs",
@@ -94,13 +99,15 @@
     ]
   },
   "independentInspection": {
-    "at": "2026-10-16T00:21:44.022340+00:00",
+    "at": "2026-10-16T03:36:53.322884+00:00",
     "zipCrcValid": true,
-    "exactPayloadFiles": 16,
-    "allManifestAndExtractedBytesMatch": true,
+    "exactPayloadFiles": 17,
+    "allManifestGitBlobAndExtractedBytesMatch": true,
     "regularFilesOnly": true,
-    "noCredentialLiteralOrRawOdataDumpFound": true,
+    "noPrivateKeyOrRawOdataDumpFound": true,
     "noGitOrDependenciesInExtraction": true,
-    "scope": "Explicit allowlist, ZIP/manifest byte verification, source inspection and conservative literal scan; not a universal secret detector."
+    "scope": "Independent exact allowlist, CRC, modes, source-blob/manifest/extracted byte comparison and conservative private-key/raw-dump scan; packager credential-literal scan also passed. Not a universal secret detector.",
+    "postRunAll17PayloadFilesUnchanged": true,
+    "postRunVerifiedAt": "2026-10-16T03:42:20.286324+00:00"
   }
 }

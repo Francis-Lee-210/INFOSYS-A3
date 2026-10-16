@@ -57,8 +57,8 @@ assessment material.
 | Review and quality | Approved PRs #18, #20, #23, #26, #28 and #30; found the cross-PR packaging defect (missing `issue-27.mjs`) before the final ZIP. |
 | Assessment material | This contribution snapshot (#14). |
 
-Across members: 17–23 commits each, at least two implementation pull requests each, and reviews of other members'
-work by every member.
+Across members: 15 or more non-merge commits each on `main`, at least two implementation pull requests each, and
+reviews of other members' work by every member.
 
 ## Contribution split
 

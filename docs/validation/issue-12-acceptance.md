@@ -10,6 +10,8 @@ Documentation-only checks on **`05a3817c4d739910c8845a855806c167ede7275b`** are 
 
 **Historical visual repair, 16 October at `b1d4cb3`:** corrected PNG clipping/duplicated heading using full-canvas-before-navigation capture, fonts/stable frames and repeat-byte checks. Its **39/39 artifact groups / 157 links** and the then-pending human questions are retained in the [repair closeout](issue-12-reconciliation.md#16-october-visual-review-repair-closeout). They are not results for the current step-5/status update. Francis's later human-authored supplement is preserved from `1468d12`, not reverted to an earlier report hash. Current final commands, tested identity and visual inspection are appended in reconciliation; frozen sources and unchanged wireframe screenshots remain protected.
 
+**Final executed validation:** tested source/artifact identity **`0f8700bd43f1d54e130a7ba2755c0765693efb29`**: **39/39 artifact groups and 158 link-target checks PASS**; new status/step-5 assertions, script syntax, source/hash/markup, stable 1440×1840 PNG reproduction, whitespace, ancestry and protected-scope checks pass. Final PNG visually inspected through the bottom, including L2/E1 note, one heading, complete status/link/footer; no clipping/duplication/overlap observed. Francis's latest supplement remains byte-identical to `1468d12`; app/frozen sources and eight other visual artifacts unchanged. Raw output, commands/runtime and artifact hashes are in reconciliation. Later result-recording edits do not change tested SVG/PNG/script logic. **No remaining material #12 gap; Ready for review is justified.**
+
 ## Artifact index and independent use
 
 | Artifact | Purpose |

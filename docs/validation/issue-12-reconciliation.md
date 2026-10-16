@@ -174,4 +174,91 @@ Reviewer conclusion (not an extra participant statement): the bounded human/mode
 
 ### Final validation record
 
-The final SVG/capture-script changes are executed and captured before publication; tested identity, actual output and full-image observations follow after the run. Historical outputs above remain tied to their original identities, not to the new artifact or Francis's unknown tested commit.
+**Tested source/artifact identity: `0f8700bd43f1d54e130a7ba2755c0765693efb29`**, normal additive commit `docs(design): reconcile model review and walkthrough evidence`. macOS; Node **v24.20.0**, Playwright **1.62.1**, installed headless Chrome **155.0.8059.80**. The actual final commands below all exited 0; only the process PNG was regenerated:
+
+```sh
+ISSUE12_QA_TMP=/private/var/folders/gr/c764x1r91mgcd2r25jm77cn40000gn/T/opencode \
+PLAYWRIGHT_MODULE_PATH=/private/var/folders/gr/c764x1r91mgcd2r25jm77cn40000gn/T/opencode/receipt-review-tools/node_modules/playwright \
+CHROME_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
+CAPTURE_ISSUE12_SVG=1 node docs/validation/issue-12-artifact-check.mjs
+python3 docs/validation/issue-12-source-check.py
+node --check docs/validation/issue-12-artifact-check.mjs
+git diff --exit-code HEAD -- docs/validation/issue-12-process-adaptation.png
+git diff --check
+git diff --check origin/main...HEAD
+```
+
+Full new browser output at this tested identity (not reused historical results):
+
+```text
+Artifact QA only; Node v24.20.0; Chrome/Chromium 155.0.8059.80; widths 1280/1366/390; synthetic memory-only interactions.
+PASS design scenario partial at 1280px
+PASS design scenario not-checked at 1280px
+PASS design scenario unavailable at 1280px
+PASS design scenario absent at 1280px
+PASS design scenario complete at 1280px
+PASS design scenario conflict at 1280px
+PASS design scenario pending at 1280px
+PASS design scenario empty at 1280px
+PASS design scenario failed at 1280px
+PASS design scenario invalid at 1280px
+PASS design scenario partial at 1366px
+PASS design scenario not-checked at 1366px
+PASS design scenario unavailable at 1366px
+PASS design scenario absent at 1366px
+PASS design scenario complete at 1366px
+PASS design scenario conflict at 1366px
+PASS design scenario pending at 1366px
+PASS design scenario empty at 1366px
+PASS design scenario failed at 1366px
+PASS design scenario invalid at 1366px
+PASS design scenario partial at 390px
+PASS design scenario not-checked at 390px
+PASS design scenario unavailable at 390px
+PASS design scenario absent at 390px
+PASS design scenario complete at 390px
+PASS design scenario conflict at 390px
+PASS design scenario pending at 390px
+PASS design scenario empty at 390px
+PASS design scenario failed at 390px
+PASS design scenario invalid at 390px
+PASS decision refresh clears old choice; resolution partial
+PASS decision refresh clears old choice; resolution conflict
+PASS decision refresh clears old choice; resolution unavailable
+PASS correction / negative exact amount / obsolete manual result
+PASS historical provenance survives another failed scenario
+PASS another selection is explicitly not recorded in the old receipt
+PASS keyboard select / explain / confirm / return routes
+Measured text contrast ratios: 15.24, 7.17, 10.17, 8.68, 8.32
+PASS HTML structure / no external resources / readable palette contrast
+Process PNG: 1440x1840; viewport set before navigation; fonts ready; two stable captures identical. Visual inspection required.
+PASS complete process SVG renders with all text within its canvas
+All 39 artifact groups passed. External requests: 0. Browser storage records: 0. Application acceptance suite not run. No human walkthrough or Signavio action claimed.
+```
+
+Source/link output at the same tested identity:
+
+```text
+PASS all 4 Rae archive byte counts / manifest SHA-256 values
+PASS original TO-BE extraction equals DOCX and PPTX embedded bytes; SHA-256 c34cbcd44fdc667d6744d43b0f3ed5f623dcb2cacd137d2d8fdb3a10fd0e7ac3
+PASS preserved Pool v4, official request specification and archived V3 hashes
+PASS adaptation and existing matrix SVG XML parse; title/description present
+PASS HTML parser / unique static IDs / three-screen and separate setup structure
+PASS 158 authored relative file/anchor links (historical unbundled references not re-audited)
+Source/markup/link checks complete. No API, application suite, Signavio or human evaluation performed.
+```
+
+The 158 are relative-link **occurrence checks**, not distinct files. Source-check logic is unchanged; counts differ from the prior 161 because current summaries/links were reconciled, not assertions disabled. Historical output remains above and in the original run file, tied to its own identity.
+
+**Agent visual inspection:** opened the actual final full-size **1440×1840 PNG**, including the bottom. L2 explicitly marked Modified; new L2/E1 note correctly contrasts original labelled summary/details/assistance against Lite error/no summary and valid-header/optional-gap review. Note fits its panel; heading occurs once; full bottom status panel, model/source link and final footer readable. No clipping, duplicate band, overlap or unexpected scaling. PNG was generated directly by the repaired full-canvas-before-navigation path; repeated committed-source run reproduced its bytes exactly. No image splicing, unchanged wireframe screenshot overwrite or human interaction recheck.
+
+| Final artifact | SHA-256 |
+|---|---|
+| SVG | `71d84324cf1c4117f51efac05d4bbfd5869c1fe42e8d6b1dee94137eb4bcb070` |
+| PNG | `e158160e38a849f48abacc9b1b44e75d47dd7840123bdea38e71f9f38306787a` |
+| Artifact browser script | `ed57946ccf9afa99e22668dbb94bfd560a8a7576e970e5e847e7cf425007ea18` |
+| Latest Francis-authored report/supplement, equal to `1468d12` | `4e0f012075eb01438788b097f20b9ecc25834e75ebf164f2cbfb96f206847875` |
+
+Read-only Python/Git preservation checks passed: all received commits reachable through `1468d12`, earlier Francis report commits and Rae implementation ancestors `498e15d`/`4ab2005`, plus integrated main, remain ancestors. Latest supplement bytes preserved from `1468d12`, not the old report hash. Original assignments/frozen sources, `app/`, `tools/`, instructions and source README unchanged from main; **eight unchanged HTML/original-model/wireframe screenshot artifacts** preserved. Original test output/source-check script unchanged; no Rae BPMN silently archived or hash claimed verified. No new app acceptance, SAP request, packaging run or Signavio operation.
+
+Subsequent commits only record results/current summaries, with source-link/whitespace and tested-artifact equality rechecked before publication. No material unresolved #12 acceptance gap remains. Existing PR may be marked **Ready for review** with **Closes #11 / Closes #12**, without merge or manual closure. #15 final team/route/API-fit/build/pitch ratification and optional owner-reported BPMN archival remain downstream, not new blockers. Remote head/open/non-draft/unmerged state is verified after normal push and readiness change.

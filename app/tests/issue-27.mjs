@@ -330,7 +330,7 @@ export function registerIssue27Tests({ test, browser, startInjectedServer, injec
     } finally { await context.close(); }
   });
 
-  test('issue 27: known saved receipt, reset first getItem throws then working remove/readback empties it', async () => {
+  test('issue 27: known saved receipt, reset first getItem throws: removal still happens and a second reset verifies it', async () => {
     const { p, context } = await pageWithInit();
     try {
       // Save a receipt with working storage.
@@ -344,9 +344,10 @@ export function registerIssue27Tests({ test, browser, startInjectedServer, injec
       await p.locator('#receipt-status').filter({ hasText: 'Saved' }).waitFor({ state: 'visible' });
       assert.equal(await p.evaluate(() => localStorage.getItem('planReviewSnapshot.receipt') !== null), true);
 
-      // The first getItem throws (as it would have in the old pre-read check), then
-      // getItem works. removeItem works throughout. Reset does not skip removal based
-      // on a getItem failure; removal + read-back empties the receipt.
+      // The first getItem during reset throws, then getItem works. removeItem works
+      // throughout. Reset must not skip removal because of a getItem failure: the
+      // unverified read-back keeps the uncertain state, but the bytes are gone, and
+      // a second Confirm reset verifies the removal.
       await p.evaluate(() => {
         const ogGet = Storage.prototype.getItem;
         let firstGet = true;
@@ -359,9 +360,14 @@ export function registerIssue27Tests({ test, browser, startInjectedServer, injec
           return ogGet.call(this, key);
         };
       });
-      await p.evaluate(() => { try { localStorage.getItem('planReviewSnapshot.receipt'); } catch {} });
 
       await p.locator('#reset-demo').click();
+      await p.locator('#confirm-reset').click();
+      assert.equal(await p.locator('#screen-decision').isVisible(), true);
+      assert.match(await p.locator('#receipt-status').innerText(), /Deletion could not be verified/);
+      assert.doesNotMatch(await p.locator('#receipt-status').innerText(), /Saved/);
+      assert.equal(await p.evaluate(() => localStorage.getItem('planReviewSnapshot.receipt')), null);
+
       await p.locator('#confirm-reset').click();
       assert.equal(await p.locator('#screen-list').isVisible(), true);
       assert.equal(await p.locator('#screen-decision').isVisible(), false);
@@ -494,6 +500,112 @@ export function registerIssue27Tests({ test, browser, startInjectedServer, injec
         assert.equal(await p.locator('#screen-decision').isVisible(), false);
       } finally { await context.close(); }
     }
+  });
+
+  test('issue 27: this session\'s own partial write is never adopted as Saved after the intent changes', async () => {
+    const { p, context } = await pageWithInit();
+    try {
+      await p.locator('#use-fixture').click();
+      await p.locator('#records-body tr[data-key="9000000001"]').click();
+      await p.locator('#review-cost-evidence').click();
+      await p.locator('#continue-decision').click();
+      await p.getByRole('radio', { name: 'Later', exact: true }).check();
+      // Receipt reads: 1 pre-read ok, 2 read-back after the Later write throws,
+      // 3 Retry pre-read throws (marks storage unavailable), then reads work again.
+      await p.evaluate(() => {
+        const get = Storage.prototype.getItem;
+        let reads = 0;
+        Storage.prototype.getItem = function (key) {
+          if (this === localStorage && key === 'planReviewSnapshot.receipt') {
+            reads++;
+            if (reads === 2 || reads === 3) throw new DOMException('flaky', 'SecurityError');
+          }
+          return get.call(this, key);
+        };
+      });
+      await p.locator('#confirm-intent').click();
+      assert.match(await p.locator('#receipt-status').innerText(), /^Unsaved — storage write or read-back verification failed/);
+      await p.locator('#retry-receipt').click();
+      assert.match(await p.locator('#receipt-status').innerText(), /^Unsaved — browser storage is unavailable/);
+      assert.equal(JSON.parse(await p.evaluate(() => localStorage.getItem('planReviewSnapshot.receipt'))).intent, 'later');
+
+      await p.getByRole('radio', { name: 'Help', exact: true }).check();
+      await p.locator('#confirm-intent').click();
+      assert.match(await p.locator('#receipt-status').innerText(), /^Saved/);
+      assert.match(await p.locator('#decision-choice').innerText(), /Help/);
+      assert.equal(JSON.parse(await p.evaluate(() => localStorage.getItem('planReviewSnapshot.receipt'))).intent, 'help');
+    } finally { await context.close(); }
+  });
+
+  test('issue 27: persistent getItem failure, reset with no receipt clears the session instead of an uncertain loop', async () => {
+    const { p, context } = await pageWithInit(() => {
+      Storage.prototype.getItem = function () { throw new DOMException('blocked', 'SecurityError'); };
+    });
+    try {
+      await p.locator('#api-key').fill('SESSION-KEY');
+      await p.locator('#use-fixture').click();
+      await p.locator('#records-body tr[data-key="9000000001"]').click();
+      await p.locator('#review-cost-evidence').click();
+      await p.locator('#continue-decision').click();
+      await p.getByRole('radio', { name: 'Later', exact: true }).check();
+      await p.locator('#confirm-intent').click();
+      await p.locator('#retry-receipt').waitFor({ state: 'visible' });
+      await p.locator('#reset-demo').click();
+      await p.locator('#confirm-reset').click();
+      assert.equal(await p.locator('#screen-list').isVisible(), true);
+      assert.equal(await p.locator('#screen-decision').isVisible(), false);
+      assert.equal(await p.locator('#api-key').inputValue(), '');
+      assert.match(await p.locator('#status').innerText(), /Browser storage is unavailable, so no receipt could be read or deleted\. The review session and key were cleared\./);
+      assert.doesNotMatch(await p.locator('body').innerText(), /may already be deleted|uncertain|still present/i);
+    } finally { await context.close(); }
+  });
+
+  test('issue 27: a partial write is still known to reset after leaving the decision', async () => {
+    const { p, context } = await pageWithInit();
+    try {
+      await p.locator('#use-fixture').click();
+      await p.locator('#records-body tr[data-key="9000000001"]').click();
+      await p.locator('#review-cost-evidence').click();
+      await p.locator('#continue-decision').click();
+      await p.getByRole('radio', { name: 'Later', exact: true }).check();
+      await p.evaluate(() => {
+        const get = Storage.prototype.getItem, set = Storage.prototype.setItem;
+        let written = false, failed = false;
+        Storage.prototype.setItem = function (key, value) {
+          const result = set.call(this, key, value);
+          if (key === 'planReviewSnapshot.receipt') written = true;
+          return result;
+        };
+        Storage.prototype.getItem = function (key) {
+          if (key === 'planReviewSnapshot.receipt' && written && !failed) {
+            failed = true;
+            throw new Error('Injected read-back failure after successful write');
+          }
+          return get.call(this, key);
+        };
+      });
+      await p.locator('#confirm-intent').click();
+      assert.match(await p.locator('#receipt-status').innerText(), /^Unsaved/);
+
+      // Leave the decision (clears the pending receipt), then come back to Screen 3.
+      await p.locator('#back-to-evidence').click();
+      await p.locator('#back-to-list').click();
+      await p.locator('#records-body tr[data-key="9000000001"]').click();
+      await p.locator('#review-cost-evidence').click();
+      await p.locator('#continue-decision').click();
+
+      await p.evaluate(() => {
+        const storage = window.localStorage;
+        window.__issue27StoredBytes = () => storage.getItem('planReviewSnapshot.receipt');
+        Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new DOMException('Injected property denial', 'SecurityError'); } });
+      });
+      await p.locator('#reset-demo').click();
+      await p.locator('#confirm-reset').click();
+      assert.equal(await p.locator('#screen-decision').isVisible(), true);
+      assert.match(await p.locator('#receipt-status').innerText(), /Deletion could not be verified/);
+      assert.doesNotMatch(await p.locator('#status').innerText(), /no receipt could be read or deleted/);
+      assert.equal(await p.evaluate(() => window.__issue27StoredBytes() !== null), true);
+    } finally { await context.close(); }
   });
 
 }

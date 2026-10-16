@@ -43,7 +43,10 @@ let resetUncertain = false;
 let storageUnavailable = false;
 let chosenIntent = '';
 let pendingReceipt = null;
-let pendingWriteAttempted = false;
+// True once this session has called setItem for a receipt, until a verified reset.
+// Stored bytes may then be this session's own unverified write, so they are never
+// adopted as unknown startup history, and reset must not claim nothing was stored.
+let receiptWriteAttempted = false;
 let decisionSnapshot = null;
 const screenNames = [
   { screen: screenList, heading: 'Choose a document to review', title: 'Choose a document – Plan Review Snapshot' },
@@ -1309,9 +1312,9 @@ function saveReceipt() {
     // Storage is readable now: clear any stale startup flag/notice.
     storageUnavailable = false;
     document.getElementById('storage-unavailable').hidden = true;
-    if (wasUnavailable && snapshot.stored !== null && !pendingWriteAttempted) {
-      // UNKNOWN pre-existing bytes from startup-unavailable and no pending write
-      // has been attempted yet: preserve them, never overwrite. Route to
+    if (wasUnavailable && snapshot.stored !== null && !receiptWriteAttempted) {
+      // UNKNOWN pre-existing bytes from startup-unavailable and this session has
+      // never written a receipt: preserve them, never overwrite. Route to
       // valid-history or corrupt/version/provenance recovery.
       try {
         receipt = validateReceipt(JSON.parse(snapshot.stored));
@@ -1326,7 +1329,7 @@ function saveReceipt() {
     }
     // Normal save: write the pending intent + read-back + verify exact equality
     // (established retry semantics; never adopt different stored bytes/intent).
-    pendingWriteAttempted = true;
+    receiptWriteAttempted = true;
     const serialized = JSON.stringify(pendingReceipt);
     localStorage.setItem(RECEIPT_KEY, serialized);
     const readBack = validateReceipt(JSON.parse(localStorage.getItem(RECEIPT_KEY)));
@@ -1373,7 +1376,6 @@ intentOptions.addEventListener('change', event => {
   if (!Object.hasOwn(INTENTS, event.target.value)) return;
   chosenIntent = event.target.value;
   pendingReceipt = null;
-  pendingWriteAttempted = false;
   renderDecision();
 });
 confirmIntentButton.addEventListener('click', saveReceipt);
@@ -1396,34 +1398,46 @@ document.getElementById('cancel-reset').addEventListener('click', () => {
   document.getElementById('reset-confirmation').hidden = true;
   document.getElementById('reset-demo').focus();
 });
+// Reset could not read storage. A receipt that is known, invalid, or may have been
+// persisted by this session's own write keeps the truthful uncertain-reset + retry
+// path. Otherwise nothing is known to be stored: clear the session/key honestly
+// instead of trapping the user in an uncertain reset for a receipt that never existed.
+function resetWithUnreadableStorage() {
+  if (receipt || receiptRecovery || receiptWriteAttempted) {
+    showUncertainReset();
+    return;
+  }
+  receipt = null;
+  receiptRecovery = false;
+  resetUncertain = false;
+  reopenReceiptButton.hidden = true;
+  resetSession();
+  document.getElementById('decision-summary').replaceChildren();
+  receiptStatus.textContent = '';
+  setStatus('Browser storage is unavailable, so no receipt could be read or deleted. The review session and key were cleared.');
+  document.getElementById('use-fixture').focus();
+}
+
 document.getElementById('confirm-reset').addEventListener('click', () => {
   let storage;
   try { storage = window.localStorage; } catch {
     // Storage object wholly inaccessible.
-    if (receipt || receiptRecovery || (pendingReceipt && pendingWriteAttempted)) {
-      // A receipt is known, invalid, or may have been persisted by a pending write: preserve the truthful uncertain-reset
-      // + retry path instead of discarding the known receipt or returning to Screen1.
-      showUncertainReset();
-      return;
-    }
-    // No known receipt: permanent property denial at startup → honest session/key clear.
-    receipt = null;
-    receiptRecovery = false;
-    resetUncertain = false;
-    reopenReceiptButton.hidden = true;
-    resetSession();
-    document.getElementById('decision-summary').replaceChildren();
-    receiptStatus.textContent = '';
-    setStatus('Browser storage is unavailable, so no receipt could be read or deleted. The review session and key were cleared.');
-    document.getElementById('use-fixture').focus();
+    resetWithUnreadableStorage();
     return;
   }
   // Storage object is accessible: attempt removal even if getItem fails, then
   // validate the outcome with truthful uncertain/preserved states.
-  try { localStorage.removeItem(RECEIPT_KEY); } catch {
+  try { storage.removeItem(RECEIPT_KEY); } catch {
     // A thrown removal is not itself proof that the old receipt survived.
+    let stored;
+    try { stored = storage.getItem(RECEIPT_KEY); } catch {
+      resetWithUnreadableStorage();
+      return;
+    }
+    // The read succeeded, so storage is readable: clear any stale unavailable notice.
+    storageUnavailable = false;
+    document.getElementById('storage-unavailable').hidden = true;
     try {
-      const stored = localStorage.getItem(RECEIPT_KEY);
       if (stored !== null && (!receipt || JSON.stringify(validateReceipt(JSON.parse(stored))) === JSON.stringify(receipt))) {
         receiptStatus.textContent = receipt
           ? 'Reset could not delete the receipt. Saved — receipt is still stored; session kept. Try Confirm reset again.'
@@ -1434,15 +1448,19 @@ document.getElementById('confirm-reset').addEventListener('click', () => {
     showUncertainReset();
     return;
   }
-  try {
-    if (localStorage.getItem(RECEIPT_KEY) !== null) throw new Error('Reset read-back still contains data.');
-  } catch {
+  let remaining;
+  try { remaining = storage.getItem(RECEIPT_KEY); } catch {
+    resetWithUnreadableStorage();
+    return;
+  }
+  if (remaining !== null) {
     showUncertainReset();
     return;
   }
   // Successful verified reset clears the stale unavailable flag/notice as well.
   storageUnavailable = false;
   document.getElementById('storage-unavailable').hidden = true;
+  receiptWriteAttempted = false;
   receipt = null;
   receiptRecovery = false;
   resetUncertain = false;

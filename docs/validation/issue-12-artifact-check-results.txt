@@ -1,0 +1,73 @@
+Issue #12 artifact checks — 16 October 2026 NZDT
+Starting main: 7a368f529b60edae730afe2b8b1a0f9513d65e5e.
+Design artifacts only. No application suite, SAP request, Signavio operation or human walkthrough.
+
+Initial browser iteration: failed "Selection must leave useful focus, not BODY". Wireframe corrected to focus Review cost evidence after explicit selection; assertion retained.
+Second iteration: scenario/keyboard/contrast checks passed; SVG full-page capture timed out. Corrected the capture method to use the entire SVG canvas viewport, without relaxing bounds checks or changing the diagram.
+Focused complete SVG viewport capture in Chrome succeeded.
+
+Final reproducible source/link and browser runs are recorded below after validation. Human results remain Pending — not yet conducted; automated results are not human observations.
+
+Integrated main: f829c6c (concurrent Issue #9 PR #26), merged normally as f885d082bccad9814754032178f16ee6a8f17802.
+Tested artifact/code identity: 1b69b5e81e2611ba548f30833895dbcee6eebd5f.
+Commands from the original repository checkout:
+python3 docs/validation/issue-12-source-check.py
+ISSUE12_QA_TMP=<approved scratch directory> PLAYWRIGHT_MODULE_PATH=<external Playwright directory> CHROME_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' CAPTURE_ISSUE12=1 node docs/validation/issue-12-artifact-check.mjs
+No filter. Both final commands exited 0. Playwright package version 1.62.1. Runtime reported below is the actual final browser, not the earlier .40 browser or historical app-suite environment.
+
+=== Source / markup / link checks (raw output) ===
+PASS all 4 Rae archive byte counts / manifest SHA-256 values
+PASS original TO-BE extraction equals DOCX and PPTX embedded bytes; SHA-256 c34cbcd44fdc667d6744d43b0f3ed5f623dcb2cacd137d2d8fdb3a10fd0e7ac3
+PASS preserved Pool v4, official request specification and archived V3 hashes
+PASS adaptation and existing matrix SVG XML parse; title/description present
+PASS HTML parser / unique static IDs / three-screen and separate setup structure
+PASS 81 authored relative file/anchor links (historical unbundled references not re-audited)
+Source/markup/link checks complete. No API, application suite, Signavio or human evaluation performed.
+
+=== Browser artifact checks (raw output) ===
+Artifact QA only; Node v24.20.0; Chrome/Chromium 155.0.8059.80; widths 1280/1366/390; synthetic memory-only interactions.
+PASS design scenario partial at 1280px
+PASS design scenario not-checked at 1280px
+PASS design scenario unavailable at 1280px
+PASS design scenario absent at 1280px
+PASS design scenario complete at 1280px
+PASS design scenario conflict at 1280px
+PASS design scenario pending at 1280px
+PASS design scenario empty at 1280px
+PASS design scenario failed at 1280px
+PASS design scenario invalid at 1280px
+PASS design scenario partial at 1366px
+PASS design scenario not-checked at 1366px
+PASS design scenario unavailable at 1366px
+PASS design scenario absent at 1366px
+PASS design scenario complete at 1366px
+PASS design scenario conflict at 1366px
+PASS design scenario pending at 1366px
+PASS design scenario empty at 1366px
+PASS design scenario failed at 1366px
+PASS design scenario invalid at 1366px
+PASS design scenario partial at 390px
+PASS design scenario not-checked at 390px
+PASS design scenario unavailable at 390px
+PASS design scenario absent at 390px
+PASS design scenario complete at 390px
+PASS design scenario conflict at 390px
+PASS design scenario pending at 390px
+PASS design scenario empty at 390px
+PASS design scenario failed at 390px
+PASS design scenario invalid at 390px
+PASS decision refresh clears old choice; resolution partial
+PASS decision refresh clears old choice; resolution conflict
+PASS decision refresh clears old choice; resolution unavailable
+PASS correction / negative exact amount / obsolete manual result
+PASS historical provenance survives another failed scenario
+PASS another selection is explicitly not recorded in the old receipt
+PASS keyboard select / explain / confirm / return routes
+Measured text contrast ratios: 15.24, 7.17, 10.17, 8.68, 8.32
+PASS HTML structure / no external resources / readable palette contrast
+PASS complete process SVG renders with all text within its canvas
+All 39 artifact groups passed. External requests: 0. Browser storage records: 0. Application acceptance suite not run. No human walkthrough or Signavio action claimed.
+
+Additional read-only agent inspection: primary A1/A2 model images/tables, complete adaptation SVG and existing comparison matrix; all wireframe states including supplemental temporary full-state captures. Seven curated new design screenshots retained, no historical evidence overwritten. Selected palette checks are not a full accessibility certification.
+Final scope/whitespace: git diff --check PASS; no changes to app/, original assignments/specifications, historical live evidence or existing test logs relative to integrated main.
+Human walkthrough: Pending — not yet conducted. Editable-original/model-owner decision, any required formal Signavio export/validation and #15 final ratification remain pending. No issue closure, assignee change or teammate approval claimed.

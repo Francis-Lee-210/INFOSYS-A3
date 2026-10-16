@@ -608,4 +608,170 @@ export function registerIssue27Tests({ test, browser, startInjectedServer, injec
     } finally { await context.close(); }
   });
 
+
+  async function reviewFixtureForReset(p, intent) {
+    await p.locator('#use-fixture').click();
+    await p.locator('#records-body tr[data-key="9000000001"]').click();
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#continue-decision').click();
+    await p.getByRole('radio', { name: intent, exact: true }).check();
+  }
+
+  async function knownDataAfterFailedReset(kind) {
+    const { p, context } = await pageWithInit();
+    try {
+      await reviewFixtureForReset(p, 'Later');
+      await p.locator('#confirm-intent').click();
+      if (kind === 'corrupt') await p.evaluate(() => localStorage.setItem('planReviewSnapshot.receipt', '{injected-corrupt'));
+      const oldBytes = await p.evaluate(() => localStorage.getItem('planReviewSnapshot.receipt'));
+      assert.ok(oldBytes);
+      await p.addInitScript(() => {
+        const get = Storage.prototype.getItem;
+        let failed = false;
+        Storage.prototype.getItem = function (key) {
+          if (key === 'planReviewSnapshot.receipt' && !failed) {
+            failed = true;
+            throw new DOMException('Injected one-off startup read', 'SecurityError');
+          }
+          return get.call(this, key);
+        };
+      });
+      await p.reload();
+      assert.equal(await p.locator('#screen-list').isVisible(), true);
+      await reviewFixtureForReset(p, 'Help');
+      await p.evaluate(() => {
+        const f = window.__pr32KnownDataFaults = {
+          storage: window.localStorage,
+          descriptor: Object.getOwnPropertyDescriptor(window, 'localStorage'),
+          get: Storage.prototype.getItem,
+          set: Storage.prototype.setItem,
+          remove: Storage.prototype.removeItem,
+          readFail: false,
+          removeFail: true,
+          writes: 0
+        };
+        f.stored = () => f.get.call(f.storage, 'planReviewSnapshot.receipt');
+        Storage.prototype.getItem = function (key) {
+          if (this === f.storage && key === 'planReviewSnapshot.receipt' && f.readFail) throw new DOMException('Injected later read failure', 'SecurityError');
+          return f.get.call(this, key);
+        };
+        Storage.prototype.setItem = function (key, value) {
+          if (this === f.storage && key === 'planReviewSnapshot.receipt') f.writes++;
+          return f.set.call(this, key, value);
+        };
+        Storage.prototype.removeItem = function (key) {
+          if (this === f.storage && key === 'planReviewSnapshot.receipt' && f.removeFail) throw new DOMException('Injected remove failure', 'SecurityError');
+          return f.remove.call(this, key);
+        };
+      });
+      await p.locator('#reset-demo').click();
+      await p.locator('#confirm-reset').click();
+      return { p, context, oldBytes };
+    } catch (error) {
+      await context.close();
+      throw error;
+    }
+  }
+
+  test('issue 27: known old bytes survive failed reset, cancellation and another confirmation until verified deletion', async () => {
+    for (const kind of ['valid', 'corrupt']) {
+      const { p, context, oldBytes } = await knownDataAfterFailedReset(kind);
+      try {
+        assert.equal(await p.evaluate(() => window.__pr32KnownDataFaults.stored()), oldBytes);
+        assert.equal(await p.locator('#reset-confirmation').isVisible(), true);
+        if (kind === 'valid') {
+          assert.match(await p.locator('#decision-title').innerText(), /Saved receipt \(historical\)/);
+          assert.match(await p.locator('#decision-choice').innerText(), /Later/);
+          assert.match(await p.locator('#provenance').innerText(), /Fixture demonstration/);
+        } else {
+          assert.match(await p.locator('#decision-title').innerText(), /Receipt could not be recovered/);
+          assert.doesNotMatch(await p.locator('#receipt-status').innerText(), /\bSaved\b/);
+        }
+        await p.locator('#cancel-reset').click();
+        if (await p.locator('#confirm-intent').isVisible()) await p.locator('#confirm-intent').click();
+        assert.equal(await p.evaluate(() => window.__pr32KnownDataFaults.stored()), oldBytes);
+        assert.equal(await p.evaluate(() => window.__pr32KnownDataFaults.writes), 0);
+        assert.equal(await p.locator('#confirm-intent').isVisible(), false);
+        await p.evaluate(() => { window.__pr32KnownDataFaults.removeFail = false; });
+        await p.locator('#reset-demo').click();
+        await p.locator('#confirm-reset').click();
+        assert.equal(await p.locator('#screen-list').isVisible(), true);
+        assert.equal(await p.evaluate(() => window.__pr32KnownDataFaults.stored()), null);
+        await reviewFixtureForReset(p, 'Help');
+        await p.locator('#confirm-intent').click();
+        assert.match(await p.locator('#receipt-status').innerText(), /^Saved/);
+        assert.equal(await p.evaluate(() => JSON.parse(window.__pr32KnownDataFaults.stored()).intent), 'help');
+        assert.equal(await p.evaluate(() => window.__pr32KnownDataFaults.writes), 1);
+      } finally { await context.close(); }
+    }
+  });
+
+  test('issue 27: known old bytes retain uncertain reset when later read or property access fails', async () => {
+    for (const kind of ['valid', 'corrupt']) {
+      for (const failure of ['read', 'property']) {
+        const { p, context, oldBytes } = await knownDataAfterFailedReset(kind);
+        try {
+          await p.evaluate(failure => {
+            if (failure === 'read') window.__pr32KnownDataFaults.readFail = true;
+            else Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new DOMException('Injected later property denial', 'SecurityError'); } });
+          }, failure);
+          await p.locator('#confirm-reset').click();
+          assert.equal(await p.locator('#screen-decision').isVisible(), true);
+          assert.match(await p.locator('#receipt-status').innerText(), /Deletion could not be verified/);
+          assert.equal(await p.locator('#reset-confirmation').isVisible(), true);
+          assert.equal(await p.evaluate(() => window.__pr32KnownDataFaults.stored()), oldBytes);
+          assert.equal(await p.evaluate(() => window.__pr32KnownDataFaults.writes), 0);
+          await p.evaluate(() => {
+            const f = window.__pr32KnownDataFaults;
+            if (f.descriptor) Object.defineProperty(window, 'localStorage', f.descriptor);
+            else delete window.localStorage;
+            f.readFail = false;
+            f.removeFail = false;
+          });
+          await p.locator('#confirm-reset').click();
+          assert.equal(await p.locator('#screen-list').isVisible(), true);
+          assert.equal(await p.evaluate(() => window.__pr32KnownDataFaults.stored()), null);
+          assert.equal(await p.locator('#api-key').inputValue(), '');
+        } finally { await context.close(); }
+      }
+    }
+  });
+
+  test('issue 27: failed reset never promotes this sessions unverified wrong-intent write to Saved', async () => {
+    const { p, context } = await pageWithInit();
+    try {
+      await reviewFixtureForReset(p, 'Later');
+      await p.evaluate(() => {
+        const set = Storage.prototype.setItem;
+        Storage.prototype.setItem = function (key, value) {
+          if (key === 'planReviewSnapshot.receipt') {
+            const wrong = JSON.parse(value);
+            wrong.intent = 'help';
+            return set.call(this, key, JSON.stringify(wrong));
+          }
+          return set.call(this, key, value);
+        };
+        const remove = Storage.prototype.removeItem;
+        window.__pr32RestoreRemove = () => { Storage.prototype.removeItem = remove; };
+        Storage.prototype.removeItem = function (key) {
+          if (key === 'planReviewSnapshot.receipt') throw new DOMException('Injected remove failure', 'SecurityError');
+          return remove.call(this, key);
+        };
+      });
+      await p.locator('#confirm-intent').click();
+      assert.match(await p.locator('#receipt-status').innerText(), /^Unsaved/);
+      const unverified = await p.evaluate(() => localStorage.getItem('planReviewSnapshot.receipt'));
+      assert.equal(JSON.parse(unverified).intent, 'help');
+      await p.locator('#reset-demo').click();
+      await p.locator('#confirm-reset').click();
+      assert.doesNotMatch(await p.locator('#receipt-status').innerText(), /\bSaved\b/);
+      assert.doesNotMatch(await p.locator('#decision-title').innerText(), /Saved receipt/);
+      assert.equal(await p.locator('#confirm-intent').isVisible(), false);
+      assert.equal(await p.evaluate(() => localStorage.getItem('planReviewSnapshot.receipt')), unverified);
+      await p.evaluate(() => window.__pr32RestoreRemove());
+      await p.locator('#confirm-reset').click();
+      assert.equal(await p.locator('#screen-list').isVisible(), true);
+      assert.equal(await p.evaluate(() => localStorage.getItem('planReviewSnapshot.receipt')), null);
+    } finally { await context.close(); }
+  });
 }

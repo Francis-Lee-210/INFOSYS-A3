@@ -82,3 +82,36 @@ OpenCode 复现了两个独立的 P2 缺陷（`/private/tmp/a3-pr29-storage-repr
 - `TEST_FILTER='issue 27' PORT=7500`：共 16 个检查全部通过，即 15 个 issue-27 组（7 原有 + 8 新增）加 1 个继承的 fixture 来源检查，**非 16 个 issue-27 组**。
 
 全量父方未过滤验收与新提交冻结由父方独立完成；本处不声称全量结果为最终。
+
+## 当前修复（OpenCode，PR #32 复审，HEAD `ee51431`）
+
+本 session：`ses_ebc03cd83ffesb3EreZKTOskCE`。父方提供的 PR #32 补丁
+`/private/tmp/a3-pr32-apply-reviewed-repair.py` 已按原样应用（基线 `ee51431`）；OpenCode 不执行任何
+git 操作。本工作树仅 `app/app.mjs`、`app/tests/issue-27.mjs` 两处，并在本文追加本节。
+
+### app/app.mjs 变更
+
+- 在确认重置分支读回仍有字节且尚无有效回执时，保留已知数据的存在：未尝试过写入时，
+  验证并恢复原有历史回执或保留损坏数据恢复路径；本会话尝试过写入时，保留恢复与不确定
+  重置状态，不把自身未验证的写入提升为 `Saved`。后续无法验证删除时仍可重试。
+- 纯插入式变更，其余实现与既有重试语义保持不变。
+
+### app/tests/issue-27.mjs 变更
+
+在既有测试之后追加三个黑盒回归组：
+
+- 失败重置后保留有效/损坏既有数据的存在，取消重置与再次确认路径不变，直至有意重置；
+- 第二次读（持续 `getItem` 失败）或属性拒绝时保留不确定重置/重试路径，可恢复后验证清除；
+- 本次会话自身的错误意图写入不会被采纳为 `Saved`。
+
+### 验证结果（实际，聚焦）
+
+- `node --check app.mjs` / `node --check tests/issue-27.mjs`：通过。
+- `git diff --check`：干净。
+- 父方复现 `/private/tmp/a3-pr32-reset-preserved-data-repro.mjs`：exit 0，
+  两个变体均为 true（`oldBytesPreservedAfterFailedReset`、
+  `oldBytesProtectedAfterNextConfirmation`、`oldBytesStillPresent`、
+  `uncertainResetRetryPreserved`）。
+- `TEST_FILTER='issue 27' PORT=8600 npm test`：22 个检查全部通过（21 个 issue-27 组加 1 个继承
+  的 fixture 来源检查），exit 0。
+- 未声称父方完整未过滤验收；父方拥有完整验收与全部 Git 操作。

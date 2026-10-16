@@ -1437,6 +1437,23 @@ document.getElementById('confirm-reset').addEventListener('click', () => {
     // The read succeeded, so storage is readable: clear any stale unavailable notice.
     storageUnavailable = false;
     document.getElementById('storage-unavailable').hidden = true;
+    if (stored !== null && !receipt) {
+      // Readable bytes survived deletion: retain history/recovery so a later
+      // confirmation or unreadable reset cannot treat them as absent. This
+      // session's unverified writes must never become verified saved history.
+      receiptRecovery = true;
+      resetUncertain = receiptWriteAttempted;
+      if (!receiptWriteAttempted) {
+        try {
+          receipt = validateReceipt(JSON.parse(stored));
+          receiptRecovery = false;
+        } catch {
+          receipt = null;
+        }
+      }
+      renderDecision();
+      if (receipt) setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
+    }
     try {
       if (stored !== null && (!receipt || JSON.stringify(validateReceipt(JSON.parse(stored))) === JSON.stringify(receipt))) {
         receiptStatus.textContent = receipt

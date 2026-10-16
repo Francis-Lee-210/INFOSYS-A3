@@ -260,6 +260,7 @@ assertImportRejected('missing side-effect import is rejected', "import './x.mjs'
 assertImportRejected('missing re-export is rejected', "export * from './y.js';", './y.js', 'app/tests/y.js');
 assertImportRejected('missing dynamic string import is rejected', "import('./z.mjs');", './z.mjs', 'app/tests/z.mjs');
 assertImportRejected('import escaping repository root is rejected', "import '../../../outside.mjs';", '../../../outside.mjs', '../outside.mjs');
+assertImportRejected('missing import with quotes, semicolons and parentheses in clause comments is rejected', "import {\n  a, // don't drop; (legacy)\n  /* b's (old); */ b,\n} from './w.mjs';\nexport { c /* (c); */ } from './v.mjs';", './w.mjs', 'app/tests/w.mjs');
 
 ok('bare, built-in and variable imports are ignored', () => {
   const dir = initRepoWithPayload();
@@ -293,9 +294,9 @@ ok('imports after function exports, declarations, and import.meta are detected',
   assert(readDirectory(out).length === 0, 'output created despite missing imports');
 });
 
-ok('multiline import list and import.meta/export default package successfully', () => {
+ok('multiline import list with a comment, import.meta and export default package successfully', () => {
   const dir = initRepoWithPayload();
-  appendFile(join(dir, 'app/tests/browser.mjs'), "\nimport {\n a,\n b\n} from './issue-27.mjs';\nconst url = import.meta.url;\nexport default function () {}\n");
+  appendFile(join(dir, 'app/tests/browser.mjs'), "\nimport {\n a,\n b, // moved from './gone.mjs'; don't re-add\n} from './issue-27.mjs';\nconst url = import.meta.url;\nexport default function () {}\n");
   assert(git(dir, ...authorFlags(), 'add', '--', 'app/tests/browser.mjs').status === 0);
   assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add multiline import').status === 0);
   const out = join(dir, 'out');

@@ -239,8 +239,10 @@ function scanPayload(blobs) {
 function scanPayloadImports(blobs) {
   const payload = new Set(PAYLOAD);
   const missing = [];
-  // Import/export clauses contain no quotes, semicolons, or parentheses before `from`.
-  const specifierPattern = /\bimport\s*(?:\(\s*(['"])([^'"\n]+)\1\s*\)|(['"])([^'"\n]+)\3|[^;'"()]*?\bfrom\s*(['"])([^'"\n]+)\5)|\bexport\s*[^;'"()]*?\bfrom\s*(['"])([^'"\n]+)\7/g;
+  // Import/export clauses contain no quotes, semicolons, or parentheses before `from`,
+  // except inside // or /* */ comments, which may hold any characters (e.g. "don't").
+  const clause = String.raw`(?:[^;'"()/]|/\*(?:[^*]|\*(?!/))*\*/|//[^\n]*(?![^\n])|/(?![*/]))*?`;
+  const specifierPattern = new RegExp(String.raw`\bimport\s*(?:\(\s*(['"])([^'"\n]+)\1\s*\)|(['"])([^'"\n]+)\3|${clause}\bfrom\s*(['"])([^'"\n]+)\5)|\bexport\s*${clause}\bfrom\s*(['"])([^'"\n]+)\7`, 'g');
   for (const path of PAYLOAD) {
     if (!/\.(?:js|mjs)$/.test(path)) continue;
     const text = blobs.get(path).toString('utf8');

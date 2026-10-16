@@ -6,7 +6,7 @@
 
 **Continuation:** fast-forwarded the existing checkout from `0b36c40` to remote `5974528c38907caca858846416bec407fcb2c9ff`, preserving Francis's three commits and original report; merged main `203b200fd81cde6c49cb52d5be0afc5f1e4b89b5` normally as `c1a88ae425293f0cb7594e6bbae3980c815e79a3`. No app/source/visual artifact edits. [Current implementation evidence checkpoint](../design/issue-12-design-rationale.md#7-implementation-cross-reference-read-only-inspection) distinguishes merged #30, closed-unmerged #31 and open #32/#34 with immutable identities. Older live/package evidence does not validate later repairs.
 
-Documentation-only checks for this continuation are recorded separately in [issue-12-reconciliation.md](issue-12-reconciliation.md); the original browser output and Francis report are retained unchanged.
+Documentation-only checks on **`05a3817c4d739910c8845a855806c167ede7275b`** are recorded separately in [issue-12-reconciliation.md](issue-12-reconciliation.md): **157 relative-link target checks**, source/hash/markup checks, preserved report/10 visual-artifact byte comparisons, protected-scope/ancestry checks and `git diff --check` passed. The original browser output and Francis report are retained unchanged; no browser/app/SAP/package execution was repeated.
 
 ## Artifact index and independent use
 

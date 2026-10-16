@@ -15,13 +15,18 @@ verification. Fixture mode works without a key or SAP network access.
 The ZIP is `plan-review-snapshot-billing-lite-<commit>.zip`; its adjacent
 sidecar is `plan-review-snapshot-billing-lite-<commit>.manifest.json`. The
 manifest records the exact full source commit, UTC packaging time, ZIP byte
-length/SHA-256 and all **16** payload paths, byte lengths and SHA-256 hashes.
+length/SHA-256 and all **17** payload paths, byte lengths and SHA-256 hashes.
 Compare it with the supplied handoff identity before connecting. The source
-commit includes this README and lockfile; it is newer than dependency/base
-`f829c6c9f1107652e0affa9c894eca962e75662c` (merged PR #26).
+commit combines merged main `203b200fd81cde6c49cb52d5be0afc5f1e4b89b5`
+(PR #30 source package) with the reviewed receipt recovery repair
+`81099ce4ff37564dec7099687726a3ed5dd10e41` carried by this follow-up
+source freeze. It is newer than the historical dependency/base
+`f829c6c9f1107652e0affa9c894eca962e75662c` (merged PR #26); the pinned
+historical links below refer to that old base and this source is not claimed
+byte-identical to it.
 
 The fixed ZIP prefix is `plan-review-snapshot-billing-lite/`. It contains this
-README and `app/`: server/UI, six adapter/contract/fixture modules, three browser
+README and `app/`: server/UI, six adapter/contract/fixture modules, four browser
 test modules, `package.json` and `package-lock.json`. The maintainer creates it
 from a resolved Git commit using an explicit allowlist. Course documents,
 probe outputs, local configuration, development history, dependencies and Git
@@ -114,6 +119,10 @@ customer linkage. Missing optional fields stay Unknown/Not available; unusable
 required fields produce a contract error. Material conflicts allow only Help
 or Later. Loaded pages/partial items do not prove complete account history.
 These qualifications remain relevant on all three screens and in the receipt.
+
+Blocked or rejected storage still permits reviewing returned records;
+temporarily unreadable old data is not overwritten, and Retry retains the
+pending intent. The app reports Saved only after write plus an identical validated read-back. Existing verified receipt data is preserved unchanged until a deliberate reset. Failed or unverifiable resets remain visible and retryable; deletion is claimed only after verification; they are not treated as absent or deleted merely because storage is temporarily blocked or a connection is dropped.
 
 **Use fixture demonstration** and **Use synthetic billing-document fixture**
 are separate labelled offline modes. They require no key and do not contact

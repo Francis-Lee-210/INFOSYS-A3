@@ -98,3 +98,17 @@ repair result (24 passed) are kept historical; the final suite result is
 ## Reviewed final correction
 
 OpenCode applied the supplied review patch: artifact comparison uses exact Buffer equality, including equal-size export-subst; failure throws through owned temporary-file cleanup; the README uses complete extraction paths, correct receipt/key semantics and actual controls. Generated-output ignores are scoped to release/. Independent acceptance remains in the separate validation record.
+
+## PR29 sync preparation (bounded, pre-integration)
+
+OpenCode added `app/tests/issue-27.mjs` to the explicit PAYLOAD allowlist in both `tools/package-source.mjs` and `tools/tests/package-source.mjs` (17 payload entries total) and updated README-SOURCE counts accordingly (17 payload paths; four browser test modules). `app/tests/issue-27.mjs` is now present in this worktree (implemented and independently reviewed by another OpenCode session); no placeholder was created. No app files, lockfile, validation evidence, .gitignore, branches or Git history were changed. No GitHub, SAP/key, browser or live acceptance actions were taken. Independent full acceptance and the final source commit/archive identity remain with the parent after PR29 integration.
+
+## README finish and source-sync verification (this session)
+
+Session `ses_ebe2a7a6effe8GTGhdYP6IocPO` on branch `codex/receipt-recovery-source-sync`. OpenCode finished README-SOURCE.md: updated the dependency/source identity to merged main `203b200fd81cde6c49cb52d5be0afc5f1e4b89b5` (PR #30 source package) plus the reviewed receipt recovery repair `81099ce4ff37564dec7099687726a3ed5dd10e41` carried by this follow-up source freeze, kept the historical B0/contract links pinned to `f829c6c9f1107652e0affa9c894eca962e75662c` labelled historical (not claiming byte-identity to that old base), retained 17 payload paths / four browser test modules, and added concise storage semantics (temporarily unreadable old data not overwritten; Retry retains pending intent; known/possibly written receipts retain uncertain reset/retry until removal verified). No review history was added to the user flow and no clean-run/live results are claimed for the new source package.
+
+Verification: `node --check` passed for both `tools/package-source.mjs` and `tools/tests/package-source.mjs`; `git diff --check` clean; `node tools/tests/package-source.mjs` ran 28 passed / 0 failed of 28 (output redirected to /private/tmp/a3-source-sync-opencode-package-tests.txt). These are this session's targeted packaging results, distinct from the parent's independent frozen acceptance (161/161 belongs to the parent). The full 161/161 browser result and final artifact identity are not claimed here. No GitHub, SAP/key, browser, install, commit, push, merge or branch operations were performed.
+
+## README precision correction (final)
+
+Session `ses_ebe2a7a6effe8GTGhdYP6IocPO`: OpenCode corrected README-SOURCE.md storage wording for precision — the app reports Saved only after write plus an identical validated read-back (a successful write plus failed read-back may have persisted bytes, one repaired uncertain-reset scenario); failed or unverifiable resets remain visible and retryable, deletion claimed only after verification. Temporarily unreadable old bytes remain protected and Retry retains pending intent. No other README changes; no app/test/Git/GitHub/SAP/key actions; no acceptance claims.

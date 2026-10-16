@@ -1,0 +1,39 @@
+ok git and unzip available, node >= 22
+    archive plan-review-snapshot-billing-lite-5d95123.zip (98618 bytes), manifest verified
+ok clean repo produces ZIP and manifest
+ok missing static import is rejected before outputs
+ok missing side-effect import is rejected
+ok missing re-export is rejected
+ok missing dynamic string import is rejected
+ok import escaping repository root is rejected
+ok bare, built-in and variable imports are ignored
+ok imports after function exports, declarations, and import.meta are detected
+ok multiline import list and import.meta/export default package successfully
+ok dirty payload is refused
+ok untracked required file is refused
+ok missing payload file is refused
+ok symlinked HEAD-worktree payload is refused
+ok private key in payload is refused before outputs
+ok real-looking assigned credential in payload is refused
+ok quoted JS object credential property is refused
+ok quoted JSON credential property is refused
+ok raw OData response dump in payload is refused
+ok clearly fictional SENTINEL string is not flagged
+ok existing archive is not overwritten
+ok different output dir is allowed
+ok pinned commit behavior: --ref uses archived commit content
+ok unresolvable ref is refused
+ok packager refuses outside a git repo
+ok untracked decoys never enter the archive
+ok export-ignore on a payload file is rejected before outputs
+ok committed .gitattributes export-ignore is rejected before outputs
+ok export-subst changing payload bytes is rejected before outputs
+ok --ref to a commit where payload is a symlink is refused
+ok --ref to an older commit archives exactly that commit content
+ok missing --ref value is refused
+ok missing --output-dir value is refused
+ok dangling symlink at output path counts as existing and is refused
+ok pre-existing output file is not overwritten (exclusive write)
+ok equal-size export-subst is rejected by actual bytes, not only file length
+
+Packaging acceptance suite: 36 passed, 0 failed of 36

@@ -1,8 +1,8 @@
 # Issue #12 walkthrough: protocol, observations and evidence separation
 
-**Artifact:** [standalone wireframe](../design/issue-12-wireframes.html). [Rationale/source map](../design/issue-12-design-rationale.md) · [Model handoff](../design/issue-12-model-handoff.md). **One group-member manual walkthrough report received; detailed observations are limited.** Francis's four-task report and no-change finding are retained below; agent inspection and automated checks are separate. H1–H8 is the prepared project protocol, not a teacher-mandated requirement for eight detailed transcripts. Do not restart the whole walkthrough by default.
+**Artifact:** [standalone wireframe](../design/issue-12-wireframes.html). [Rationale/source map](../design/issue-12-design-rationale.md) · [Model handoff](../design/issue-12-model-handoff.md). **Initial summary and later screenshot-guided manual supplement received from Francis.** The supplement resolves the specific missing/error/evidence-change question. Guidance and evidence limits remain explicit; agent checks and reviewer conclusions are separate. No new full session or interaction recheck is required. H1–H8 is a prepared protocol, not eight mandated transcripts.
 
-**16 October repair checkpoint:** rechecked the PR/issues; no later scenario clarification or model-owner answer found. Francis's report is unchanged. Only the process SVG's stale status/footer, its malformed PNG export and the capture routine changed (`b1d4cb378e9f12e7450ff3ceae56445c3999e418`); the HTML and human interaction tasks did not. No new participant session or post-change human recheck is due for these repairs. [New artifact run and visual inspection](issue-12-reconciliation.md#16-october-visual-review-repair-closeout) are agent checks, not answers to the human questions.
+**Superseded repair checkpoint:** at `b1d4cb3` the two human questions were pending; the [recorded repair checks](issue-12-reconciliation.md#16-october-visual-review-repair-closeout) concern that identity. **Current evidence:** Francis's human-authored supplement at `1468d12` is preserved intact; Rae's [16 October model-owner comment](https://github.com/Francis-Lee-210/INFOSYS-A3/pull/28#issuecomment-6210567463) accepts reuse with original step 5 explicitly Modified. Current edits clarify that mapping/status and regenerate the process image, not the HTML interaction.
 
 ## Ready-to-run human session
 
@@ -45,38 +45,42 @@ Record whether the participant:
 
 An action/statement can be recorded as correct, ambiguous or mistaken **for this task**, with supporting words/actions, not as a population satisfaction or success percentage. Understanding one record does not demonstrate the original A2 financial/retention benefit.
 
-## Human results — bounded report received; detailed fields incomplete
+## Human results — initial summary and guided supplement
 
-A report from Francis, a group member, was received on **16 October 2026 NZDT (report date, not an established session date)**. It covers the four broad step groups Ryan requested and says all worked normally, with no wireframe change needed. See the [unchanged manual report](issue-12-francis-manual-walkthrough-2026-10-16.md), preserved at [remote commit `5974528`](https://github.com/Francis-Lee-210/INFOSYS-A3/blob/5974528c38907caca858846416bec407fcb2c9ff/docs/validation/issue-12-francis-manual-walkthrough-2026-10-16.md). That is the report's repository identity, **not the tested artifact commit**. No step-specific actions/comments or assistance details were supplied. #11 comments and Rae's archived A1 interviews remain separate evidence.
+Francis, group member, supplied an initial four-group summary: steps worked normally, no wireframe change needed. Its **16 October NZDT report date is not an established session timestamp**. The [latest human-authored record](issue-12-francis-manual-walkthrough-2026-10-16.md), preserved at [commit `1468d12`](https://github.com/Francis-Lee-210/INFOSYS-A3/blob/1468d12bc2d6044f88e2eafc7307a1ca5988c838/docs/validation/issue-12-francis-manual-walkthrough-2026-10-16.md), separately adds screenshot-guided manual actions and interface text. Earlier versions remain in Git; **do not revert the supplement to satisfy an obsolete byte-unchanged assertion**. Neither the report commit nor the synthetic receipt time establishes the tested artifact commit or human session time. #11 comments, Rae's archived research and her later model review are distinct evidence.
 
 | Result field | Reported value |
 |---|---|
 | Tester role / prior familiarity | Francis, group member; prior familiarity not recorded |
-| Session date/time / moderator / consent | Report received 16 October 2026 NZDT; actual session details not recorded |
-| Artifact version / commit / browser/device | Ryan's standalone HTML wireframe; exact version, commit and runtime details not recorded |
-| Tasks attempted / assistance | Ryan's four step groups listed in the linked record; assistance details not recorded |
-| Observed behaviour / comments | Summary only: all steps worked normally; no step-specific notes or verbatim comments supplied |
-| Change needed | None, according to Francis's report |
-| Actual recheck / remaining issue | No change requested, so no post-change recheck required; the specific missing/error/changed-evidence scenario and outcome are not recorded |
+| Session date/time / consent | Initial session timing/consent not recorded; supplement headed 16 October, exact session time unknown |
+| Artifact version / commit / browser/device | Footer reported v1.0 / 16 October NZDT; tested commit/hash and runtime versions unknown |
+| Tasks attempted / assistance | Initial four groups plus guided sequence below; prompted step-by-step manual interactions, not unaided task success |
+| Observed behaviour / comments | Reported screenshot-visible amounts, limits, error, pending, conflict and historical receipt; screenshots not archived; no verbatim participant comments |
+| Change needed | Initial report requested none; reviewer concludes no interaction change justified by the supplement. Step-5 documentation clarification comes from Rae, not a fabricated participant defect |
+| Actual recheck / remaining issue | No interaction change, hence no post-change human recheck required. Missing/error scenario question resolved; failed-read recovery-button activation remains unrecorded, not claimed |
 
-### Summary record (not eight reconstructed transcripts)
+### Guided sequence and evidence limits (not eight reconstructed transcripts)
 
-| Report date / role / artifact details | Task / scenario | Observable action | Attributable result | Interpretation / limitation | Change made | Actual recheck |
-|---|---|---|---|---|---|---|
-| 16 October 2026 report; Francis, group member; session date and artifact version/commit not recorded | Ryan's four requested step groups; see [manual record](issue-12-francis-manual-walkthrough-2026-10-16.md) | Step-level actions not recorded | Summary report: all steps worked normally; no verbatim comments supplied | No wireframe change requested on those groups; summary only | None | Not applicable: no change made on this report |
+| Francis's reported guided action | Interface recorded in his supplement | Reviewer interpretation / limit |
+|---|---|---|
+| Select first record, explain; Back, select second and explain | USD 250.000 net / 37.500 tax / 287.500 gross; then -18.750 EUR net/gross and 0.000 tax | Selection→explanation and correction/Back demonstrated with guidance; not proof of unaided financial comprehension |
+| Stage optional detail absent and continue | Explicit bounded-read absence and not-complete-history limitation | Required valid header remains reviewable despite optional gap |
+| Stage failed read and load | No usable rows, explicit failure-not-empty alert, Retry/Back shown, Review cost evidence disabled | Error state and block observed. Activation of recovery buttons not recorded; do not claim it |
+| Review updated evidence; resolve as conflicting item currency | Pending message clears previous intention and blocks continuation; later EUR-item/USD-header conflict, Help/Later only | Specific changed-evidence and conflict scenario recorded, not every prepared H4–H7 variant |
+| Confirm Later, return to list, reopen receipt | Historical receipt retains original record/conflict limits, says memory-only and clears on reload | Full intention/history endpoint recorded; synthetic `2026-10-16T04:05:00.000Z` is not the human session time or real persistence |
 
 ### 16 October evidence assessment against actual #12 criterion 7
 
-This assessment is documentation review, **not a new human observation or clarification**. The original report is unchanged.
+This is a reviewer assessment of Francis's initial summary **and later committed supplement**, not new participant observation. The latest human-authored file is unchanged from `1468d12`.
 
 | Required design evidence | What the report supports | Remaining limit |
 |---|---|---|
-| Who evaluated / scenario | Francis, group member; Ryan's standalone HTML and four listed task groups | Exact tested artifact/session/runtime details not recorded; useful optional metadata, not grounds alone for a full rerun |
-| Select → explain → intention/receipt and correction/Back | Reported select/explain, return/change selection, record intention/revisit receipt all worked normally | Assistance and detailed actions are not recorded; do not claim independent task success or comprehension of all financial meanings |
-| A missing/error state | Third group reports missing data, failed read **or** changed evidence | **Material clarification:** which specific state was attempted and what happened? “Or” is not evidence of each H4–H7 variant or necessarily the required missing/error case |
-| Observations / resulting changes | Summary finding: all four groups worked normally, no wireframe change needed | No verbatim comments or detailed behaviour; no change requested on this finding. No post-change recheck is due |
+| Who evaluated / scenario | Francis, group member, performed guided manual sequence above | Not an unaided usability study; screenshots reported in conversation, not stored; tested commit/runtime/time unknown |
+| Select → explain → intention/receipt and correction/Back | First record, Back/negative EUR correction, Later confirmation and historical reopen recorded | Guided operation only; no general comprehension, live access or app-persistence claim |
+| A missing/error state | Optional detail absent with continuation; failed read with disabled evidence review; pending/cleared choice→currency conflict recorded | Prior disjunction resolved. Failed-read recovery activation and every H1–H8 variant not proven; neither is an extra requirement for this bounded #12 criterion |
+| Observations / resulting changes | Initial no-change result plus specific guided interface observations | No interaction change justified; status/mapping/export documentation corrected, with automated checks/visual inspection separate. No fabricated defect or human recheck |
 
-Only the specific third-group scenario/outcome is needed to resolve the current walkthrough-coverage ambiguity. If the recollection/notes establish a missing/error case, record that as a dated supplement with its source and whether it is recollection or contemporaneous notes. If no such case was attempted or can be established, propose **one short missing/error-and-recovery task**, not a repeat of the whole session. Date/browser/artifact identity, assistance, interpretation of amount/intention and further support for the no-change conclusion are useful **if known**; otherwise retain “not recorded” and bounded claims. Never provide desired answers or reconstruct quotes. Keep the PR draft for the precise unresolved #12 evidence, not for eight transcripts or the entire #15 audit. No new session is requested by this document.
+**Criterion 7 is supported by the bounded guided record.** No full replay, additional participant, eight transcripts or post-change interaction recheck is required. Unknown metadata remains unknown. The screenshots are a human-reported source, not independently inspectable repository images; no new quotation or population-level result is inferred. Ready for review is not lecturer/course acceptance or #15 completion.
 
 ## Agent inspection and automated artifact checks
 

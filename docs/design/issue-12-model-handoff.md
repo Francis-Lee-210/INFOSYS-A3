@@ -2,7 +2,7 @@
 
 16 October 2026 NZDT. [Rationale/map](issue-12-design-rationale.md#2-original-to-lite-mechanism-map) · [New simplified process map](issue-12-process-adaptation.svg) · [Walkthrough](../validation/issue-12-walkthrough.md).
 
-**Visual repair checkpoint:** SVG footer status and full PNG export corrected at `b1d4cb378e9f12e7450ff3ceae56445c3999e418`, without changing L1–L8/E1–E4, original provenance or the mapping. [Repair closeout](../validation/issue-12-reconciliation.md#16-october-visual-review-repair-closeout) records the new checks/visual inspection. No later owner review was found in the rechecked PR #28/#11/#12/#15 discussion. The precise identification/mapping/reuse decision below remains outstanding; no formal revision/export is unconditionally demanded or represented as performed.
+**Current owner decision:** [Rae404's review](https://github.com/Francis-Lee-210/INFOSYS-A3/pull/28#issuecomment-6210567463), stated **16 October 2026**, posted `2026-10-16T07:39:09Z`, confirms the original identification and mapping subject to explicitly describing original step 5 as Modified in L2/E1. That clarification is now in the rationale, table and simplified map. Rae adopts the original export plus disclosed adaptation for current Option 2; **no formal Signavio revision is required for that approach**. Not lecturer approval or final #15 ratification. The earlier pending-owner status at the [visual repair checkpoint](../validation/issue-12-reconciliation.md#16-october-visual-review-repair-closeout) is superseded.
 
 ## 1. Original evidence—not a recreated “original”
 
@@ -10,6 +10,8 @@
 - Her later [A2-D1](../../references/Rae/A2-D1/A2-D1_Consulting_Proposal_Rae_Huang_xhua725.docx), **§4.4 Figure 2**, details A–C and **Table 3**, carries the annual TO-BE and efficiency/KPI interpretation. **§4.3/Table 2** chooses Pathway A. The embedded images were visually inspected, not inferred from text extraction.
 - Both images visibly separate a Spark pool (Data and plan information; Plan-review service; Customer care) from Customer, with annual timer, data-validity/fallback, snapshot, suitability/comparison, change eligibility/exceptions, assistance, stay/defer/change outcomes. A1-D1 §3.7 Figure 7 and A2-D1 §2.3 Figure 1 show the different link-only AS-IS. A1-D2's TO-BE overview clips some far-right end labels; the enlarged panels and A2 details provide the readable corresponding paths. No absent label is reconstructed as an authenticated original.
 - R2 §8.2 **reports** that Signavio Convention Check passed at original export. That author statement is not an independent check performed by this task. The editable Signavio project/model ID, access and machine-readable BPMN are **not bundled**; no authenticated Signavio workspace was accessed.
+
+**Owner-reported editable export, not independently archived/verified:** Rae reports `INFOSYS704_A1-D2_TO-BE_Spark_Financial_Optimised_v4.bpmn`, exported from Signavio Process Editor 26.34.0 on 28 August 2026; stated SHA-256 `0234c7de749afe5f18ee4bd5a70ca8998bbac2c74c2e1e1c54edeb21ca5804be`. She reports the final assistance/exception nodes and offers a follow-up archival PR; online workspace access was not rechecked. No such Rae BPMN is present in this checkout at reconciliation, so availability, version and hash remain **owner-reported**. Do not confuse this reported v4 file with the **v2 image identity** above. Follow-up archival is useful but **not a #12 blocker** for her adopted readable-export/adaptation approach.
 - [A2-D2](../../references/Rae/A2-D2/A2-D2_Business_Case_Slides_Rae_Huang_xhua725.pptx) slide 3 uses the AS-IS image; slide 7 uses the same image bytes as A2-D1 Figure 2 with crop (`r=64750,t=8300,b=74600` in slide XML), exposing the data gate rather than a new model. Its slide 14 benefits are assumptions.
 
 ### Readable archived image
@@ -25,7 +27,7 @@
 | New node | Responsible actor / operation | Original-to-Lite change |
 |---|---|---|
 | L1 | Reviewer starts manually, sees source and loaded-page scope, selects one key. | Replace annual eligibility/timer; no customer identity claim (R2 §8.2 steps 1–2). |
-| L2 | Loopback adapter validates GET destination/source and matching keyed header from SAP training source. | Replace annual pipeline with minimum single-header contract. Required failure E1 returns to L1 without a financial snapshot. |
+| L2 / E1 | Loopback adapter validates GET destination/source and matching required source/key/date/amount/currency header from SAP training source. | **Modified:** original §8.2 step 5 generates a clearly labelled basic summary and offers available details/assistance when data is invalid. Lite required-contract/read failure instead shows an error and returns to selection L1 **without generating a summary**, blocking financial explanation/confirmation. Missing optional detail may still be reviewed at L3 if the required header is valid. This is Rae's requested disclosure, not a new behaviour change. |
 | L3 | Browser explains original amounts/bases/currency/processing date and optional limitations. | Retain validation/explanation principle, remove annual usage calculations and suitability verdict (steps 3–9). Optional unavailability does not erase a valid header. |
 | L4 | Reviewer corrects selection or requests a new evidence read. Browser clears the unconfirmed intention and suspends Continue while checking (E2). | New explicit pending/correction control; matching response returns to L3; obsolete generation is ignored. Back to L1 discards pending evidence. |
 | L5 | Browser exposes evidence conflict, not “plan suitable?”. | Material currency/source/parent conflict permits Help/Later; otherwise four intentions. No comparison/eligibility engine (steps 9–13 deferred). |
@@ -37,11 +39,11 @@
 
 ## 3. Required human model construction / export
 
-**Status: model-owner verification/reuse decision not yet recorded; no Signavio operation performed by this task.** Checked current #11/#12/#15 comments and PR #28 reviews/comments on 16 October: no later review of this model/change package is present there. Rae's #11 direction confirmation predates these artifacts and is not model approval. The precise remaining owner decision is (1) whether the original title/source above is correctly identified, (2) whether the retained/changed/deferred map faithfully reflects her proposal, and (3) whether the readable original export plus disclosed adaptation suffices for this route or a formal revision is required/adopted. This bounded review can precede final #15 ratification; it does not require the entire #15 audit to finish.
+**Conditional reference only — not outstanding work for the adopted reuse approach.** Rae's later PR #28 review (not her earlier #11 direction confirmation) supplies the identification/mapping/reuse decision. With step 5 disclosed as Modified, readable original export plus adaptation meets this task's model evidence under her current Option 2 adoption. **No new Signavio construction, validation or export is required or claimed by this task.** Final company/domain/route/API-fit ratification remains #15. Use the instructions below only if a later recorded route/scope decision actually requires/adopts a formal revision.
 
 The agent has produced a change specification/map only. Under the Option 2 working route, disclose changes to the applicable member model; if a formal revision is needed, reuse/duplicate it rather than editing the authentic A1/A2 archive. No two new models are demanded merely by the words “Option 3”; the [route rule](issue-12-design-rationale.md#3-route-and-model-decision-not-automatic-justification) distinguishes another member's existing solution from a wholly new solution.
 
-**Requirement limit:** this is a precise plan *if a formal revised Signavio/BPMN artifact is required/adopted for the final submission*, not an invented universal requirement to rebuild models for Option 2. The original export plus disclosed adaptation map already provide readable source/change evidence. The human model/course owner and #15 must decide and record whether that reuse/change package is sufficient or the formal revision below is necessary. Do not claim a new tool operation/export either way; if no new operation is required, record the actual basis for that decision. The absence of an editable project still limits independent verification.
+**Requirement limit:** this is a precise plan *if a formal revised Signavio/BPMN artifact is later required/adopted*, not a universal Option 2 rebuilding rule. The actual basis for current reuse is Rae's identified original export and accepted disclosed mapping, including the modified invalid-data fallback. Her reported editable export is not independently checked; that limit remains without adding an archival prerequisite or inventing a new tool operation.
 
 Ready-to-run human instructions:
 
@@ -56,15 +58,15 @@ Ready-to-run human instructions:
 9. **Validate and export:** run the actual Signavio checks; inspect labels, arrow directions, gateways, pool/lane boundaries and all exceptional paths at readable scale. Capture the actual result and resolve issues. Export **BPMN XML (if available), a readable SVG/PDF with full overview + enlarged exception/decision detail, and a dated Signavio screenshot showing model identity/version and actual validation result**. Preserve original and revised identities separately; redact access tokens/unnecessary PII. Report exact limitations if export/validation is unavailable.
 10. **Human review / #15 gate:** compare the human-made model with this change table, the finished wireframe and #9/#10 evidence. Confirm whether the materially reduced business purpose still fits Option 2. If wholly new, obtain the real team decision and prepare the applicable new AS-IS/TO-BE/change details before content freeze. No route, export, approval or tool operation is completed by this blueprint.
 
-## 4. Evidence slots to complete, not pre-filled results
+## 4. Recorded evidence and remaining downstream scope
 
 | Human evidence | Current state |
 |---|---|
-| Owner verifies original identification, mapping fidelity and reuse sufficiency versus formal revision | Not recorded in the checked issue/PR discussion; precise #12 model-review dependency |
-| Model owner, actual session/date and original editable model identity | Pending — not yet supplied |
-| A3 adapted model identity/version and disclosed change list | Agent map/change list supplied; formal model only if required/adopted by the owner/route decision |
-| Actual validation result / resolved exceptions | No new operation claimed; supply if formal revision is required/adopted |
-| Readable overview/detail export and machine-readable model where available | Original PNG and simplified map supplied; new formal exports conditional on that decision |
+| Owner verifies original identification, mapping fidelity and reuse sufficiency versus formal revision | Rae404, 16 October comment linked above: correct identification, map accepted with explicit step-5 modification; reuse adopted, no formal revision required |
+| Original editable model identity | Original visible v2 identified; separate v4 export/version/hash owner-reported only, not present/verified in this checkout |
+| A3 adaptation and disclosed change list | Original readable export, simplified SVG/text equivalent and rationale supplied; modified L2/E1 fallback explicit |
+| Actual validation result / resolved exceptions | No new operation claimed or required for current adoption; original author-reported result remains separate |
+| Readable overview/detail export and machine-readable model where available | Readable original PNG + accepted adaptation supplied; optional reported BPMN archival follow-up is not a blocker |
 | Team review against final source/build and Option route (#15) | Pending in #15, downstream of this design handoff |
 
 Keep the source/research limitation in view: R2's original 17 August GenAI-design date refers to later-dated interviews. Ask the author to explain that provenance; do not rewrite the original or imply these new artifacts resolve it. Human construction above is not a new round of Spark customer research.

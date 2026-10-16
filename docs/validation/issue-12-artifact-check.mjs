@@ -188,9 +188,22 @@ try {
       const outside=await p.locator('svg text').evaluateAll(es=>{const root=document.querySelector('svg').getBoundingClientRect();return es.filter(e=>{const b=e.getBoundingClientRect();return b.left<root.left||b.right>root.right||b.top<root.top||b.bottom>root.bottom;}).map(e=>e.textContent);});
       assert.deepEqual(outside,[]);
       const status=await p.locator('#current-status').textContent();
-      assert.match(status,/Francis's walkthrough report received/);
-      assert.match(status,/missing\/error scenario clarification and model-owner review pending/);
-      assert.match(status,/Formal revision\/export only if required by route and recorded owner decision/);
+      assert.match(status,/Francis's guided missing\/error walkthrough recorded/);
+      assert.match(status,/Rae accepts reuse with the disclosed step-5 modification/);
+      assert.match(status,/no formal Signavio revision required for current Option 2/);
+      assert.match(status,/Final team\/API-fit ratification remains #15/);
+      const step5=await p.locator('#step-5-note').textContent();
+      assert.match(step5,/MODIFIED original step 5/);
+      assert.match(step5,/Original invalid data → basic summary/);
+      assert.match(step5,/labelled; available details \/ assistance/);
+      assert.match(step5,/Lite required failure → error, no summary/);
+      assert.match(step5,/Valid header \+ optional gaps → L3/);
+      assert.match(await p.locator('svg > desc').textContent(),/not BPMN or a Signavio export/);
+      const noteOverflow=await p.locator('#step-5-note').evaluate(g=>{
+        const r=g.querySelector('rect').getBoundingClientRect();
+        return [...g.querySelectorAll('text')].filter(e=>{const b=e.getBoundingClientRect();return b.left<r.left||b.right>r.right||b.top<r.top||b.bottom>r.bottom;}).map(e=>e.textContent);
+      });
+      assert.deepEqual(noteOverflow,[],'Step-5 clarification must fit its annotation panel');
       assert.equal(await p.locator('a[href="issue-12-model-handoff.md"]').count(),1);
       // CAPTURE_ISSUE12_SVG captures only this repaired export, not the unchanged
       // wireframe screenshots. Pixel correctness still needs visual inspection.

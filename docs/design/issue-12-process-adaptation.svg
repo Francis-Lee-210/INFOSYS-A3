@@ -60,7 +60,7 @@
     <g font-size="18">
       <text x="145" y="314">MODIFIED: manual start and bounded page, not an annual timer.</text>
       <text x="145" y="341">Source/profile and loaded scope visible; no Spark identity claim.</text>
-      <text x="145" y="455">RETAINED gate principle; MODIFIED to key/date/amount/currency.</text>
+      <text x="145" y="455">MODIFIED: required source/key/date/amount/currency gate.</text>
       <text x="145" y="485">Source, provenance and selection must match before explanation.</text>
       <text x="145" y="625">Exact reported amount / basis / currency / processing date / source.</text>
       <text x="145" y="653">Optional gaps stay visible; no payment or complete-history claim.</text>
@@ -109,6 +109,14 @@
       <text x="951" y="1554">Clear local review / session key.</text>
       <text x="951" y="1582">Uncertain result cannot claim Saved.</text>
     </g>
+    <g id="step-5-note" font-size="17" fill="#3f4754">
+      <rect x="930" y="550" width="420" height="155" rx="10" fill="#f3f4f6" stroke="#697382"/>
+      <text x="951" y="577" font-weight="bold">L2/E1 · MODIFIED original step 5</text>
+      <text x="951" y="602">Original invalid data → basic summary,</text>
+      <text x="951" y="627">labelled; available details / assistance.</text>
+      <text x="951" y="652">Lite required failure → error, no summary.</text>
+      <text x="951" y="677">Valid header + optional gaps → L3.</text>
+    </g>
     <rect x="930" y="990" width="420" height="190" rx="10" fill="#f3f4f6" stroke="#697382" stroke-width="2"/>
     <g font-size="18" fill="#3f4754">
       <text x="951" y="1024" font-weight="bold">DEFERRED / OUTSIDE LITE</text>
@@ -121,8 +129,8 @@
     <text x="82" y="1680" font-size="20" font-weight="bold">Adaptation claim: a narrower mechanism, not the original annual-review outcome</text>
     <text x="82" y="1707" font-size="18">Retained: validated evidence and explicit choice. Modified: unit of evidence, actor scope, intention and local receipt.</text>
     <g id="current-status" font-size="18">
-      <text x="82" y="1734">Francis's walkthrough report received; missing/error scenario clarification and model-owner review pending.</text>
-      <text x="82" y="1761">Formal revision/export only if required by route and recorded owner decision. Wireframe: synthetic simulation.</text>
+      <text x="82" y="1734">Francis's guided missing/error walkthrough recorded; Rae accepts reuse with the disclosed step-5 modification.</text>
+      <text x="82" y="1761">Rae: no formal Signavio revision required for current Option 2. Final team/API-fit ratification remains #15.</text>
     </g>
     <a href="issue-12-model-handoff.md"><text x="82" y="1788" font-size="17" fill="#542c83" text-decoration="underline">Source/model identity, text equivalent and conditional construction/export handoff: issue-12-model-handoff.md</text></a>
     <text x="60" y="1825" font-size="17">Updated 16 October 2026 NZDT · Issue #12 design evidence · No new SAP or Signavio operation; human report recorded separately</text>

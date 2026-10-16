@@ -2,7 +2,7 @@
 
 Documentation/source validation by the OpenCode agent, **not a new independent human evaluation, application acceptance run or live SAP test**. [Current acceptance](issue-12-acceptance.md) · [Human report](issue-12-francis-manual-walkthrough-2026-10-16.md) · [Coverage assessment](issue-12-walkthrough.md#16-october-evidence-assessment-against-actual-12-criterion-7) · [Process record](../development/issue-12-opencode.md).
 
-**Current scope:** the earlier documentation-only continuation below ended at `70a157b`. Its unchanged-visual comparisons are historical byte checks, not a guarantee of correct raster output. The subsequent SVG/PNG/capture-script repair and new run are recorded in the dated closeout below; earlier raw outputs and human report remain intact.
+**Current scope:** the final evidence reconciliation below incorporates **Rae404's accepted reuse decision and Francis's committed guided supplement**. The two earlier draft conditions are resolved; final #12 criterion assessment is in acceptance. Earlier sections through the `ebad700` repair checkpoint are **historical**, including their pending questions and old report-byte comparisons. Preserve the **latest** human-authored file from `1468d12`, not an obsolete report hash. New SVG/PNG/status assertions are tested separately; no old result is reassigned to them.
 
 ## Preserved identities and evidence separation — earlier continuation at `70a157b`
 
@@ -148,9 +148,30 @@ New SHA-256 values: SVG **`ee91bc91b013458347732c5731e6deb419584037a6cb495b1f6e3
 
 **Post-repair documentation checks:** the same source/link command passes **161 relative-link target checks** after four closeout cross-links were added (157 at the repair commit plus four links; no source-check logic change). In-memory Python/Git assertions confirm raw outputs above recorded verbatim; Francis report bytes/hash unchanged; all **8 other HTML/original-model/wireframe screenshot artifacts unchanged**; SVG bytes above the footer unchanged; original authors/main ancestry preserved; protected `app/`, `tools/`, `resources/`, `references/`, `candidates/`, instructions, source README and V3 specification equal integrated main; old artifact output and source-check script unchanged. `git diff --check` and the PR-range whitespace check pass. The final documentation-recording revision is checked again before push; no new browser results are assigned to that later documentation identity.
 
-## Remaining requirements, not repeated human work
+## Superseded requirements at `ebad700` — not current requests
 
 1. Clarify the **specific third-group state and outcome** from Francis's report. Record any answer as a dated sourced supplement, marking recollection versus contemporaneous notes. If no required missing/error case was attempted/established, propose one short targeted supplement only. Session/runtime/artifact identity and assistance/interpretation details are optional if known, otherwise “not recorded”.
 2. Model owner verifies **original TO-BE identification, mapping fidelity and whether original export plus disclosed adaptation suffices** or a formal revision is required/adopted. Only the latter requires following the existing construction/export handoff. No universal Option 2 rebuilding requirement.
 
 PR #28 remains draft / **Related to #12** for those precise gaps. Its canonical update supports **Closes #11 on merge**, with all original confirmations, fallback, benefit qualification and personal A1/A2 preservation. #15 final ratification is downstream; do not make its entire audit a prerequisite for completed design evidence. No PR merge or manual issue closure.
+
+## Final evidence reconciliation — 16 October 2026
+
+The preceding draft condition describes `ebad700`, **not current readiness**. Both questions now have genuine sources:
+
+- **Model owner Rae404**, [PR #28 comment](https://github.com/Francis-Lee-210/INFOSYS-A3/pull/28#issuecomment-6210567463), stated 16 October, posted `2026-10-16T07:39:09Z`: original v2 identification correct; mapping accepted with original step 5 explicitly Modified; original readable export plus disclosed adaptation adopted for current Option 2, **no formal Signavio revision required**. Not authored by Francis, lecturer approval or #15 final team/API-fit ratification.
+- **Francis**, [committed supplement `1468d12`](https://github.com/Francis-Lee-210/INFOSYS-A3/blob/1468d12bc2d6044f88e2eafc7307a1ca5988c838/docs/validation/issue-12-francis-manual-walkthrough-2026-10-16.md): screenshot-guided first-record explanation, Back/negative-EUR correction, optional detail absent with continuation, failed read/disabled evidence review, pending/cleared intention, conflict resolution, Later confirmation and historical reopen. This resolves the specific scenario uncertainty. Screenshots reported shared in conversation, **not repository-stored**; failed-read recovery activation unrecorded; tested commit/runtime/exact time unknown. Receipt timestamp synthetic. No unaided usability, verbatim comments, live SAP or real persistence inferred.
+
+Clean original checkout fast-forwarded from `ebad700` to remote `1468d12`; main remained `203b200`, so no merge needed. Francis's supplement remains byte-intact from its commit, and all prior authors/commits remain ancestors. No other checkout/branch/PR or history rewrite.
+
+### Applied clarification and criterion conclusions
+
+Original A1-D2 §8.2 step 5 was re-read from the immutable DOCX: invalid data logs a reason, generates a **clearly labelled basic summary**, includes secure access to available details and offers assistance. The rationale/map and handoff now explicitly classify **L2/E1 as Modified**: Lite required source/key/date/amount/currency or read failure blocks financial explanation/confirmation, shows recovery and returns to selection **without generating a summary**. Missing optional detail still allows review of a valid required header. The SVG adds the matching annotation and current received-evidence status. No application or HTML behaviour changed to recreate the annual fallback.
+
+Rae's stated `INFOSYS704_A1-D2_TO-BE_Spark_Financial_Optimised_v4.bpmn`, export version/date and SHA-256 `0234c7de749afe5f18ee4bd5a70ca8998bbac2c74c2e1e1c54edeb21ca5804be` remain **owner-reported**: no actual Rae BPMN found in this checkout and no independent file/hash/workspace check. This is separate from the visible original **v2** identity. Proposed follow-up archival is not a new #12 gate for her adopted reuse approach. Conditional formal-construction instructions remain reference only.
+
+Reviewer conclusion (not an extra participant statement): the bounded human/model evidence plus explicit modification supports all ten #12 design criteria. Initial no-change finding is retained; the guided supplement justifies **no interaction change**, not a fabricated defect or population-level outcome. Documentation/SVG/PNG-only corrections do not require another human walkthrough. After final checks, PR #28 supports **Ready for review, Closes #11 and Closes #12**. #15 must still ratify final company/domain/Option/API-fit/source/build/pitch and reconcile historical evidence before freeze; that is downstream, not a missing #12 prerequisite. No merge, manual closure or approval on anyone's behalf.
+
+### Final validation record
+
+The final SVG/capture-script changes are executed and captured before publication; tested identity, actual output and full-image observations follow after the run. Historical outputs above remain tied to their original identities, not to the new artifact or Francis's unknown tested commit.

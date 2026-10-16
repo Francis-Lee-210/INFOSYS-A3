@@ -64,26 +64,26 @@ reviews of other members' work by every member.
 
 | Member | Proposed share | Confirmed by member |
 |---|---|---|
-| Francis Lee | 25% | ☐ |
-| Ryan Li | 25% | ☐ |
-| Xuan Zeng | 25% | ☐ |
-| Rae Huang | 25% | ☐ |
+| Francis Lee | 25% | ☐ pending |
+| Ryan Li | 25% | ☑ PR #35 comment, 16 Oct |
+| Xuan Zeng | 25% | ☑ #14 comment, 16 Oct |
+| Rae Huang | 25% | ☑ proposer, PR #35 |
 | **Total** | **100%** | |
 
 The equal split is a **proposal** based on the comparable workload above. It becomes the team record only when
 each member confirms it (or proposes a change) in Issue #14. Disagreements and how they were resolved are recorded
 there.
 
-## Responsibilities still to assign
+## Responsibilities
 
 | Responsibility | Due | Member |
 |---|---|---|
-| Upload the OpenCode ZIP to Canvas | Mon 19 Oct, 11:59 AM | To be agreed |
-| Upload the pitch slides (groupwork slide last) to Canvas | Tue 20 Oct, 11:59 AM | To be agreed |
-| Pitch part 1 — Situation: Spark's annual plan review and the customer need (≈1:00) | Lab 12 | To be agreed |
-| Pitch part 2 — Complication: why bills are hard to interpret and the business impact (≈1:00) | Lab 12 | Rae (stated preference) |
-| Pitch part 3 — Resolution: Billing Review Lite, Option 2 adaptation and SAP API fit (≈1:15) | Lab 12 | To be agreed |
-| Pitch part 4 — App demonstration, next steps and groupwork slide (≈1:30) | Lab 12 | To be agreed |
+| Upload the OpenCode ZIP to Canvas (rebuilt from final `main` after a clean-directory retest) | Mon 19 Oct, 11:59 AM | Ryan (PR #35 comment) |
+| Upload the pitch slides (groupwork slide last) to Canvas | Tue 20 Oct, 11:59 AM | Xuan (#14 comment; needs the final PPT and demo recording in time to check) |
+| Pitch part 1 — Situation: Spark's annual plan review and the customer need (≈1:00) | Lab 12 | Francis (said in team chat; to confirm in #14) |
+| Pitch part 2 — Complication: why bills are hard to interpret and the business impact (≈1:00) | Lab 12 | Rae |
+| Pitch part 3 — Resolution: Billing Review Lite, Option 2 adaptation and SAP API fit (≈1:15) | Lab 12 | Ryan (PR #35 comment) |
+| Pitch part 4 — App demonstration, next steps and groupwork slide (≈1:30) | Lab 12 | Xuan (#14 comment) |
 | Keep OpenCode projects and records until marking ends (#17) | After marking | Each member for their own sessions |
 
 ## Release update

@@ -14,6 +14,9 @@ opencode.jsonc
 # Generated API responses may contain sample records
 tools/sap_api_probe_result.json
 **/sap_api_probe_result.json
+# Issue #10 source handoff: generated archives and sidecar manifests
+release/
+
 # Dependencies, builds and local state
 node_modules/
 .venv/

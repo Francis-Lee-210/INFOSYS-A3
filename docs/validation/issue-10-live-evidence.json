@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "issue-10-live-evidence-v1",
+  "startedAt": "2026-10-16T00:37:15.667Z",
+  "completedAt": "2026-10-16T01:34:05.346Z",
+  "completedAtLocal": "2026-10-16T14:34:05.346+13:00",
+  "sourceCommit": "c9914cc4f1158fb46244ae7e5c03ec2b60ef6878",
+  "archiveSha256": "5ae2d5a14c806d8a76cd3de28e4828f29dc19a456db046ef9b770784cabaa7c7",
+  "origin": "http://127.0.0.1:6289/",
+  "source": {
+    "apiId": "API_BILLING_DOCUMENT_REQUEST_SRV",
+    "apiVersion": "1.1.0",
+    "serviceRoot": "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata/sap/API_BILLING_DOCUMENT_REQUEST_SRV",
+    "profile": "billing-document-request-v1",
+    "transport": "Final extracted package default local adapter; no injected transport, fixture or mocked SAP response.",
+    "upstreamPolicy": "Unchanged fixed sandbox allowlist, GET only; source inspection and packaged transport regressions verify this boundary.",
+    "keyHandling": "Existing signed-in SAP session supplied the course key directly to the local password field. Key was not printed, copied to the system clipboard, sent to OpenCode, or written to evidence/files."
+  },
+  "list": {
+    "loadedRecords": 10,
+    "usableRecords": 10,
+    "liveLabelObserved": true,
+    "coverageQualificationObserved": true,
+    "completeHistoryClaimed": false
+  },
+  "detail": {
+    "separateByKeyReadCompleted": true,
+    "sameSelectedKey": true,
+    "sameSelectedAmount": true,
+    "sameCurrency": true,
+    "requestKind": true,
+    "dateQualification": true
+  },
+  "optionalItems": {
+    "readCompleted": true,
+    "coverage": "partial",
+    "continuation": "not reported",
+    "completeHistoryClaimed": false,
+    "monetaryReconciliation": "unassessed"
+  },
+  "costScreen": {
+    "visible": true,
+    "sameSelectedKey": true,
+    "sameReportedAmounts": true,
+    "sameCurrency": true,
+    "sameDate": true,
+    "requestKind": true,
+    "dateQualification": true,
+    "independentAmountQualification": true,
+    "liveProvenance": true,
+    "continueEnabled": true
+  },
+  "decisionScreen": {
+    "visible": true,
+    "sameSelectedKey": true,
+    "sameReportedAmounts": true,
+    "sameCurrency": true,
+    "sameDate": true,
+    "requestKind": true,
+    "dateQualification": true,
+    "liveProvenance": true,
+    "intentionOnly": true
+  },
+  "save": {
+    "intent": "later",
+    "checks": {
+      "savedReadBackVerified": true,
+      "receiptHeading": true,
+      "originalLiveProvenance": true,
+      "sameSelectedKey": true,
+      "sameReportedAmounts": true,
+      "sameCurrency": true,
+      "sameDate": true,
+      "exactChoice": true,
+      "passwordEmpty": true
+    }
+  },
+  "refreshReopen": {
+    "receiptVisible": true,
+    "sameReceiptTitle": true,
+    "sameDisplayedEvidence": true,
+    "sameIntentAndIdentity": true,
+    "sameSelectedKey": true,
+    "sameReportedAmounts": true,
+    "sameCurrency": true,
+    "sameDate": true,
+    "originalLiveProvenance": true,
+    "historicalNotice": true,
+    "passwordEmpty": true,
+    "requestKind": true,
+    "dateQualification": true,
+    "noConnectionRequestedAfterReload": true,
+    "keyAbsentFromRenderedPage": true
+  },
+  "cancelReset": {
+    "confirmationHidden": true,
+    "sameDisplayedEvidence": true,
+    "sameIntentAndIdentity": true,
+    "receiptStillSaved": true
+  },
+  "confirmReset": {
+    "screen1": true,
+    "receiptHidden": true,
+    "reopenHidden": true,
+    "passwordEmpty": true,
+    "notConnected": true,
+    "noSelectableRecords": true,
+    "stillNoReceiptAfterReload": true
+  },
+  "storageEvidence": {
+    "liveObservation": "Saved write/read-back verification and exact displayed receipt evidence/identity survived reload. Deliberate reset survived a further reload.",
+    "directLiveStorageInspection": false,
+    "scopeNote": "The browser control read-only DOM scope does not expose localStorage. Exact minimal persistent schema/key exclusions are independently covered by the unchanged source validator and packaged 146-group storage regressions; no raw live receipt was exported.",
+    "persistentKey": "planReviewSnapshot.receipt",
+    "rootFieldNames": [
+      "amounts",
+      "assessmentScope",
+      "assessmentStatus",
+      "confirmedAt",
+      "context",
+      "coverage",
+      "date",
+      "document",
+      "intent",
+      "materialInconsistency",
+      "missing",
+      "reasons",
+      "receiptId",
+      "reviewId",
+      "version"
+    ]
+  },
+  "sharedDataBoundary": "Counts, source/runtime identity, schema field names and booleans only. No key, document ID, amount, party context, raw response or full receipt.",
+  "evidenceSeparation": "Actual current SAP sandbox flow, separate from fixture/injected scenarios and historical Issue #5 B0.",
+  "result": "PASS",
+  "AC25": "PASS",
+  "AC26": "PASS",
+  "resetScreenshot": "issue-10-reset-complete.jpg"
+}

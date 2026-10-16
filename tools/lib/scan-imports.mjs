@@ -291,6 +291,14 @@ export function collectModuleReferences(source) {
           expressionAllowed = true; statementStart = false;
         } else if (token.property) {
           expressionAllowed = false; statementStart = false;
+        } else if (!token.escaped && value === 'debugger') {
+          // DebuggerStatement takes no operand of its own. ASI ends the
+          // statement at the next line terminator, so a slash beginning the
+          // following line opens a regular expression (or a new statement)
+          // rather than continuing a division. Only a non-property, unescaped
+          // `debugger` is a statement; member access like obj.debugger and a
+          // `debugger` member name remain ordinary operands.
+          expressionAllowed = true; statementStart = true;
         } else if (value === 'export') {
           expressionAllowed = true; statementStart = true;
         } else if (value === 'default' && previous?.value === 'export') {

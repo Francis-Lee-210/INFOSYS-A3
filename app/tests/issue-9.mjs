@@ -328,7 +328,7 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
           : element.id ? `#${element.id}` : `${element.tagName.toLowerCase()}:${element.getAttribute('aria-label') || element.textContent.trim()}`;
         const radios = new Set();
         const stops = [];
-        for (const element of document.querySelectorAll('a[href], button, input, select, textarea, [tabindex]')) {
+        for (const element of document.querySelectorAll('a[href], button, input, select, textarea, summary, [tabindex]')) {
           if (element.disabled || element.tabIndex < 0 || !element.checkVisibility({ visibilityProperty: true })) continue;
           if (element.type === 'radio' && element.name) {
             if (radios.has(element.name)) continue;

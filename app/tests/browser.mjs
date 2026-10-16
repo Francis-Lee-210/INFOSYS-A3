@@ -71,6 +71,8 @@ function stopServer(serverOrChild) {
   else serverOrChild.close();
 }
 
+// Raw context without the legacy-expanded harness; used by #36 tests that check the collapsed UI.
+let rawNewContext;
 const tests = [];
 function test(name, fn) {
   tests.push({ name, fn });
@@ -2160,6 +2162,26 @@ async function main() {
   try {
     const playwright = await loadPlaywright();
     browser = await playwright.chromium.launch({ headless: true, ...(process.env.CHROME_EXECUTABLE_PATH ? { executablePath: process.env.CHROME_EXECUTABLE_PATH } : {}) });
+    // #36 legacy-expanded harness: the pre-#36 tests were written for a fully expanded UI.
+    // Every context they create opens all <details> and keeps the connection form visible,
+    // so their behavioural assertions still run unchanged. #36 tests use rawNewContext.
+    rawNewContext = browser.newContext.bind(browser);
+    browser.newContext = async (options) => {
+      const context = await rawNewContext(options);
+      await context.addInitScript(() => {
+        const expand = () => {
+          for (const details of document.querySelectorAll('details')) details.open = true;
+          if (document.head && !document.getElementById('legacy-expanded-harness')) {
+            const style = document.createElement('style');
+            style.id = 'legacy-expanded-harness';
+            style.textContent = '.connection-panel.is-collapsed .connection-grid { display: grid !important; } #connection-summary { display: none !important; }';
+            document.head.append(style);
+          }
+        };
+        new MutationObserver(expand).observe(document, { childList: true, subtree: true });
+      });
+      return context;
+    };
     console.log(`Runtime: ${process.version}; browser: Chromium/Chrome ${browser.version()}; Playwright ${process.env.PLAYWRIGHT_MODULE_PATH || 'local dependency'}`);
     for (const { name, fn } of selectedTests) {
       try {

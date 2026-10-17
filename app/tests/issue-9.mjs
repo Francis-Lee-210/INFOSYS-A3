@@ -309,8 +309,9 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
       // Keyboard focus is visible on buttons, scroll regions and rows.
       await tabTo(p, 'use-fixture');
       assert.equal(await outline(p, '#use-fixture'), 'solid 3px');
-      await p.keyboard.press('Tab'); // use-synthetic
       await p.keyboard.press('Tab'); // disconnect
+      await p.keyboard.press('Tab'); // More data sources summary
+      await p.keyboard.press('Tab'); // use-synthetic (inside More data sources)
       await p.keyboard.press('Tab'); // records table region
       assert.equal(await p.evaluate(() => document.activeElement?.classList.contains('table-wrap')), true);
       assert.equal(await outline(p, '#screen-list .table-wrap'), 'solid 3px');

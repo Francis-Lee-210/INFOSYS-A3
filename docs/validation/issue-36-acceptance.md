@@ -57,6 +57,36 @@ task-success or satisfaction numbers are claimed. The heuristic column is an ana
 mapping, not a measured outcome. Live SAP sandbox verification and repackaging happen after
 merge.
 
+## Review fixes (R40-01 to R40-07)
+
+Fixes for Francis's review of `bed8d6b`. Code-bearing head tested: `da05a54655bd301ff50e64c4c37020930e4c9694`. Final
+`npm test` summary line on this head: **`All 176 tests passed.`**; FAIL list empty. The "after"
+screenshots were re-taken on this head.
+
+| Finding | Change | Heuristic (Nielsen H1–H10) | Covering test |
+|---|---|---|---|
+| R40-01 | The date explanation follows the data source: a synthetic processing date for the synthetic fixture, and the date the follow-on billing document is to be processed for billing requests. Neither is called a payment date. | H2 Match between system and the real world | `issue 36 review: date wording follows the source, …` |
+| R40-02 | When only Help or Later is allowed, the specific reason is shown next to the options | H5 Error prevention; H9 Help users recognise, diagnose and recover from errors | `issue 7: … permits only Help or Later and retains material reasons` (reason assertions added) |
+| R40-03 | Two new tests run the default UI with no harness: the source controls by keyboard, and optional-items loading, failure and Retry read | Test coverage | the two round-2 `issue 36 review` tests |
+| R40-04 | "Check optional items" shows checking, finished or could-not-be-checked next to the button, in addition to the top status line | H1 Visibility of system status | `issue 36 review: Check optional items shows pending, failure and recovery …` |
+| R40-05 | List columns Type, Document, Date, Amount, Currency (the basis is shown inside the Amount cell); missing values read "Not available"; read errors say "Data check failed" and use plain words instead of "contract", "continuation" and "provenance" | H2; H4 Consistency and standards; H9 | `issue 36 review: default UI keeps synthetic …`; `issue 8 S09`; `issue 8 R04` |
+| R40-06 | The synthetic fixture sits under a collapsed "More data sources"; Disconnect / reset appears only after a source is chosen, and using it moves focus to "Connect to SAP sandbox" | H8 Aesthetic and minimalist design; H3 User control and freedom | `issue 36 review: default UI keeps synthetic …` |
+| R40-07 | The intent help says "this record", never "this bill" | H2 | `issue 36 review: date wording follows the source, …` |
+| Extra | After a receipt is saved, opening another document explains that only one receipt is kept and that Reset demo is needed | H1; H9 | `issue 36 review: date wording follows the source, …` |
+
+**Why the legacy-expanded harness stays (R40-03).** Removing it would mean rewriting the setup
+of 167 inherited tests just before submission, with a high risk of breaking assertions that
+pass today. Instead, the paths the collapsed defaults can affect are covered on the real
+default UI, with no harness: connection panel collapse and Change source by keyboard,
+technical-evidence disclosures by keyboard, More data sources and Disconnect by keyboard, and
+optional-items loading, failure and Retry read. The inherited tests keep checking behaviour;
+the `issue 36` tests check the shipped defaults.
+
+**Deviations below that no longer apply:** the unchanged list column headers and
+"Contract / data failure" label (fixed by R40-05), the visible synthetic button (R40-06),
+"P1-4 is not implemented" (R40-04), and Disconnect shown before connecting (R40-06). The other
+deviations still apply.
+
 ## Deviations from #36
 
 - Provenance labels, list column headers, the cost-table row labels and the

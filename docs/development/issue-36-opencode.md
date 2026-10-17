@@ -109,3 +109,49 @@ panel, closed disclosures). They passed in the final run:
 
 Runtime: macOS, Node.js, Playwright 1.62.1 (declared devDependency) with bundled headless
 Chromium; the app served on the loopback interface only.
+
+## Review fixes (Francis's review of 17 Oct 2026)
+
+Francis reviewed PR #40 at `bed8d6b` with seven findings (R40-01 to R40-07) and PR #41 at
+`37e2983` with one more (R41-01). The same OpenCode session applied them in two rounds of
+work orders.
+
+1. **Round 1.** R40-01: the date explanation follows the data source. R40-02: the specific
+   reason is shown next to the restricted intent options. R40-07: the intent help says
+   "this record", not "this bill". Extra: after a receipt is saved, opening another document
+   explains that only one receipt is kept and that Reset demo is needed. One new test and one
+   added assertion. Commit `8de3a3b` on `feat/36-usability-hierarchy`:
+   `All 174 tests passed.`
+2. **Round 2.** R40-06: the synthetic fixture sits under a collapsed "More data sources", and
+   Disconnect / reset appears only after a source is chosen. R40-05: list columns Type /
+   Document / Date / Amount / Currency, one missing-value wording ("Not available"), and plain
+   read-error wording. R40-04: optional-items status next to "Check optional items". R40-03:
+   two new tests run the default UI with no harness. Commit `da05a54655bd301ff50e64c4c37020930e4c9694`: `All 176 tests passed.`
+
+Test-line edits in round 2 (old → new):
+
+- `app/tests/browser.mjs`: `#cost-fields` text `'Unknown / Not available'` → `'Not available'`
+  (two places).
+- `app/tests/browser.mjs`: `issue6RegressionAmount(p, 'Total tax amount', 'Not reported')` →
+  `'Not available'`.
+- `app/tests/browser.mjs` (round-1 test): opens "More data sources" before clicking the
+  synthetic button.
+- `app/tests/issue-8.mjs`: `/Contract \/ data failure.*exceeded the read limit/` →
+  `/Data check failed.*exceeded the read limit/`, and `/Contract \/ data failure/` →
+  `/Data check failed/`.
+- `app/tests/issue-9.mjs` (K05): the Tab sequence after `#use-fixture` is now Disconnect →
+  "More data sources" → synthetic button → records table (was synthetic button → Disconnect
+  → records table).
+
+Added assertions: `'Reason: '` (round 1), then the specific reason (`different currency` /
+`net + tax = gross`) in the restricted-options test, and no `contract|continuation|provenance`
+in the issue 8 R04 recovery message (round 2).
+
+New tests:
+
+- `issue 36 review: date wording follows the source, intent help says record, and a second document explains the one-receipt limit` (round 1)
+- `issue 36 review: default UI keeps synthetic under More data sources, labels list columns plainly and shows Disconnect only after a source is chosen` (round 2)
+- `issue 36 review: Check optional items shows pending, failure and recovery next to the button on the default UI` (round 2)
+
+The after screenshots were re-taken on `da05a54655bd301ff50e64c4c37020930e4c9694`. The legacy-expanded harness for the
+pre-#36 tests is kept; the acceptance record explains why.

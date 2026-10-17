@@ -192,3 +192,9 @@ button.ghost:hover { background: var(--paper); }
 }
 .detail { min-height: 0; }
 .detail.empty-detail { display: block; padding: 8px 0; }
+
+/* #36 review R40-06: synthetic source under a collapsed "More data sources" area */
+.more-sources { flex-basis: 100%; margin-top: 4px; }
+.more-sources > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 700; }
+.more-sources > summary:focus-visible { outline: 3px solid var(--plum); outline-offset: 2px; }
+.more-sources[open] > summary { margin-bottom: 6px; }

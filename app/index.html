@@ -37,9 +37,12 @@
         <div class="actions">
           <button id="connect-live" type="button">Connect to SAP sandbox (needs key)</button>
           <button id="use-fixture" type="button" class="secondary">Try with demo data (Fixture demonstration)</button>
-          <button id="use-synthetic" type="button" class="ghost">Use synthetic billing-document fixture</button>
-          <button id="disconnect" type="button" class="ghost">Disconnect / reset</button>
+          <button id="disconnect" type="button" class="ghost" hidden>Disconnect / reset</button>
           <button id="reopen-receipt" type="button" class="secondary" hidden>Reopen receipt</button>
+          <details id="more-sources" class="more-sources">
+            <summary>More data sources</summary>
+            <button id="use-synthetic" type="button" class="ghost">Use synthetic billing-document fixture</button>
+          </details>
         </div>
       </div>
       <div id="status" class="status" role="status" aria-live="polite">Ready. No network request has been made.</div>
@@ -67,16 +70,15 @@
           <table>
             <thead>
               <tr>
-                <th scope="col">Kind</th>
-                <th scope="col">Document key</th>
-                <th scope="col">Billing date</th>
+                <th scope="col">Type</th>
+                <th scope="col">Document</th>
+                <th scope="col">Date</th>
                 <th scope="col">Amount</th>
-                <th scope="col">Basis</th>
                 <th scope="col">Currency</th>
               </tr>
             </thead>
             <tbody id="records-body">
-              <tr><td colspan="6" class="empty">No records loaded.</td></tr>
+              <tr><td colspan="5" class="empty">No records loaded.</td></tr>
             </tbody>
           </table>
         </div>
@@ -103,6 +105,7 @@
           <button id="reload-detail" type="button" class="secondary">Reload detail</button>
           <button id="check-items" type="button" class="ghost">Check optional items</button>
         </div>
+        <p id="items-status" class="status" role="status" aria-live="polite" hidden></p>
         <details class="tech-evidence">
           <summary>B0 technical evidence (for reviewers)</summary>
           <button id="check-evidence" type="button" class="ghost">B0 evidence</button>

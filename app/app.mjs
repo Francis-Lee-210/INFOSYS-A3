@@ -19,6 +19,9 @@ const costReasons = document.getElementById('cost-reasons');
 const costItems = document.getElementById('cost-items');
 const costLimits = document.getElementById('cost-limits');
 const costUpdateStatus = document.getElementById('cost-update-status');
+// #36 review R40-04: optional-items feedback next to Check optional items on Screen 1.
+const itemsStatus = document.getElementById('items-status');
+function setItemsStatus(text) { itemsStatus.hidden = !text; itemsStatus.textContent = text; }
 const apiKeyInput = document.getElementById('api-key');
 const screenDecision = document.getElementById('screen-decision');
 const pageHeading = document.querySelector('.title-row h1');
@@ -33,10 +36,28 @@ const retryReadButton = document.getElementById('retry-read');
 const readRecovery = document.getElementById('read-recovery');
 const readRecoveryMessage = document.getElementById('read-recovery-message');
 const correctKeyButton = document.getElementById('correct-key');
+const connectionPanel = document.querySelector('.connection-panel');
+const connectionSummary = document.getElementById('connection-summary');
+const connectionSummaryLabel = document.getElementById('connection-summary-label');
+// True while the user has explicitly reopened the connection form with Change source.
+let connectionExpanded = false;
+function syncConnectionPanel() {
+  const collapsed = state.mode !== 'none' && !reads.recovery && !connectionExpanded;
+  connectionPanel.classList.toggle('is-collapsed', collapsed);
+  connectionSummary.hidden = !collapsed;
+  connectionSummaryLabel.textContent = provenance.textContent;
+  // #36 review R40-06: Disconnect / reset is shown only once a source was chosen.
+  document.getElementById('disconnect').hidden = state.mode === 'none' && state.requestedMode === 'none';
+}
 const RECEIPT_KEY = 'planReviewSnapshot.receipt';
 const RECEIPT_VERSION = 'issue-7-receipt-v2';
 const INTENTS = { keep: 'Keep', 'review-options': 'Review options', help: 'Help', later: 'Later' };
 const PROVENANCE_LABELS = { 'live-sap-sandbox': 'Live SAP sandbox', 'fixture-demonstration': 'Fixture demonstration', 'synthetic-fixture': 'Synthetic fixture' };
+// #36 review R40-05: one display wording for a missing value. Stored receipt values are unchanged.
+const NOT_AVAILABLE = 'Not available';
+// #36 review R40-05: stored placeholders ('Not reported', 'Unknown / Not available') stay
+// unchanged in the snapshot and receipt; only the displayed text reads Not available.
+const shownValue = (value) => (value === null || value === undefined || value === '' || value === 'Not reported' || value === 'Unknown / Not available' ? NOT_AVAILABLE : String(value));
 let receipt = null;
 let receiptRecovery = false;
 let resetUncertain = false;
@@ -49,15 +70,21 @@ let pendingReceipt = null;
 let receiptWriteAttempted = false;
 let decisionSnapshot = null;
 const screenNames = [
-  { screen: screenList, heading: 'Choose a document to review', title: 'Choose a document – Plan Review Snapshot' },
-  { screen: screenCost, heading: 'Review cost evidence', title: 'Cost evidence – Plan Review Snapshot' },
-  { screen: screenDecision, heading: 'Decide and save a receipt', title: 'Decision and receipt – Plan Review Snapshot' }
+  { screen: screenList, heading: 'Choose a document to review', title: 'Choose a document – Plan Review Snapshot', step: 'list', lead: 'Pick a billing record to see what it charges. Use demo data, or connect to the SAP sandbox with a key.' },
+  { screen: screenCost, heading: 'Review cost evidence', title: 'Cost evidence – Plan Review Snapshot', step: 'cost', lead: 'Check the amounts and what this record cannot tell you.' },
+  { screen: screenDecision, heading: 'Decide and save a receipt', title: 'Decision and receipt – Plan Review Snapshot', step: 'decision', lead: 'Record what you want to do next. Nothing changes in any account.' }
 ];
 function syncScreenName() {
   const active = screenNames.find(({ screen }) => !screen.hidden);
   if (!active) return;
   pageHeading.textContent = active.heading;
   document.title = active.title;
+  const lead = document.querySelector('.title-row .lead');
+  if (lead) lead.textContent = active.lead;
+  for (const item of document.querySelectorAll('#steps li')) {
+    if (item.dataset.step === active.step) item.setAttribute('aria-current', 'step');
+    else item.removeAttribute('aria-current');
+  }
 }
 new MutationObserver(syncScreenName).observe(screenList.parentElement, { attributes: true, attributeFilter: ['hidden'], subtree: true });
 syncScreenName();
@@ -127,6 +154,7 @@ function updateReadControls() {
   }
   const recovery = reads.recovery;
   readRecovery.hidden = !recovery;
+  syncConnectionPanel();
   if (!recovery) return;
   correctKeyButton.hidden = recovery.code !== 'AUTH';
   retryReadButton.hidden = recovery.code === 'AUTH';
@@ -149,11 +177,23 @@ function clearReadRecovery() {
   updateReadControls();
 }
 
+// #36 review R40-05: plain wording for user-facing read errors. Error codes and
+// the recovery actions offered for each code are unchanged.
+function plainErrorText(text) {
+  return String(text)
+    .replace(/outside the configured SAP read contract/g, 'outside the allowed SAP read')
+    .replace(/did not satisfy the minimum usable contract/g, 'did not include a valid key, date, currency and amount')
+    .replace(/usable-record contract/g, 'required fields')
+    .replace(/(?<![\w-])provenance(?![\w-])/g, 'data source')
+    .replace(/(?<![\w-])Continuation(?![\w-])/g, 'Next-page link')
+    .replace(/(?<![\w-])continuation(?![\w-])/g, 'next-page link');
+}
+
 function readFailure(caught, operation) {
   const code = caught?.code || 'CONTRACT';
-  const labels = { AUTH: 'Authentication / key problem', TIMEOUT: 'Read timed out', NETWORK: 'Network failure', RATE_LIMIT: 'Rate limited', SERVER: 'Service failure', REDIRECT: 'Redirect refused', DESTINATION: 'Continuation rejected', EMPTY: 'Empty page', NAVIGATION: 'Navigation stopped' };
-  const label = labels[code] || 'Contract / data failure';
-  const message = `${label}. ${caught?.message || 'This read could not be validated.'}`;
+  const labels = { AUTH: 'Authentication / key problem', TIMEOUT: 'Read timed out', NETWORK: 'Network failure', RATE_LIMIT: 'Rate limited', SERVER: 'Service failure', REDIRECT: 'Redirect refused', DESTINATION: 'Next page link refused', EMPTY: 'Empty page', NAVIGATION: 'Navigation stopped' };
+  const label = labels[code] || 'Data check failed';
+  const message = `${label}. ${plainErrorText(caught?.message || 'This read could not be checked.')}`;
   reads.recovery = { ...operation, code, message, generation: state.connectionToken };
   if (code === 'AUTH') {
     state.apiKey = '';
@@ -215,15 +255,18 @@ function setMode(mode) {
   // the active view, not whichever asynchronous request happened to finish last.
   if (receipt && !screenDecision.hidden) {
     setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
+    syncConnectionPanel();
     return;
   }
   if (mode === 'live') setProvenance('Live SAP sandbox', 'live');
   else if (mode === 'fixture') setProvenance('Fixture demonstration', 'fixture');
   else if (mode === 'synthetic') setProvenance('Synthetic fixture', 'fixture');
   else setProvenance('Not connected', '');
+  syncConnectionPanel();
 }
 
 function resetSession() {
+  connectionExpanded = false;
   state.connectionToken += 1;
   state.records = [];
   state.selectedKey = '';
@@ -242,7 +285,7 @@ function resetSession() {
   state.detailRequestId += 1;
   state.apiKey = '';
   apiKeyInput.value = '';
-  recordsBody.innerHTML = '<tr><td colspan="6" class="empty">No records loaded.</td></tr>';
+  recordsBody.innerHTML = '<tr><td colspan="5" class="empty">No records loaded.</td></tr>';
   listMeta.textContent = 'No list request has returned.';
   detail.className = 'detail empty-detail';
   detail.innerHTML = '<p>Select a document to load its detail.</p>';
@@ -269,6 +312,7 @@ function appendQuery(path, pairs) {
 }
 
 async function loadList(mode) {
+  connectionExpanded = false;
   clearError();
   const suppliedKey = mode === 'live' ? apiKeyInput.value.trim() : '';
   if (mode === 'live' && suppliedKey === '') {
@@ -321,7 +365,7 @@ async function loadPage(operation, moveFocus = false) {
   state.itemRequestId += 1;
   state.records = [];
   state.loadedMeta = null;
-  recordsBody.innerHTML = '<tr><td colspan="6" class="empty">Loading...</td></tr>';
+  recordsBody.innerHTML = '<tr><td colspan="5" class="empty">Loading...</td></tr>';
   listMeta.textContent = `Loading page ${page}. Previous page rows and selection are cleared.`;
   detail.className = 'detail empty-detail';
   detail.innerHTML = '<p>Select a document to load its detail.</p>';
@@ -361,7 +405,7 @@ async function loadPage(operation, moveFocus = false) {
     }
     state.mode = state.requestedMode;
     setMode(state.mode);
-    if (!Array.isArray(json.records)) throw new Error('The list response has an invalid record contract.');
+    if (!Array.isArray(json.records)) throw new Error('The records came back in an unexpected format, so they were not shown.');
     const records = json.records;
     state.records = records;
     state.loadedMeta = json;
@@ -395,7 +439,7 @@ async function loadPage(operation, moveFocus = false) {
     };
 
     if (records.length === 0) {
-      recordsBody.innerHTML = '<tr><td colspan="6" class="empty">No records loaded.</td></tr>';
+      recordsBody.innerHTML = '<tr><td colspan="5" class="empty">No records loaded.</td></tr>';
       renderPageMeta(json);
       readFailure(Object.assign(new Error('No records on this page. This is not zero spending. Retry this page, use Next page if available, or restart the list.'), { code: 'EMPTY' }), operation);
       setStatus('No usable billing request was found. This is not a zero-spend result.');
@@ -418,10 +462,9 @@ async function loadPage(operation, moveFocus = false) {
       row.innerHTML = `
         <td>${escapeHtml(record.documentKind)}</td>
         <td>${escapeHtml(record.key)}</td>
-        <td>${escapeHtml(record.dateNormalized || 'Unknown')}</td>
-        <td>${escapeHtml(formatAmount(record))}</td>
-        <td>${escapeHtml(formatBasis(record))}</td>
-        <td>${escapeHtml(record.currency || 'Unknown')}</td>
+        <td>${escapeHtml(record.dateNormalized || NOT_AVAILABLE)}</td>
+        <td>${escapeHtml(formatAmount(record))} <span class="hint">${escapeHtml(formatBasis(record))}</span></td>
+        <td>${escapeHtml(record.currency || NOT_AVAILABLE)}</td>
       `;
       row.addEventListener('click', () => { if (record.usable) selectRecord(record.key); });
       row.addEventListener('keydown', (event) => {
@@ -440,7 +483,7 @@ async function loadPage(operation, moveFocus = false) {
     if (generation !== state.connectionToken || listToken !== state.listRequestId) return;
     state.records = [];
     state.loadedMeta = null;
-    recordsBody.innerHTML = '<tr><td colspan="6" class="empty">Page unavailable — read failed.</td></tr>';
+    recordsBody.innerHTML = '<tr><td colspan="5" class="empty">Page unavailable — read failed.</td></tr>';
     listMeta.textContent = `Page ${page} read failed. No previous page is shown as this page. ${caught?.code === 'AUTH' ? 'Correct the key and reconnect before selecting a record.' : 'Retry the failed page or restart the list.'}`;
     const message = readFailure(caught, operation);
     showError(message);
@@ -462,13 +505,13 @@ function renderPageMeta(json) {
 
 function formatAmount(record) {
   const amount = record.amounts?.net ?? record.amounts?.gross ?? record.amounts?.tax;
-  return amount ? amount : 'No amount';
+  return amount ? amount : NOT_AVAILABLE;
 }
 function formatBasis(record) {
   if (record.amounts?.net) return 'Net basis';
   if (record.amounts?.gross) return 'Gross basis';
   if (record.amounts?.tax) return 'Tax basis';
-  return 'Unknown';
+  return NOT_AVAILABLE;
 }
 
 async function selectRecord(key, moveFocus = false) {
@@ -562,7 +605,7 @@ async function selectRecord(key, moveFocus = false) {
   } catch (caught) {
     if (generation !== state.connectionToken || requestToken !== state.detailRequestId || key !== state.selectedKey) return;
     detail.className = 'detail';
-    detail.innerHTML = `<p>Detail load failed: ${escapeHtml(caught?.message || 'Unknown error.')}</p>`;
+    detail.innerHTML = `<p>Detail load failed: ${escapeHtml(plainErrorText(caught?.message || 'Unknown error.'))}</p>`;
     detailActions.hidden = false;
     showError(readFailure(caught, operation));
     setStatus('Detail request failed.');
@@ -579,28 +622,42 @@ function renderDetail(record) {
   const issues = Array.isArray(record.validationIssues) ? record.validationIssues : [];
   const provenanceLabel = record.configuredSourceLabel;
   const sourceLabel = record.sourceApiId === null ? 'Not applicable (synthetic fixture)' : `${record.sourceApiId} (version ${record.sourceApiVersion})`;
-  const context = (available) => available === true ? 'Available, opaque context only (minimized in this scope).' : 'Unknown / Not available';
-  const missing = (value) => value === null || value === undefined || value === '' ? 'Unknown / Not available' : escapeHtml(String(value));
+  const context = (available) => available === true ? 'Available, opaque context only (minimized in this scope).' : NOT_AVAILABLE;
+  const missing = (value) => value === null || value === undefined || value === '' ? NOT_AVAILABLE : escapeHtml(String(value));
   const li = (label, value) => `<dt>${escapeHtml(label)}</dt><dd>${value}</dd>`;
+  const currencyText = escapeHtml(record.currency || NOT_AVAILABLE);
+  const money = (value) => value === null || value === undefined || value === '' ? NOT_AVAILABLE : `${escapeHtml(String(value))} ${currencyText}`;
   detail.innerHTML = `
-    <dl>
+    <dl class="detail-main">
+      ${li('Document', `${escapeHtml(record.documentKind || 'billing request')} ${escapeHtml(record.key || NOT_AVAILABLE)}`)}
+      ${li('Date', `${escapeHtml(record.dateNormalized || NOT_AVAILABLE)} (${escapeHtml(plainDateMeaning(record.dateMeaning).short)})`)}
+      ${li('Net', money(amounts.net))}
+      ${li('Tax', money(amounts.tax))}
+      ${li('Gross', money(amounts.gross))}
+      ${li('Data source', escapeHtml(provenanceLabel))}
+    </dl>
+    ${issues.length ? `<p class="warning">Contract warnings: ${escapeHtml(issues.join('; '))}</p>` : ''}
+    <details class="tech-evidence">
+      <summary>Technical evidence (for reviewers)</summary>
+      <p class="coverage">Selected row is never reused as detail; a separate by-key GET validates the same key.</p>
+      <dl>
       ${li('Document kind', escapeHtml(record.documentKind || 'billing request'))}
       ${li('Source API', escapeHtml(sourceLabel))}
       ${li('Configured profile', escapeHtml(record.sourceProfileId))}
-      ${li('Stable document key', escapeHtml(record.key || 'Unknown'))}
+      ${li('Stable document key', escapeHtml(record.key || NOT_AVAILABLE))}
       ${li('Provenance', escapeHtml(provenanceLabel))}
-      ${li('Billing date (BillingDocumentDate)', `${escapeHtml(record.dateNormalized || 'Unknown')} - ${escapeHtml(record.dateMeaning || 'documented billing date')}`)}
+      ${li('Billing date (BillingDocumentDate)', `${escapeHtml(record.dateNormalized || NOT_AVAILABLE)} - ${escapeHtml(record.dateMeaning || 'documented billing date')}`)}
       ${li('TotalNetAmount', `${missing(amounts.net)}${basis.net ? ` (${escapeHtml(basis.net)})` : ''}`)}
       ${li('TotalTaxAmount', `${missing(amounts.tax)}${basis.tax ? ` (${escapeHtml(basis.tax)})` : ''}`)}
       ${li('TotalGrossAmount', `${missing(amounts.gross)}${basis.gross ? ` (${escapeHtml(basis.gross)})` : ''}`)}
-      ${li('Currency', escapeHtml(record.currency || 'Unknown'))}
+      ${li('Currency', escapeHtml(record.currency || NOT_AVAILABLE))}
       ${li('Payer party context', context(record.context?.payerPartyAvailable))}
       ${li('Contract account context', context(record.context?.contractAccountAvailable))}
       ${li('Optional items', escapeHtml(record.itemCoverage ? `${record.itemCoverage.status} (${record.itemCoverage.count || 0} rows)` : 'Not checked'))}
-      ${li('Retrieved at', escapeHtml(record.retrievedAt || 'Unknown'))}
-    </dl>
-    ${issues.length ? `<p class="warning">Contract warnings: ${escapeHtml(issues.join('; '))}</p>` : ''}
-    <p class="coverage">Reported net, tax and gross are independent values. They retain sign and precision and are not summed, converted or annualized.</p>
+      ${li('Retrieved at', escapeHtml(record.retrievedAt || NOT_AVAILABLE))}
+      </dl>
+      <p class="coverage">Reported net, tax and gross are independent values. They retain sign and precision and are not summed, converted or annualized.</p>
+    </details>
   `;
 }
 
@@ -638,6 +695,7 @@ async function loadOptionalItems(moveFocus = false) {
   if (moveFocus && !screenCost.hidden) costUpdateStatus.focus();
   else if (moveFocus && historicalView) document.getElementById('decision-title').focus();
   setStatus(`Checking optional item coverage for ${expectedSelection}...`);
+  setItemsStatus(`Checking optional items for document ${expectedSelection}...`);
   const path = appendQuery(`/api/billing-requests/${encodeURIComponent(expectedSelection)}/items`, [
     ['mode', expectedMode === 'synthetic' ? 'synthetic' : (expectedMode === 'fixture' ? 'fixture' : 'live')]
   ]);
@@ -651,6 +709,7 @@ async function loadOptionalItems(moveFocus = false) {
     note.textContent = `Optional items: ${json?.status || 'unknown'}${json?.count ? ` (${json.count} rows)` : ''}. ${json?.note || ''}`;
     detail.appendChild(note);
     setStatus(`Optional item coverage: ${json?.status || 'unknown'}.`);
+    setItemsStatus(json.recovery ? 'Optional items check stopped. Use the recovery options at the top of the page.' : `Optional items check finished: ${json?.status || 'unknown'}${json?.count ? ` (${json.count} rows)` : ''}.`);
     if (json.recovery) showError(readFailure(Object.assign(new Error(json.recovery.message), json.recovery), operation));
     if (moveFocus) focusReadOutcome(anchor, json.recovery ? document.getElementById('read-recovery-title') : (screenCost.hidden ? reviewCostButton : backToListButton));
   } catch (caught) {
@@ -664,6 +723,7 @@ async function loadOptionalItems(moveFocus = false) {
     note.textContent = `Optional items: unavailable. ${unavailableNote}`;
     detail.appendChild(note);
     setStatus('Optional item coverage unavailable.');
+    setItemsStatus('Optional items could not be checked. Use Retry read at the top of the page, or Check optional items again.');
     showError(readFailure(caught, operation));
     if (moveFocus) focusReadOutcome(anchor, document.getElementById('read-recovery-title'));
   } finally {
@@ -732,6 +792,12 @@ function escapeHtml(value) {
 // Mirror the normalized public contract before allowing Screen 2. Amounts stay text.
 const REQUEST_DATE_MEANING = 'Date on which the subsequent billing document is processed and booked for accounting purposes. Not a payment or service-coverage date.';
 const SYNTHETIC_DATE_MEANING = 'Synthetic processing date supplied by the fixture; not a payment or service-coverage date.';
+// #36 review R40-01: plain wording that keeps each source's own date meaning.
+function plainDateMeaning(meaning) {
+  if (meaning === SYNTHETIC_DATE_MEANING) return { short: 'synthetic processing date, not a payment date', long: 'a synthetic processing date supplied by the demo fixture. It is not a payment date or a service period.' };
+  if (meaning === REQUEST_DATE_MEANING) return { short: 'date the follow-on billing document is to be processed, not a payment date', long: 'the date on which the follow-on billing document is to be processed and booked for accounting. It is not a payment date or a service period.' };
+  return { short: String(meaning || 'meaning not reported'), long: String(meaning || 'meaning not reported') };
+}
 
 function knownCurrency(value) {
   if (typeof value !== 'string' || !/^[A-Z]{3}$/.test(value)) return false;
@@ -771,6 +837,7 @@ function validateRequiredDetail(record, mode) {
 
 function clearCostView() {
   clearPendingDecision();
+  setItemsStatus('');
   costUpdateStatus.hidden = true;
   costUpdateStatus.textContent = '';
   state.costSnapshot = null;
@@ -873,7 +940,7 @@ function buildCostSnapshot(record, mode) {
   }
 
   const explanation = synthetic
-    ? `This synthetic billing document reports net ${record.amounts.net || 'Not reported'}, tax ${record.amounts.tax || 'Not reported'} and gross ${record.amounts.gross || 'Not reported'} in ${record.currency}. The amounts are reported separately; no item sum, customer charge, or payment claim is created.`
+    ? `This synthetic billing document reports net ${record.amounts.net || NOT_AVAILABLE}, tax ${record.amounts.tax || NOT_AVAILABLE} and gross ${record.amounts.gross || NOT_AVAILABLE} in ${record.currency}. The amounts are reported separately; no item sum, customer charge, or payment claim is created.`
     : `This billing request reports ${record.amounts.net ? `a net amount of ${record.amounts.net}` : 'no net amount'}, ${record.amounts.tax ? `tax of ${record.amounts.tax}` : 'no tax amount'} and ${record.amounts.gross ? `a gross amount of ${record.amounts.gross}` : 'no gross amount'} in ${record.currency}. These are independent reported SAP amounts with the signs and decimal text preserved; they are not summed, converted or annualised here.`;
 
   return {
@@ -980,7 +1047,31 @@ function renderCost(snapshot) {
   clearError();
   if (costError) { costError.hidden = true; costError.textContent = ''; }
   if (costSummary) {
-    costSummary.innerHTML = `<p>${escapeHtml(snapshot.explanation)}</p><p><strong>Document kind:</strong> ${escapeHtml(snapshot.document.kind)}; <strong>key:</strong> ${escapeHtml(snapshot.document.key)}; <strong>currency:</strong> ${escapeHtml(snapshot.document.currency)}.</p>`;
+    const cur = escapeHtml(snapshot.amounts.currency || snapshot.document.currency || NOT_AVAILABLE);
+    const show = (value) => value === null || value === undefined || value === '' ? NOT_AVAILABLE : escapeHtml(String(value));
+    const limits = [
+      'This is sample data (SAP sandbox or offline demo), not a Spark customer bill.',
+      'It does not show whether anything was paid, or which service period it covers.',
+      'Amounts are shown exactly as reported. Nothing is added up or converted.'
+    ];
+    if (snapshot.materialInconsistency) limits.push('Something in this record did not match, so only Help or Later can be recorded.');
+    costSummary.innerHTML = `
+      <div class="amount-hero">
+        <p class="amount-gross"><span class="amount-label">Gross</span> <span class="amount-value">${show(snapshot.amounts.gross)}</span> <span class="amount-cur">${cur}</span></p>
+        <p class="amount-parts">Net ${show(snapshot.amounts.net)} ${cur} · Tax ${show(snapshot.amounts.tax)} ${cur}</p>
+        <p class="amount-meta">Billing date ${escapeHtml(snapshot.date.value || NOT_AVAILABLE)}: ${escapeHtml(plainDateMeaning(snapshot.date.meaning).long)}</p>
+        <p class="amount-meta">${escapeHtml(snapshot.document.kind)} ${escapeHtml(snapshot.document.key)} · Data source: ${escapeHtml(snapshot.source.provenanceLabel)}</p>
+      </div>
+      <div class="limits-box">
+        <h3>What this does not tell you</h3>
+        <ul>${limits.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>
+      </div>
+      <details class="tech-evidence">
+        <summary>Full explanation (for reviewers)</summary>
+        <p>${escapeHtml(snapshot.explanation)}</p>
+        <p><strong>Document kind:</strong> ${escapeHtml(snapshot.document.kind)}; <strong>key:</strong> ${escapeHtml(snapshot.document.key)}; <strong>currency:</strong> ${escapeHtml(snapshot.document.currency)}.</p>
+      </details>
+    `;
   }
   if (costAmounts) {
     const rows = [
@@ -991,8 +1082,8 @@ function renderCost(snapshot) {
     costAmounts.innerHTML = rows.map(([label, value, basis]) => `
       <tr>
         <th scope="row">${escapeHtml(label)}</th>
-        <td class="numeric">${escapeHtml(value || 'Not reported')}</td>
-        <td>${escapeHtml(snapshot.amounts.currency || 'Unknown')}</td>
+        <td class="numeric">${escapeHtml(value || NOT_AVAILABLE)}</td>
+        <td>${escapeHtml(snapshot.amounts.currency || NOT_AVAILABLE)}</td>
         <td>${escapeHtml(basis || 'Reported document field')}</td>
       </tr>
     `).join('');
@@ -1006,12 +1097,12 @@ function renderCost(snapshot) {
       ['Source API', snapshot.source.sourceApi],
       ['Source API version', snapshot.source.sourceApiVersion],
       ['Configured profile', snapshot.document.sourceProfileId],
-      ['Billing date', `${snapshot.date.value || 'Unknown'} (${snapshot.date.meaning})`],
-      ['Payer party context', snapshot.context.payerPartyAvailable ? 'Available, opaque context only' : 'Unknown / Not available'],
-      ['Contract account context', snapshot.context.contractAccountAvailable ? 'Available, opaque context only' : 'Unknown / Not available'],
-      ['Service period/payment evidence', `${snapshot.servicePeriod}; ${snapshot.paymentStatus}`],
+      ['Billing date', `${snapshot.date.value || NOT_AVAILABLE} (${snapshot.date.meaning})`],
+      ['Payer party context', snapshot.context.payerPartyAvailable ? 'Available, opaque context only' : NOT_AVAILABLE],
+      ['Contract account context', snapshot.context.contractAccountAvailable ? 'Available, opaque context only' : NOT_AVAILABLE],
+      ['Service period/payment evidence', `Service period: ${shownValue(snapshot.servicePeriod)}. Payment status: ${shownValue(snapshot.paymentStatus)}.`],
       ['Linked item evidence', `${snapshot.linkedDetail.status} (${snapshot.linkedDetail.count} rows)${snapshot.linkedDetail.note ? ` - ${snapshot.linkedDetail.note}` : ''}`],
-      ['Retrieval time', snapshot.document.retrievedAt || 'Unknown']
+      ['Retrieval time', snapshot.document.retrievedAt || NOT_AVAILABLE]
     ];
     costFields.innerHTML = fields.map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(value))}</dd>`).join('');
   }
@@ -1024,14 +1115,14 @@ function renderCost(snapshot) {
   }
   if (costItems) {
     if (snapshot.linkedDetail.rows && snapshot.linkedDetail.rows.length) {
-      costItems.innerHTML = snapshot.linkedDetail.rows.map((row) => `<li>${escapeHtml(row.itemKey)}: net ${escapeHtml(row.netAmount)}, tax ${escapeHtml(row.taxAmount)}, gross ${escapeHtml(row.grossAmount)} (${escapeHtml(row.currency)}) - reported row, not a total.</li>`).join('');
+      costItems.innerHTML = snapshot.linkedDetail.rows.map((row) => `<li>${escapeHtml(row.itemKey)}: net ${escapeHtml(shownValue(row.netAmount))}, tax ${escapeHtml(shownValue(row.taxAmount))}, gross ${escapeHtml(shownValue(row.grossAmount))} (${escapeHtml(row.currency)}) - reported row, not a total.</li>`).join('');
     } else {
       const conflict = snapshot.linkedDetail.currencyConflict || snapshot.linkedDetail.sourceConflict;
       costItems.innerHTML = `<li>${escapeHtml(conflict ? 'Linked item rows are not shown as valid evidence because of a currency or source/parent conflict.' : (snapshot.linkedDetail.note || 'No linked item detail was checked or available.'))}</li>`;
     }
   }
   if (costLimits) {
-    const linkedText = snapshot.linkedDetail.present ? `Linked detail currency: ${snapshot.linkedDetail.currency || snapshot.linkedDetail.sourceCurrency || 'Unknown'}${snapshot.linkedDetail.currencyConflict ? ' (conflict - not combined)' : ''}.` : 'No linked item detail was checked.';
+    const linkedText = snapshot.linkedDetail.present ? `Linked detail currency: ${snapshot.linkedDetail.currency || snapshot.linkedDetail.sourceCurrency || NOT_AVAILABLE}${snapshot.linkedDetail.currencyConflict ? ' (conflict - not combined)' : ''}.` : 'No linked item detail was checked.';
     const coverageLimit = snapshot.document.sourceProfileId === 'synthetic-billing-document-v1' ? 'Only the synthetic fixture may explicitly declare bounded complete coverage; this does not establish SAP history.' : 'SAP item coverage is bounded and partial even without a continuation.';
     costLimits.textContent = `No paid-bill claim, default NZD, FX, annual spend, or header-plus-item aggregate is made. ${linkedText} ${coverageLimit}`;
   }
@@ -1058,7 +1149,13 @@ backToListButton?.addEventListener('click', backToList);
 document.getElementById('connect-live').addEventListener('click', () => loadList('live'));
 document.getElementById('use-synthetic')?.addEventListener('click', () => loadList('synthetic'));
 document.getElementById('use-fixture').addEventListener('click', () => loadList('fixture'));
-document.getElementById('disconnect').addEventListener('click', resetSession);
+// #36 review R40-06: Disconnect hides itself, so focus moves to the first connection action.
+document.getElementById('disconnect').addEventListener('click', () => { resetSession(); document.getElementById('connect-live').focus(); });
+document.getElementById('change-source').addEventListener('click', () => {
+  connectionExpanded = true;
+  syncConnectionPanel();
+  document.getElementById('use-fixture').focus();
+});
 document.getElementById('reload-detail').addEventListener('click', () => {
   if (state.selectedKey) selectRecord(state.selectedKey, true);
 });
@@ -1231,9 +1328,9 @@ function renderDecision() {
     ['Source API / version', `${value.document.sourceApiId ?? 'Not applicable (synthetic fixture)'} / ${value.document.sourceApiVersion ?? 'Not applicable'}`],
     ['Configured profile', value.document.sourceProfileId],
     ['Date', `${value.date.value} — ${value.date.meaning}`],
-    ...[['net', 'Net amount'], ['tax', 'Tax amount'], ['gross', 'Gross amount']].map(([field, label]) => [label, `${value.amounts[field] ?? 'Not reported'} ${value.amounts.currency} — ${value.amounts.basis[field] ?? 'Not reported'}`]),
+    ...[['net', 'Net amount'], ['tax', 'Tax amount'], ['gross', 'Gross amount']].map(([field, label]) => [label, `${value.amounts[field] ?? NOT_AVAILABLE} ${value.amounts.currency} — ${value.amounts.basis[field] ?? NOT_AVAILABLE}`]),
     ['Retrieved at', value.document.retrievedAt],
-    ['Payer / account context', `${value.context.payerPartyAvailable ? 'Available (opaque)' : 'Unknown'} / ${value.context.contractAccountAvailable ? 'Available (opaque)' : 'Unknown'}`],
+    ['Payer / account context', `${value.context.payerPartyAvailable ? 'Available (opaque)' : NOT_AVAILABLE} / ${value.context.contractAccountAvailable ? 'Available (opaque)' : NOT_AVAILABLE}`],
     ['Assessment', value.assessmentStatus],
     ['Assessment scope', `${value.assessmentScope.scope === 'synthetic-header-net-tax-gross-only' ? 'Synthetic header net + tax = gross only; not production accounting validation.' : 'Source and linkage validation only. No verified universal item-to-header equation or rounding tolerance; SAP monetary reconciliation remains unassessed.'} Linked monetary reconciliation: not assessed.`],
     ['Item coverage', `Coverage: ${value.coverage.status}${value.coverage.complete ? ' (explicitly bounded synthetic fixture only, not complete SAP history)' : ''}; continuation: ${value.coverage.hasContinuation === null ? 'unknown' : (value.coverage.hasContinuation ? 'present' : 'not reported')}. Row-field completeness is separate from dataset coverage.`],
@@ -1241,9 +1338,28 @@ function renderDecision() {
     ['Reasons', saved ? (value.reasons.join(' ') || 'None — no material inconsistency recorded.') : snapshot.reasons.join(' ')],
     ...(saved ? [['Confirmed at', value.confirmedAt], ['Receipt identity', value.receiptId]] : [])
   ] : [];
-  document.getElementById('decision-summary').innerHTML = `<dl class="cost-fields">${fields.map(([label, text]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(text)}</dd>`).join('')}</dl>`;
+  const summaryElement = document.getElementById('decision-summary');
+  const techWasOpen = summaryElement.querySelector('details')?.open === true;
+  const mainFields = value ? [
+    ['Document', `${value.document.kind} ${value.document.key}`],
+    ['Gross', `${value.amounts.gross ?? NOT_AVAILABLE} ${value.amounts.currency}`],
+    ['Billing date', value.date.value],
+    ['Data source', PROVENANCE_LABELS[value.document.provenance]]
+  ] : [];
+  const dl = (rows) => `<dl class="cost-fields">${rows.map(([label, text]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(text))}</dd>`).join('')}</dl>`;
+  document.getElementById('decision-card').innerHTML = value ? `<div class="decision-card">${dl(mainFields)}</div>` : '';
+  summaryElement.innerHTML = value ? `
+    <details class="tech-evidence"${techWasOpen ? ' open' : ''}>
+      <summary>Technical evidence (for reviewers)</summary>
+      <p>These are intentions only. Keep is not a plan suitability verdict. Review options is not an account switch or a completed switch. Help is not a submitted support ticket. Later is not a scheduled reminder.</p>
+      ${dl(fields)}
+    </details>
+  ` : '';
   const restricted = value?.materialInconsistency === true;
-  document.getElementById('decision-restriction').textContent = restricted ? 'Material inconsistency: only Help or Later can be confirmed. The reason is retained with the receipt.' : '';
+  const otherDocument = Boolean(saved && snapshot && reviewIdentity(snapshot.document) !== receipt.reviewId);
+  document.getElementById('decision-restriction').textContent = otherDocument
+    ? `Only one receipt is kept. Document ${receipt.document.key} is already recorded, so document ${snapshot.document.key} cannot be recorded until you use Reset demo (this also clears the connection and key).`
+    : (restricted ? `Material inconsistency: only Help or Later can be confirmed. The reason is retained with the receipt. Reason: ${value.reasons.join(' ')}` : '');
   intentOptions.hidden = saved || receiptRecovery;
   for (const input of intentOptions.querySelectorAll('input')) {
     input.disabled = restricted && ['keep', 'review-options'].includes(input.value);
@@ -1256,6 +1372,12 @@ function renderDecision() {
   document.getElementById('decision-return-to-list').hidden = !saved && !receiptRecovery;
   retryReceiptButton.hidden = true;
   receiptStatus.textContent = saved ? 'Saved — receipt write and read-back verified.' : 'Unsaved — no intention has been recorded.';
+  const success = document.getElementById('receipt-success');
+  success.hidden = !(saved && !receiptRecovery && !otherDocument);
+  document.getElementById('one-receipt-note').hidden = !(saved && !receiptRecovery && !otherDocument);
+  success.textContent = saved && !receiptRecovery && !otherDocument
+    ? `✓ Saved: ${INTENTS[receipt.intent]} for ${receipt.document.kind} ${receipt.document.key} (${receipt.amounts.gross ?? 'gross not reported'} ${receipt.amounts.currency}).`
+    : '';
   if (receiptRecovery) receiptStatus.textContent = resetUncertain
     ? 'Deletion could not be verified. The receipt may already be deleted; no saved history is verified. Use Reset demo and Confirm reset to retry deletion and verification. The session key is cleared when reset is verified.'
     : 'Stored receipt could not be recovered. No saved history is shown. Use Reset demo to clear it and start again.';
@@ -1270,6 +1392,8 @@ function openDecision() {
   renderDecision();
   if (receipt) setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
   showDecision();
+  if (!receipt && !receiptRecovery && decisionSnapshot) setStatus(`Decision step opened for document ${decisionSnapshot.document.key}. Choose an intent, then Confirm intent.`);
+  else if (receipt && state.costSnapshot && reviewIdentity(state.costSnapshot.document) !== receipt.reviewId) setStatus(`A receipt for document ${receipt.document.key} is already saved. Use Reset demo to record a decision for document ${state.costSnapshot.document.key}.`);
 }
 
 function currentCostEvidenceReady() {
@@ -1336,13 +1460,14 @@ function saveReceipt() {
     if (JSON.stringify(readBack) !== serialized) throw new Error('Receipt read-back differs from the confirmed intent.');
     receipt = readBack;
     renderDecision();
+    setStatus(`Receipt saved for document ${receipt.document.key}.`);
     // Only an explicit successful confirmation/retry moves focus, not rendering
     // caused by unrelated connection or optional-evidence activity.
     document.getElementById('decision-title').focus();
   } catch {
     receiptStatus.textContent = storageUnavailable
       ? 'Unsaved — browser storage is unavailable, so receipts cannot be saved in this browser. Your chosen intent is preserved. Retry to save it.'
-      : 'Unsaved — storage write or read-back verification failed. Your chosen intent is preserved. Retry to save it.';
+      : 'Unsaved — we could not confirm your receipt was saved. Your chosen intent is preserved. Retry to save it.';
     retryReceiptButton.hidden = false;
   }
 }
@@ -1384,6 +1509,7 @@ document.getElementById('back-to-evidence').addEventListener('click', () => {
   screenDecision.hidden = true;
   screenCost.hidden = false;
   document.getElementById('continue-decision').focus();
+  if (state.costSnapshot) setStatus(`Cost evidence opened for document ${state.costSnapshot.document.key}.`);
 });
 document.getElementById('decision-return-to-list').addEventListener('click', () => {
   backToList();
@@ -1413,6 +1539,7 @@ function resetWithUnreadableStorage() {
   reopenReceiptButton.hidden = true;
   resetSession();
   document.getElementById('decision-summary').replaceChildren();
+  document.getElementById('decision-card').replaceChildren();
   receiptStatus.textContent = '';
   setStatus('Browser storage is unavailable, so no receipt could be read or deleted. The review session and key were cleared.');
   document.getElementById('use-fixture').focus();
@@ -1458,7 +1585,7 @@ document.getElementById('confirm-reset').addEventListener('click', () => {
       if (stored !== null && (!receipt || JSON.stringify(validateReceipt(JSON.parse(stored))) === JSON.stringify(receipt))) {
         receiptStatus.textContent = receipt
           ? 'Reset could not delete the receipt. Saved — receipt is still stored; session kept. Try Confirm reset again.'
-          : 'Reset could not delete the stored data. Read-back confirms stored data is still present. Try Confirm reset again.';
+          : 'Reset could not delete the unreadable saved receipt. It is still stored. Try Confirm reset again.';
         return;
       }
     } catch {}
@@ -1484,6 +1611,7 @@ document.getElementById('confirm-reset').addEventListener('click', () => {
   reopenReceiptButton.hidden = true;
   resetSession();
   document.getElementById('decision-summary').replaceChildren();
+  document.getElementById('decision-card').replaceChildren();
   receiptStatus.textContent = '';
   document.getElementById('use-fixture').focus();
 });

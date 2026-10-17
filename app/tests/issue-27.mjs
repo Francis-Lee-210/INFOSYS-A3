@@ -524,7 +524,7 @@ export function registerIssue27Tests({ test, browser, startInjectedServer, injec
         };
       });
       await p.locator('#confirm-intent').click();
-      assert.match(await p.locator('#receipt-status').innerText(), /^Unsaved — storage write or read-back verification failed/);
+      assert.match(await p.locator('#receipt-status').innerText(), /^Unsaved — we could not confirm your receipt was saved/);
       await p.locator('#retry-receipt').click();
       assert.match(await p.locator('#receipt-status').innerText(), /^Unsaved — browser storage is unavailable/);
       assert.equal(JSON.parse(await p.evaluate(() => localStorage.getItem('planReviewSnapshot.receipt'))).intent, 'later');

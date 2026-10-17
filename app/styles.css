@@ -129,3 +129,72 @@ button:disabled { opacity: .55; cursor: default; }
 #decision-summary { overflow-wrap: anywhere; }
 #continue-decision, #reset-demo { margin-top: 16px; }
 @media (max-width: 600px) { .mobile-table-hint { display: block; } }
+
+/* #36 step indicator */
+.steps { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0 0 16px; padding: 0; }
+.steps li { padding: 6px 12px; border: 1px solid var(--rule); border-radius: 999px; background: var(--white); color: var(--muted); font-size: 13px; font-weight: 700; }
+.steps li[aria-current="step"] { border-color: var(--plum); background: var(--plum); color: var(--white); }
+
+/* #36 collapsible connection panel */
+.connection-panel.is-collapsed { padding: 12px 18px; }
+.connection-panel.is-collapsed .connection-grid { display: none; }
+.connection-panel.is-collapsed > h2 { display: none; }
+.connection-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.connection-panel.is-collapsed .status { margin-top: 8px; padding: 6px 10px; font-size: 13px; }
+
+/* #36 technical evidence disclosures */
+details.tech-evidence { margin-top: 12px; border: 1px dashed var(--rule); border-radius: 8px; padding: 8px 12px; background: var(--white); }
+details.tech-evidence > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 700; }
+details.tech-evidence > summary:focus-visible { outline: 3px solid var(--plum); outline-offset: 2px; }
+details.tech-evidence[open] > summary { margin-bottom: 8px; }
+
+/* #36 Screen 1 detail summary */
+.detail-main { display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; margin: 0; font-size: 15px; }
+.detail-main dt { font-weight: 700; }
+.detail-main dd { margin: 0; }
+
+/* #36 Screen 2 amount card */
+.amount-hero { padding: 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
+.amount-hero p { margin: 4px 0; }
+.amount-gross { font-size: 30px; font-weight: 700; color: var(--ink); }
+.amount-label { font-size: 15px; color: var(--muted); font-weight: 700; margin-right: 6px; }
+.amount-value { font-variant-numeric: tabular-nums; }
+.amount-cur { font-size: 18px; color: var(--plum); }
+.amount-parts { font-size: 16px; font-variant-numeric: tabular-nums; }
+.amount-meta { color: var(--muted); font-size: 14px; }
+.limits-box { margin-top: 12px; padding: 12px 16px; border-left: 4px solid var(--magenta); background: var(--white); }
+.limits-box h3 { margin: 0 0 6px; font-size: 15px; }
+.limits-box ul { margin: 0; padding-left: 18px; }
+@media (max-width: 600px) { .amount-gross { font-size: 24px; } .detail-main { grid-template-columns: 1fr; } }
+
+/* #36 decision screen */
+.decision-card { padding: 12px 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); margin: 8px 0; }
+#intent-options { padding: 8px; }
+.intent-card { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px; margin: 8px 0; background: var(--white); }
+.intent-card:has(input:checked) { border-color: var(--plum); box-shadow: 0 0 0 2px var(--plum) inset; }
+.intent-card:has(input:disabled) { opacity: .55; }
+.intent-card:has(input:focus-visible) { outline: 3px solid var(--plum); outline-offset: 2px; }
+#intent-options .intent-card label { padding: 4px 0; font-weight: 700; cursor: pointer; }
+.intent-help { margin: 0 0 4px 28px; color: var(--muted); font-size: 14px; }
+.success-card { padding: 12px 16px; border: 1px solid #1D7A46; border-radius: 10px; background: #EAF6EF; color: #14532D; font-weight: 700; }
+#decision-restriction:empty { display: none; }
+#decision-restriction { padding: 8px 12px; border-left: 4px solid var(--magenta); font-weight: 700; }
+button.ghost.danger { color: var(--magenta); }
+#reset-demo { margin-top: 32px; }
+
+/* #36 button hierarchy */
+button.ghost { border-color: transparent; background: transparent; text-decoration: underline; text-underline-offset: 3px; padding-left: 6px; padding-right: 6px; }
+button.ghost:hover { background: var(--paper); }
+
+/* #36 side-by-side list and detail on wide screens */
+@media (min-width: 1000px) {
+  .workspace { grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr); }
+}
+.detail { min-height: 0; }
+.detail.empty-detail { display: block; padding: 8px 0; }
+
+/* #36 review R40-06: synthetic source under a collapsed "More data sources" area */
+.more-sources { flex-basis: 100%; margin-top: 4px; }
+.more-sources > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 700; }
+.more-sources > summary:focus-visible { outline: 3px solid var(--plum); outline-offset: 2px; }
+.more-sources[open] > summary { margin-bottom: 6px; }

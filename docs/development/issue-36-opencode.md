@@ -178,3 +178,13 @@ re-taken). Final `npm test` on this branch: `All 177 tests passed.`
 
 Round 3 (R40-03, R40-05) was merged into `feat/36-usability-polish` with `e1add67580a4a36bfa5100a8ca42ee204ea7608b`, with no
 conflicts. Final `npm test` on this branch: `All 181 tests passed.`
+
+**Part 8 — copy polish before submission (`feat/36-usability-polish`).** A short plain page
+summary under the list (the full coverage statement moved into the list's technical
+disclosure), "record" and "data source" instead of "bill" and "provenance" in the saved
+history line, the one-receipt message shown once instead of three times, and a destructive
+style for Confirm reset. Commit `f64f5100753ffcc6b7b1aa761491276f3ef61c70`: `All 182 tests passed.` Test-line edits (old → new):
+`#decision-history` `'not a newly refreshed bill'` → `'not a newly refreshed record'`; the
+three `#decision-history` second-document checks now check the same facts in
+`#decision-restriction`. New test: `issue 36 polish: list summary is short and plain, saved
+history avoids bill and provenance, and Confirm reset looks destructive`.

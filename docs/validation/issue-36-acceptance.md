@@ -117,6 +117,13 @@ re-taken on this branch.
 conflicts). Final `npm test` on this branch: **`All 181 tests passed.`**; FAIL list empty. The "after"
 screenshots were not re-taken because no visible main-flow screen changed.
 
+**Copy polish (Part 8, `f64f5100753ffcc6b7b1aa761491276f3ef61c70`):** the list shows one short plain summary, and the full
+coverage statement is kept in the list's "Technical evidence (for reviewers)" disclosure
+(H2, H8). The saved-receipt history says "record" and "data source" (H2). The one-receipt
+message appears once next to the options instead of three times (H8). Confirm reset uses the
+destructive colour (H5). Final `npm test`: **`All 182 tests passed.`**; FAIL list empty. The "after"
+screenshots were re-taken on this commit.
+
 ## Deviations from #36
 
 - Provenance labels, list column headers, the cost-table row labels and the

@@ -155,3 +155,10 @@ New tests:
 
 The after screenshots were re-taken on `da05a54655bd301ff50e64c4c37020930e4c9694`. The legacy-expanded harness for the
 pre-#36 tests is kept; the acceptance record explains why.
+
+On `feat/36-usability-polish` (PR #41): round 1 was merged in with `2e4d754` (one conflict in
+the amount card, resolved by keeping both the Net/Tax/Gross line and the new date line), and
+R41-01 was fixed in `ba5a540` ("Partial coverage: you can check the next page for more
+records."). Round 2 was merged in with `506b3f22ffd448e693507eef887220ed499ed652` (conflicts in the amount card date line
+and the source buttons, resolved by keeping both sides' changes; the after images were
+re-taken). Final `npm test` on this branch: `All 177 tests passed.`

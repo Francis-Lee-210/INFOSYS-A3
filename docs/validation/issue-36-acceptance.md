@@ -87,6 +87,12 @@ the `issue 36` tests check the shipped defaults.
 "P1-4 is not implemented" (R40-04), and Disconnect shown before connecting (R40-06). The other
 deviations still apply.
 
+**On PR #41 (`feat/36-usability-polish`):** R41-01 is fixed in `ba5a540`: the list summary now
+says "Partial coverage: you can check the next page for more records." instead of promising
+that more records exist. Both review rounds were merged in (`2e4d754`, `506b3f22ffd448e693507eef887220ed499ed652`). Final
+`npm test` on this branch: **`All 177 tests passed.`**; FAIL list empty. The "after" screenshots were
+re-taken on this branch.
+
 ## Deviations from #36
 
 - Provenance labels, list column headers, the cost-table row labels and the

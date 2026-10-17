@@ -88,6 +88,17 @@ function git(args, { input } = {}) {
   return spawnSync('git', args, options);
 }
 
+// unzip is a hard prerequisite for archive verification; check it early so a
+// missing unzip fails with an actionable message before any output exists.
+function verifyUnzipAvailable() {
+  const probe = spawnSync('unzip', ['-v'], { encoding: 'utf8' });
+  if (probe.error && probe.error.code === 'ENOENT') {
+    fail(
+      'unzip was not found on PATH. It is required to verify the archive. On Windows, run this command from Git Bash, which includes unzip.',
+    );
+  }
+}
+
 function ensureGitRepo() {
   const dir = git(['rev-parse', '--is-inside-work-tree']);
   if (dir.status !== 0 || dir.stdout.trim() !== 'true') {
@@ -364,7 +375,13 @@ function verifyArchiveArtifact(archivePath, blobs) {
       const actual = readFileSync(extracted);
       const planned = blobs.get(path);
       if (!actual.equals(planned)) {
-        fail(`archive entry bytes/SHA-256 do not match planned payload: ${path}`);
+        // Refuse exactly as before; when the only difference is CRLF vs LF,
+        // name the likely line-ending conversion as the cause in the message.
+        const lfOnly = Buffer.from(actual.toString('latin1').replace(/\r\n/g, '\n'), 'latin1');
+        const hint = lfOnly.equals(planned)
+          ? ' (the difference is only CRLF vs LF line endings; a git line-ending setting or a .gitattributes eol/text rule converted the file)'
+          : '';
+        fail(`archive entry bytes/SHA-256 do not match planned payload: ${path}${hint}`);
       }
       payloadEntries.push({
         path,
@@ -403,6 +420,7 @@ function main() {
     }
   }
 
+  verifyUnzipAvailable();
   ensureGitRepo();
   const { commit, short } = resolveRef(ref);
 
@@ -454,9 +472,15 @@ function main() {
 
   // Source archive from git, never a folder copy. Written to a temporary file
   // for independent artifact verification before final outputs are created.
+  // Line-ending conversion is disabled for this one command (Windows checkouts
+  // default to core.autocrlf=true, which would make git archive write CRLF);
+  // .gitattributes / .git/info/attributes conversions (eol/text, export-subst)
+  // still apply and are caught by the byte verification below.
   let archiveBytes;
   try {
     archiveBytes = execFileSync('git', [
+      '-c', 'core.autocrlf=false',
+      '-c', 'core.eol=lf',
       'archive',
       `--format=zip`,
       `--prefix=${ARCHIVE_PREFIX}`,

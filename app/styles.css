@@ -181,3 +181,14 @@ details.tech-evidence[open] > summary { margin-bottom: 8px; }
 #decision-restriction { padding: 8px 12px; border-left: 4px solid var(--magenta); font-weight: 700; }
 button.ghost.danger { color: var(--magenta); }
 #reset-demo { margin-top: 32px; }
+
+/* #36 button hierarchy */
+button.ghost { border-color: transparent; background: transparent; text-decoration: underline; text-underline-offset: 3px; padding-left: 6px; padding-right: 6px; }
+button.ghost:hover { background: var(--paper); }
+
+/* #36 side-by-side list and detail on wide screens */
+@media (min-width: 1000px) {
+  .workspace { grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr); }
+}
+.detail { min-height: 0; }
+.detail.empty-detail { display: block; padding: 8px 0; }

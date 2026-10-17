@@ -164,7 +164,7 @@ test('fixture provenance and exact source labels', async () => {
   await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
   await expectText(page, 'body', 'Source API: API_BILLING_DOCUMENT_REQUEST_SRV (version 1.1.0)');
   assert.equal(await page.locator('#detail-actions').isVisible(), false);
-  await page.getByRole('button', { name: 'Use fixture demonstration' }).click();
+  await page.getByRole('button', { name: 'Try with demo data' }).click();
   await page.waitForFunction(() => document.querySelector('#list-meta')?.textContent.includes('Loaded records, not complete history'));
   await expectText(page, '#provenance', 'Fixture demonstration');
   await expectText(page, '#records-body', '9000000001');
@@ -342,7 +342,7 @@ test('optional item metadata is partial, not complete history', async () => {
 test('browser flow keeps no storage and generates observed metadata report', async () => {
   await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
   await page.locator('#api-key').fill('SENTINEL-LIVE-KEY-STORAGE');
-  await page.getByRole('button', { name: 'Use fixture demonstration' }).click();
+  await page.getByRole('button', { name: 'Try with demo data' }).click();
   await page.waitForFunction(() => document.querySelector('#records-body')?.textContent.includes('9000000001'));
   const storage = await page.evaluate(() => ({ local: window.localStorage.length, session: window.sessionStorage.length }));
   assert.equal(storage.local, 0);
@@ -793,7 +793,7 @@ test('linked item currency and parent conflicts are flagged material', async () 
   const context = await browser.newContext();
   const p = await context.newPage();
   await p.goto(`http://127.0.0.1:${port}`);
-  await p.getByRole('button', { name: 'Use fixture demonstration' }).click();
+  await p.getByRole('button', { name: 'Try with demo data' }).click();
   await p.waitForFunction(() => document.querySelector('#list-meta')?.textContent.includes('Loaded records'));
   await p.locator('#records-body tr.selectable').first().click();
   await p.waitForFunction(() => document.querySelector('#status')?.textContent.includes('Detail loaded'));
@@ -2148,6 +2148,140 @@ test('issue 7 review: connection input and hint remain usable with Reopen visibl
         assert.ok(box.x >= 0 && box.x + box.width <= width);
       }
       await issue7Screenshot(p, `layout-${width}`);
+    } finally { await context.close(); }
+  }
+});
+
+test('issue 36: connection panel collapses after choosing a source and Change source reopens it by keyboard', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    assert.equal(await p.locator('#api-key').isVisible(), true);
+    await p.locator('#use-fixture').click();
+    await p.locator('#records-body tr.selectable').first().waitFor();
+    assert.equal(await p.locator('#api-key').isVisible(), false);
+    assert.equal(await p.locator('#connection-summary').isVisible(), true);
+    assert.match(await p.locator('#connection-summary').innerText(), /Fixture demonstration/);
+    assert.equal(await p.locator('#status').isVisible(), true);
+    await p.locator('#change-source').focus();
+    await p.keyboard.press('Enter');
+    assert.equal(await p.locator('#use-fixture').evaluate((element) => element === document.activeElement), true);
+    assert.equal(await p.locator('#api-key').isVisible(), true);
+    await p.locator('#disconnect').click();
+    assert.equal(await p.locator('#connection-summary').isVisible(), false);
+    assert.equal(await p.locator('#api-key').isVisible(), true);
+  } finally { await context.close(); }
+});
+
+test('issue 36: technical evidence is closed by default and opens by keyboard on each screen', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.locator('#use-fixture').click();
+    await p.locator('#records-body tr[data-key="9000000001"]').click();
+    await p.waitForFunction(() => {
+      const statusText = document.querySelector('#status')?.textContent || '';
+      return statusText.includes('Detail loaded') && statusText.includes('9000000001');
+    });
+    const detailTech = p.locator('#detail details.tech-evidence');
+    assert.equal(await detailTech.evaluate((element) => element.open), false);
+    assert.equal(await p.locator('#check-evidence').isVisible(), false);
+    await detailTech.locator('summary').focus();
+    await p.keyboard.press('Enter');
+    assert.equal(await detailTech.evaluate((element) => element.open), true);
+    assert.match(await detailTech.innerText(), /API_BILLING_DOCUMENT_REQUEST_SRV/);
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#screen-cost').waitFor({ state: 'visible' });
+    assert.equal(await p.locator('#cost-limits').isVisible(), false);
+    const costTech = p.locator('#screen-cost details.tech-evidence').filter({ has: p.locator('#cost-limits') });
+    await costTech.locator('summary').focus();
+    await p.keyboard.press(' ');
+    assert.equal(await p.locator('#cost-limits').isVisible(), true);
+    await p.locator('#continue-decision').click();
+    await p.locator('#screen-decision').waitFor({ state: 'visible' });
+    assert.equal(await p.locator('#decision-summary details').evaluate((element) => element.open), false);
+  } finally { await context.close(); }
+});
+
+test('issue 36: cost amount card shows exact reported amounts without formatting', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.locator('#use-fixture').click();
+    await p.locator('#records-body tr[data-key="9000000001"]').click();
+    await p.waitForFunction(() => {
+      const statusText = document.querySelector('#status')?.textContent || '';
+      return statusText.includes('Detail loaded') && statusText.includes('9000000001');
+    });
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#screen-cost').waitFor({ state: 'visible' });
+    const gross = await p.locator('.amount-gross').innerText();
+    assert.match(gross, /287\.500/);
+    assert.match(gross, /USD/);
+    const parts = await p.locator('.amount-parts').innerText();
+    assert.match(parts, /250\.000/);
+    assert.match(parts, /37\.500/);
+    const summaryText = await p.locator('#cost-summary').innerText();
+    assert.doesNotMatch(summaryText, /287\.5(?!00)|287,500|\$/);
+    assert.equal(await p.locator('.limits-box').isVisible(), true);
+    await p.locator('#back-to-list').click();
+    await p.locator('#screen-cost').waitFor({ state: 'hidden' });
+    await p.locator('#records-body tr[data-key="9000000002"]').click();
+    await p.waitForFunction(() => {
+      const statusText = document.querySelector('#status')?.textContent || '';
+      return statusText.includes('Detail loaded') && statusText.includes('9000000002');
+    });
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#screen-cost').waitFor({ state: 'visible' });
+    assert.match(await p.locator('#cost-summary').innerText(), /-18\.750/);
+  } finally { await context.close(); }
+});
+
+test('issue 36: saved confirmation names the intent, document and gross amount', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.locator('#use-fixture').click();
+    await p.locator('#records-body tr[data-key="9000000001"]').click();
+    await p.waitForFunction(() => {
+      const statusText = document.querySelector('#status')?.textContent || '';
+      return statusText.includes('Detail loaded') && statusText.includes('9000000001');
+    });
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#screen-cost').waitFor({ state: 'visible' });
+    await p.locator('#continue-decision').click();
+    await p.locator('#screen-decision').waitFor({ state: 'visible' });
+    await p.locator('input[value="keep"]').check();
+    await p.locator('#confirm-intent').click();
+    const success = p.locator('#receipt-success');
+    await success.waitFor({ state: 'visible' });
+    assert.match(await success.innerText(), /Saved: Keep for billing request 9000000001 \(287\.500 USD\)/);
+    assert.equal(await p.locator('#decision-return-to-list').isVisible(), true);
+    await p.locator('#reset-demo').click();
+    await p.locator('#confirm-reset').click();
+  } finally { await context.close(); }
+});
+
+test('issue 36: no horizontal page scroll on all three screens at 390px and 1280px', async () => {
+  for (const width of [390, 1280]) {
+    const context = await rawNewContext({ viewport: { width, height: 900 } }); const p = await context.newPage();
+    try {
+      await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+      await p.locator('#use-fixture').click();
+      await p.locator('#records-body tr[data-key="9000000001"]').click();
+      await p.waitForFunction(() => {
+        const statusText = document.querySelector('#status')?.textContent || '';
+        return statusText.includes('Detail loaded') && statusText.includes('9000000001');
+      });
+      assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `list ${width}`);
+      await p.locator('#review-cost-evidence').click();
+      await p.locator('#screen-cost').waitFor({ state: 'visible' });
+      assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `cost ${width}`);
+      await p.locator('#continue-decision').click();
+      await p.locator('#screen-decision').waitFor({ state: 'visible' });
+      assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `decision ${width}`);
+      await p.locator('#reset-demo').click();
+      await p.locator('#confirm-reset').click();
     } finally { await context.close(); }
   }
 });

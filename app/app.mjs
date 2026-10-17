@@ -169,7 +169,7 @@ function clearReadRecovery() {
 
 function readFailure(caught, operation) {
   const code = caught?.code || 'CONTRACT';
-  const labels = { AUTH: 'Authentication / key problem', TIMEOUT: 'Read timed out', NETWORK: 'Network failure', RATE_LIMIT: 'Rate limited', SERVER: 'Service failure', REDIRECT: 'Redirect refused', DESTINATION: 'Continuation rejected', EMPTY: 'Empty page', NAVIGATION: 'Navigation stopped' };
+  const labels = { AUTH: 'Authentication / key problem', TIMEOUT: 'Read timed out', NETWORK: 'Network failure', RATE_LIMIT: 'Rate limited', SERVER: 'Service failure', REDIRECT: 'Redirect refused', DESTINATION: 'Next page link refused', EMPTY: 'Empty page', NAVIGATION: 'Navigation stopped' };
   const label = labels[code] || 'Contract / data failure';
   const message = `${label}. ${caught?.message || 'This read could not be validated.'}`;
   reads.recovery = { ...operation, code, message, generation: state.connectionToken };
@@ -383,7 +383,7 @@ async function loadPage(operation, moveFocus = false) {
     }
     state.mode = state.requestedMode;
     setMode(state.mode);
-    if (!Array.isArray(json.records)) throw new Error('The list response has an invalid record contract.');
+    if (!Array.isArray(json.records)) throw new Error('The records came back in an unexpected format, so they were not shown.');
     const records = json.records;
     state.records = records;
     state.loadedMeta = json;
@@ -1428,7 +1428,7 @@ function saveReceipt() {
   } catch {
     receiptStatus.textContent = storageUnavailable
       ? 'Unsaved — browser storage is unavailable, so receipts cannot be saved in this browser. Your chosen intent is preserved. Retry to save it.'
-      : 'Unsaved — storage write or read-back verification failed. Your chosen intent is preserved. Retry to save it.';
+      : 'Unsaved — we could not confirm your receipt was saved. Your chosen intent is preserved. Retry to save it.';
     retryReceiptButton.hidden = false;
   }
 }

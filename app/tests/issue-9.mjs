@@ -155,7 +155,7 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
       await tabTo(p, 'confirm-intent'); await p.keyboard.press('Enter');
       await p.waitForFunction(() => document.querySelector('#receipt-status').textContent.includes('Saved'));
       assert.equal(await p.locator('#decision-title').evaluate(element => element === document.activeElement && element.checkVisibility()), true);
-      await text(p, '#receipt-status', /read-back verified/);
+      await text(p, '#receipt-status', /stored and checked/);
       await expectOnlyReceipt(p);
       await screenshot(p, 'keyboard-receipt', [1280, 1366, 390]);
       // Reset stays deliberate from the keyboard: cancel keeps history, confirm clears it.
@@ -309,8 +309,9 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
       // Keyboard focus is visible on buttons, scroll regions and rows.
       await tabTo(p, 'use-fixture');
       assert.equal(await outline(p, '#use-fixture'), 'solid 3px');
-      await p.keyboard.press('Tab'); // use-synthetic
       await p.keyboard.press('Tab'); // disconnect
+      await p.keyboard.press('Tab'); // More data sources summary
+      await p.keyboard.press('Tab'); // use-synthetic (inside More data sources)
       await p.keyboard.press('Tab'); // records table region
       assert.equal(await p.evaluate(() => document.activeElement?.classList.contains('table-wrap')), true);
       assert.equal(await outline(p, '#screen-list .table-wrap'), 'solid 3px');
@@ -328,7 +329,7 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
           : element.id ? `#${element.id}` : `${element.tagName.toLowerCase()}:${element.getAttribute('aria-label') || element.textContent.trim()}`;
         const radios = new Set();
         const stops = [];
-        for (const element of document.querySelectorAll('a[href], button, input, select, textarea, [tabindex]')) {
+        for (const element of document.querySelectorAll('a[href], button, input, select, textarea, summary, [tabindex]')) {
           if (element.disabled || element.tabIndex < 0 || !element.checkVisibility({ visibilityProperty: true })) continue;
           if (element.type === 'radio' && element.name) {
             if (radios.has(element.name)) continue;

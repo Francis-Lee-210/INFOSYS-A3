@@ -61,7 +61,7 @@
         <div class="panel-head">
           <h2 id="records-title" tabindex="-1">Loaded billing records</h2>
           <p id="coverage" class="coverage">Loaded records, not complete history.</p>
-          <p class="hint">Source API: API_BILLING_DOCUMENT_REQUEST_SRV (version 1.1.0), for the live source. The synthetic fixture has its own profile and no SAP API identity. SAP sandbox records are demonstration data; they are not Spark customer bills, payments or service-history evidence.</p>
+          <p class="hint">SAP sandbox demo data, not Spark customer bills.</p>
         </div>
         <div class="table-wrap" tabindex="0" role="region" aria-label="Loaded billing records table">
           <table>
@@ -85,12 +85,15 @@
           <button id="next-page" type="button" hidden>Next page</button>
           <button id="restart-list" type="button" class="secondary" hidden>Restart list</button>
         </nav>
+        <details class="tech-evidence">
+          <summary>Technical evidence (for reviewers)</summary>
+          <p class="hint">Source API: API_BILLING_DOCUMENT_REQUEST_SRV (version 1.1.0), for the live source. The synthetic fixture has its own profile and no SAP API identity. SAP sandbox records are demonstration data; they are not Spark customer bills, payments or service-history evidence.</p>
+        </details>
       </aside>
 
       <article class="detail-panel" aria-labelledby="detail-title">
         <div class="panel-head">
           <h2 id="detail-title">Selected document detail</h2>
-          <p class="coverage">Selected row is never reused as detail; a separate by-key GET validates the same key.</p>
         </div>
         <div id="detail" class="detail empty-detail">
           <p>Select a document to load its detail.</p>
@@ -99,9 +102,12 @@
           <button id="review-cost-evidence" type="button" disabled>Review cost evidence</button>
           <button id="reload-detail" type="button" class="secondary">Reload detail</button>
           <button id="check-items" type="button" class="ghost">Check optional items</button>
-          <button id="check-evidence" type="button" class="ghost">B0 evidence</button>
         </div>
-        <div id="evidence" class="evidence" hidden></div>
+        <details class="tech-evidence">
+          <summary>B0 technical evidence (for reviewers)</summary>
+          <button id="check-evidence" type="button" class="ghost">B0 evidence</button>
+          <div id="evidence" class="evidence" hidden></div>
+        </details>
       </article>
     </section>
 
@@ -114,6 +120,8 @@
       <div id="cost-error" class="error" role="alert" hidden></div>
       <p id="cost-update-status" class="status" role="status" tabindex="-1" hidden></p>
       <div id="cost-summary" class="cost-summary"></div>
+      <details class="tech-evidence">
+        <summary>Amount table with SAP field meanings (for reviewers)</summary>
       <section class="amount-card" aria-labelledby="amount-title">
         <h3 id="amount-title">Reported document amounts</h3>
         <p class="mobile-table-hint hint">Scroll the table horizontally to compare all columns.</p>
@@ -131,6 +139,9 @@
         </table>
         </div>
       </section>
+      </details>
+      <details class="tech-evidence">
+        <summary>Technical evidence (for reviewers)</summary>
       <section class="cost-details" aria-labelledby="cost-details-title">
         <h3 id="cost-details-title">Source and date context</h3>
         <dl id="cost-fields" class="cost-fields"></dl>
@@ -146,6 +157,7 @@
         <h3 id="cost-coverage-title">Evidence limits</h3>
         <p id="cost-limits"></p>
       </section>
+      </details>
       <button id="continue-decision" type="button">Continue to decision</button>
     </section>
 

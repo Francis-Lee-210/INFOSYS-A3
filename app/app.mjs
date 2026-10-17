@@ -604,8 +604,22 @@ function renderDetail(record) {
   const context = (available) => available === true ? 'Available, opaque context only (minimized in this scope).' : 'Unknown / Not available';
   const missing = (value) => value === null || value === undefined || value === '' ? 'Unknown / Not available' : escapeHtml(String(value));
   const li = (label, value) => `<dt>${escapeHtml(label)}</dt><dd>${value}</dd>`;
+  const currencyText = escapeHtml(record.currency || 'Unknown');
+  const money = (value) => value === null || value === undefined || value === '' ? 'Not available' : `${escapeHtml(String(value))} ${currencyText}`;
   detail.innerHTML = `
-    <dl>
+    <dl class="detail-main">
+      ${li('Document', `${escapeHtml(record.documentKind || 'billing request')} ${escapeHtml(record.key || 'Unknown')}`)}
+      ${li('Date', `${escapeHtml(record.dateNormalized || 'Unknown')} (accounting date, not a payment date)`)}
+      ${li('Net', money(amounts.net))}
+      ${li('Tax', money(amounts.tax))}
+      ${li('Gross', money(amounts.gross))}
+      ${li('Data source', escapeHtml(provenanceLabel))}
+    </dl>
+    ${issues.length ? `<p class="warning">Contract warnings: ${escapeHtml(issues.join('; '))}</p>` : ''}
+    <details class="tech-evidence">
+      <summary>Technical evidence (for reviewers)</summary>
+      <p class="coverage">Selected row is never reused as detail; a separate by-key GET validates the same key.</p>
+      <dl>
       ${li('Document kind', escapeHtml(record.documentKind || 'billing request'))}
       ${li('Source API', escapeHtml(sourceLabel))}
       ${li('Configured profile', escapeHtml(record.sourceProfileId))}
@@ -620,9 +634,9 @@ function renderDetail(record) {
       ${li('Contract account context', context(record.context?.contractAccountAvailable))}
       ${li('Optional items', escapeHtml(record.itemCoverage ? `${record.itemCoverage.status} (${record.itemCoverage.count || 0} rows)` : 'Not checked'))}
       ${li('Retrieved at', escapeHtml(record.retrievedAt || 'Unknown'))}
-    </dl>
-    ${issues.length ? `<p class="warning">Contract warnings: ${escapeHtml(issues.join('; '))}</p>` : ''}
-    <p class="coverage">Reported net, tax and gross are independent values. They retain sign and precision and are not summed, converted or annualized.</p>
+      </dl>
+      <p class="coverage">Reported net, tax and gross are independent values. They retain sign and precision and are not summed, converted or annualized.</p>
+    </details>
   `;
 }
 
@@ -1002,7 +1016,31 @@ function renderCost(snapshot) {
   clearError();
   if (costError) { costError.hidden = true; costError.textContent = ''; }
   if (costSummary) {
-    costSummary.innerHTML = `<p>${escapeHtml(snapshot.explanation)}</p><p><strong>Document kind:</strong> ${escapeHtml(snapshot.document.kind)}; <strong>key:</strong> ${escapeHtml(snapshot.document.key)}; <strong>currency:</strong> ${escapeHtml(snapshot.document.currency)}.</p>`;
+    const cur = escapeHtml(snapshot.amounts.currency || snapshot.document.currency || 'Unknown');
+    const show = (value) => value === null || value === undefined || value === '' ? 'Not reported' : escapeHtml(String(value));
+    const limits = [
+      'This is SAP sandbox demo data, not a Spark customer bill.',
+      'It does not show whether anything was paid, or which service period it covers.',
+      'Amounts are shown exactly as reported. Nothing is added up or converted.'
+    ];
+    if (snapshot.materialInconsistency) limits.push('Something in this record did not match, so only Help or Later can be recorded.');
+    costSummary.innerHTML = `
+      <div class="amount-hero">
+        <p class="amount-gross"><span class="amount-label">Gross</span> <span class="amount-value">${show(snapshot.amounts.gross)}</span> <span class="amount-cur">${cur}</span></p>
+        <p class="amount-parts">Net ${show(snapshot.amounts.net)} ${cur} · Tax ${show(snapshot.amounts.tax)} ${cur}</p>
+        <p class="amount-meta">Billing date ${escapeHtml(snapshot.date.value || 'Unknown')}: the date SAP booked this for accounting. It is not a payment date or a service period.</p>
+        <p class="amount-meta">${escapeHtml(snapshot.document.kind)} ${escapeHtml(snapshot.document.key)} · Data source: ${escapeHtml(snapshot.source.provenanceLabel)}</p>
+      </div>
+      <div class="limits-box">
+        <h3>What this does not tell you</h3>
+        <ul>${limits.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>
+      </div>
+      <details class="tech-evidence">
+        <summary>Full explanation (for reviewers)</summary>
+        <p>${escapeHtml(snapshot.explanation)}</p>
+        <p><strong>Document kind:</strong> ${escapeHtml(snapshot.document.kind)}; <strong>key:</strong> ${escapeHtml(snapshot.document.key)}; <strong>currency:</strong> ${escapeHtml(snapshot.document.currency)}.</p>
+      </details>
+    `;
   }
   if (costAmounts) {
     const rows = [

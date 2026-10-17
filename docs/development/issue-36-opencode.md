@@ -175,3 +175,6 @@ R41-01 was fixed in `ba5a540` ("Partial coverage: you can check the next page fo
 records."). Round 2 was merged in with `506b3f22ffd448e693507eef887220ed499ed652` (conflicts in the amount card date line
 and the source buttons, resolved by keeping both sides' changes; the after images were
 re-taken). Final `npm test` on this branch: `All 177 tests passed.`
+
+Round 3 (R40-03, R40-05) was merged into `feat/36-usability-polish` with `e1add67580a4a36bfa5100a8ca42ee204ea7608b`, with no
+conflicts. Final `npm test` on this branch: `All 181 tests passed.`

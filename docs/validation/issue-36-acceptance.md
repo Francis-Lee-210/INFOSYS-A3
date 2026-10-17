@@ -113,6 +113,10 @@ that more records exist. Both review rounds were merged in (`2e4d754`, `506b3f22
 `npm test` on this branch: **`All 177 tests passed.`**; FAIL list empty. The "after" screenshots were
 re-taken on this branch.
 
+**Round 3 on PR #41:** the R40-03 and R40-05 fixes were merged in with `e1add67580a4a36bfa5100a8ca42ee204ea7608b` (no
+conflicts). Final `npm test` on this branch: **`All 181 tests passed.`**; FAIL list empty. The "after"
+screenshots were not re-taken because no visible main-flow screen changed.
+
 ## Deviations from #36
 
 - Provenance labels, list column headers, the cost-table row labels and the

@@ -163,31 +163,45 @@
 
     <section id="screen-decision" class="screen cost-screen" hidden aria-labelledby="decision-title">
       <h2 id="decision-title" tabindex="-1">Confirm your intention</h2>
-      <p>These are intentions only. Keep is not a plan suitability verdict. Review options is not an account switch or a completed switch. Help is not a submitted support ticket. Later is not a scheduled reminder.</p>
+      <p id="receipt-success" class="success-card" role="status" hidden></p>
+      <p>These record your intention only. Nothing changes in any account.</p>
       <p id="decision-history"></p>
-      <div id="decision-summary"></div>
+      <div id="decision-card"></div>
       <p id="decision-restriction"></p>
       <fieldset id="intent-options">
         <legend>Choose an intent</legend>
-        <label><input type="radio" name="intent" value="keep"> Keep</label>
-        <label><input type="radio" name="intent" value="review-options"> Review options</label>
-        <label><input type="radio" name="intent" value="help"> Help</label>
-        <label><input type="radio" name="intent" value="later"> Later</label>
+        <div class="intent-card">
+          <label><input type="radio" name="intent" value="keep" aria-describedby="intent-help-keep"> Keep</label>
+          <p id="intent-help-keep" class="intent-help">You are fine with this bill for now. It is a note to yourself, not a plan recommendation.</p>
+        </div>
+        <div class="intent-card">
+          <label><input type="radio" name="intent" value="review-options" aria-describedby="intent-help-review"> Review options</label>
+          <p id="intent-help-review" class="intent-help">You want to compare plans later. Nothing is switched.</p>
+        </div>
+        <div class="intent-card">
+          <label><input type="radio" name="intent" value="help" aria-describedby="intent-help-help"> Help</label>
+          <p id="intent-help-help" class="intent-help">You want someone to explain this bill. No support ticket is sent.</p>
+        </div>
+        <div class="intent-card">
+          <label><input type="radio" name="intent" value="later" aria-describedby="intent-help-later"> Later</label>
+          <p id="intent-help-later" class="intent-help">You will come back to it. No reminder is scheduled.</p>
+        </div>
       </fieldset>
       <p id="decision-choice"></p>
       <div class="actions">
         <button id="back-to-evidence" type="button" class="secondary">Back to cost evidence</button>
-        <button id="decision-return-to-list" type="button" class="secondary" hidden>Return to list</button>
+        <button id="decision-return-to-list" type="button" hidden>Return to list</button>
         <button id="confirm-intent" type="button" disabled>Confirm intent</button>
         <button id="retry-receipt" type="button" hidden>Retry</button>
       </div>
       <p id="receipt-status" class="status" role="status" aria-live="polite"></p>
-      <button id="reset-demo" type="button" class="ghost">Reset demo</button>
+      <button id="reset-demo" type="button" class="ghost danger">Reset demo</button>
       <div id="reset-confirmation" hidden>
         <p>Delete any stored receipt and clear the session, including the API key?</p>
         <button id="confirm-reset" type="button">Confirm reset</button>
         <button id="cancel-reset" type="button" class="secondary">Cancel</button>
       </div>
+      <div id="decision-summary"></div>
     </section>
   </main>
   <script type="module" src="/app.mjs"></script>

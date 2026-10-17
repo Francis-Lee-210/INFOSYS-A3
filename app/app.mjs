@@ -1306,7 +1306,23 @@ function renderDecision() {
     ['Reasons', saved ? (value.reasons.join(' ') || 'None — no material inconsistency recorded.') : snapshot.reasons.join(' ')],
     ...(saved ? [['Confirmed at', value.confirmedAt], ['Receipt identity', value.receiptId]] : [])
   ] : [];
-  document.getElementById('decision-summary').innerHTML = `<dl class="cost-fields">${fields.map(([label, text]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(text)}</dd>`).join('')}</dl>`;
+  const summaryElement = document.getElementById('decision-summary');
+  const techWasOpen = summaryElement.querySelector('details')?.open === true;
+  const mainFields = value ? [
+    ['Document', `${value.document.kind} ${value.document.key}`],
+    ['Gross', `${value.amounts.gross ?? 'Not reported'} ${value.amounts.currency}`],
+    ['Billing date', value.date.value],
+    ['Data source', PROVENANCE_LABELS[value.document.provenance]]
+  ] : [];
+  const dl = (rows) => `<dl class="cost-fields">${rows.map(([label, text]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(String(text))}</dd>`).join('')}</dl>`;
+  document.getElementById('decision-card').innerHTML = value ? `<div class="decision-card">${dl(mainFields)}</div>` : '';
+  summaryElement.innerHTML = value ? `
+    <details class="tech-evidence"${techWasOpen ? ' open' : ''}>
+      <summary>Technical evidence (for reviewers)</summary>
+      <p>These are intentions only. Keep is not a plan suitability verdict. Review options is not an account switch or a completed switch. Help is not a submitted support ticket. Later is not a scheduled reminder.</p>
+      ${dl(fields)}
+    </details>
+  ` : '';
   const restricted = value?.materialInconsistency === true;
   document.getElementById('decision-restriction').textContent = restricted ? 'Material inconsistency: only Help or Later can be confirmed. The reason is retained with the receipt.' : '';
   intentOptions.hidden = saved || receiptRecovery;
@@ -1321,6 +1337,11 @@ function renderDecision() {
   document.getElementById('decision-return-to-list').hidden = !saved && !receiptRecovery;
   retryReceiptButton.hidden = true;
   receiptStatus.textContent = saved ? 'Saved — receipt write and read-back verified.' : 'Unsaved — no intention has been recorded.';
+  const success = document.getElementById('receipt-success');
+  success.hidden = !(saved && !receiptRecovery);
+  success.textContent = saved && !receiptRecovery
+    ? `✓ Saved: ${INTENTS[receipt.intent]} for ${receipt.document.kind} ${receipt.document.key} (${receipt.amounts.gross ?? 'gross not reported'} ${receipt.amounts.currency}).`
+    : '';
   if (receiptRecovery) receiptStatus.textContent = resetUncertain
     ? 'Deletion could not be verified. The receipt may already be deleted; no saved history is verified. Use Reset demo and Confirm reset to retry deletion and verification. The session key is cleared when reset is verified.'
     : 'Stored receipt could not be recovered. No saved history is shown. Use Reset demo to clear it and start again.';
@@ -1478,6 +1499,7 @@ function resetWithUnreadableStorage() {
   reopenReceiptButton.hidden = true;
   resetSession();
   document.getElementById('decision-summary').replaceChildren();
+  document.getElementById('decision-card').replaceChildren();
   receiptStatus.textContent = '';
   setStatus('Browser storage is unavailable, so no receipt could be read or deleted. The review session and key were cleared.');
   document.getElementById('use-fixture').focus();
@@ -1549,6 +1571,7 @@ document.getElementById('confirm-reset').addEventListener('click', () => {
   reopenReceiptButton.hidden = true;
   resetSession();
   document.getElementById('decision-summary').replaceChildren();
+  document.getElementById('decision-card').replaceChildren();
   receiptStatus.textContent = '';
   document.getElementById('use-fixture').focus();
 });

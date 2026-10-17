@@ -166,3 +166,18 @@ details.tech-evidence[open] > summary { margin-bottom: 8px; }
 .limits-box h3 { margin: 0 0 6px; font-size: 15px; }
 .limits-box ul { margin: 0; padding-left: 18px; }
 @media (max-width: 600px) { .amount-gross { font-size: 24px; } .detail-main { grid-template-columns: 1fr; } }
+
+/* #36 decision screen */
+.decision-card { padding: 12px 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); margin: 8px 0; }
+#intent-options { padding: 8px; }
+.intent-card { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px; margin: 8px 0; background: var(--white); }
+.intent-card:has(input:checked) { border-color: var(--plum); box-shadow: 0 0 0 2px var(--plum) inset; }
+.intent-card:has(input:disabled) { opacity: .55; }
+.intent-card:has(input:focus-visible) { outline: 3px solid var(--plum); outline-offset: 2px; }
+#intent-options .intent-card label { padding: 4px 0; font-weight: 700; cursor: pointer; }
+.intent-help { margin: 0 0 4px 28px; color: var(--muted); font-size: 14px; }
+.success-card { padding: 12px 16px; border: 1px solid #1D7A46; border-radius: 10px; background: #EAF6EF; color: #14532D; font-weight: 700; }
+#decision-restriction:empty { display: none; }
+#decision-restriction { padding: 8px 12px; border-left: 4px solid var(--magenta); font-weight: 700; }
+button.ghost.danger { color: var(--magenta); }
+#reset-demo { margin-top: 32px; }

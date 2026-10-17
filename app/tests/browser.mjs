@@ -2286,6 +2286,42 @@ test('issue 36: no horizontal page scroll on all three screens at 390px and 1280
   }
 });
 
+test('issue 36: step indicator, lead text and status follow the current screen', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.locator('#use-fixture').click();
+    await p.locator('#records-body tr[data-key="9000000001"]').click();
+    await p.waitForFunction(() => {
+      const statusText = document.querySelector('#status')?.textContent || '';
+      return statusText.includes('Detail loaded') && statusText.includes('9000000001');
+    });
+    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Choose a document/);
+    assert.equal(await p.locator('#steps li[aria-current="step"]').count(), 1);
+    assert.match(await p.locator('#screen-list .panel-head .hint').innerText(), /Sample data only \(SAP sandbox or offline demo\)/);
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#screen-cost').waitFor({ state: 'visible' });
+    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Understand the cost/);
+    assert.match(await p.locator('.title-row .lead').innerText(), /Check the amounts/);
+    assert.match(await p.locator('.limits-box').innerText(), /This is sample data \(SAP sandbox or offline demo\), not a Spark customer bill\./);
+    await p.locator('#continue-decision').click();
+    await p.locator('#screen-decision').waitFor({ state: 'visible' });
+    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Record your decision/);
+    assert.match(await p.locator('#status').innerText(), /Decision step opened for document 9000000001\./);
+    await p.locator('#back-to-evidence').click();
+    await p.locator('#screen-cost').waitFor({ state: 'visible' });
+    assert.match(await p.locator('#status').innerText(), /Cost evidence opened for document 9000000001\./);
+    await p.locator('#continue-decision').click();
+    await p.locator('#screen-decision').waitFor({ state: 'visible' });
+    await p.locator('input[value="keep"]').check();
+    await p.locator('#confirm-intent').click();
+    await p.locator('#receipt-success').waitFor({ state: 'visible' });
+    assert.match(await p.locator('#status').innerText(), /Receipt saved for document 9000000001\./);
+    await p.locator('#reset-demo').click();
+    await p.locator('#confirm-reset').click();
+  } finally { await context.close(); }
+});
+
 registerIssue8Tests({ test, browser: () => browser, startInjectedServer, injectedServers, TEST_PORT });
 registerIssue9Tests({ test, browser: () => browser, startInjectedServer, injectedServers, TEST_PORT });
 registerIssue27Tests({ test, browser: () => browser, startInjectedServer, injectedServers, TEST_PORT });

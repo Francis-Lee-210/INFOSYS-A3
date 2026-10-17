@@ -1019,7 +1019,7 @@ function renderCost(snapshot) {
     const cur = escapeHtml(snapshot.amounts.currency || snapshot.document.currency || 'Unknown');
     const show = (value) => value === null || value === undefined || value === '' ? 'Not reported' : escapeHtml(String(value));
     const limits = [
-      'This is SAP sandbox demo data, not a Spark customer bill.',
+      'This is sample data (SAP sandbox or offline demo), not a Spark customer bill.',
       'It does not show whether anything was paid, or which service period it covers.',
       'Amounts are shown exactly as reported. Nothing is added up or converted.'
     ];
@@ -1356,6 +1356,7 @@ function openDecision() {
   renderDecision();
   if (receipt) setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
   showDecision();
+  if (!receipt && !receiptRecovery && decisionSnapshot) setStatus(`Decision step opened for document ${decisionSnapshot.document.key}. Choose an intent, then Confirm intent.`);
 }
 
 function currentCostEvidenceReady() {
@@ -1422,6 +1423,7 @@ function saveReceipt() {
     if (JSON.stringify(readBack) !== serialized) throw new Error('Receipt read-back differs from the confirmed intent.');
     receipt = readBack;
     renderDecision();
+    setStatus(`Receipt saved for document ${receipt.document.key}.`);
     // Only an explicit successful confirmation/retry moves focus, not rendering
     // caused by unrelated connection or optional-evidence activity.
     document.getElementById('decision-title').focus();
@@ -1470,6 +1472,7 @@ document.getElementById('back-to-evidence').addEventListener('click', () => {
   screenDecision.hidden = true;
   screenCost.hidden = false;
   document.getElementById('continue-decision').focus();
+  if (state.costSnapshot) setStatus(`Cost evidence opened for document ${state.costSnapshot.document.key}.`);
 });
 document.getElementById('decision-return-to-list').addEventListener('click', () => {
   backToList();

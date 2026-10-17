@@ -28,6 +28,27 @@ key was used, no upstream request was made, and no participant was involved.
 - Pre-existing failures carried from the Part 0 baseline at `origin/main` `28aee9d`:
   **none** (the baseline FAIL list was empty).
 
+## Follow-up polish (Part 7)
+
+Branch `feat/36-usability-polish`, based on `feat/36-usability-hierarchy` (PR #40).
+Code-bearing head tested: `3cb9de943fa9c428539f718d15e7cfbdaacb3268`
+(`feat(#36): consistent names, Net/Tax/Gross help and plainer status copy`). The "after"
+screenshots were re-taken on this head; the "before" screenshots are unchanged.
+
+| Change | Heuristic (Nielsen H1–H10) |
+|---|---|
+| Step names now match the screen headings ("2. Review cost evidence", "3. Decide and save a receipt") | H4 Consistency and standards |
+| The demo button names its own label ("Try with demo data (Fixture demonstration)"), matching the "Fixture demonstration" provenance shown after loading | H4 Consistency and standards |
+| The eyebrow shows the product name "Billing Review Lite" instead of a screen-specific label | H4 Consistency and standards |
+| Screen 1 has a single filled main button, and "Next page" became a secondary button | H8 Aesthetic and minimalist design |
+| The "Reported figures remain exactly as returned…" audit sentence moved from the top of the cost screen into the "Technical evidence (for reviewers)" disclosure | H8 Aesthetic and minimalist design |
+| New "Net is the amount before sales tax…" explanation in the amount card | H10 Help and documentation |
+| Plain status texts: "Partial coverage: more records are available with Next page." and "Saved — your receipt was stored and checked." | H2 Match between system and the real world |
+
+Covering test: `issue 36: names stay consistent and the amount card explains Net, Tax and
+Gross`. Final `npm test` summary line on this head: **`All 174 tests passed.`** (167 pre-#36
+tests + 7 new `issue 36` tests); FAIL list empty.
+
 ## Limits
 
 This is a fixture-based browser check of the shipped `app/` UI at 1280×900 and 390×844. It
@@ -54,6 +75,5 @@ merge.
   messages stay in the top status area, which remains visible on every screen when the
   connection panel is collapsed, and it is updated at each step.
 - Disconnect / reset is still shown before a source is connected.
-- The page summary under the list ("a supported continuation is available") and the saved
-  status ("receipt write and read-back verified") keep their existing wording, because many
-  existing tests assert it.
+- The list summary on the last page ("Explicitly bounded fixture coverage exhausted…" /
+  "Continuation exhausted…") keeps its existing wording, because existing tests assert it.

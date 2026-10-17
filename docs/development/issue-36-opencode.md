@@ -7,15 +7,16 @@
 - **Tool:** OpenCode.
 - **Model:** `opencode` / `deepseek-v4.1-flash-free` (DeepSeek V4.1 Flash Free), used for the
   whole task.
-- **Session:** one continuous OpenCode session covered Parts 0–5 on this single branch. No
-  other project or branch was driven by this session for #36.
+- **Session:** one continuous OpenCode session covered Parts 0–7: branch
+  `feat/36-usability-hierarchy` (Parts 0–6) and this follow-up branch
+  `feat/36-usability-polish` (Part 7). No other project was driven by this session for #36.
 - No credentials, keys or tokens are recorded here. Independent review/acceptance evidence is
   kept separately in [issue-36-acceptance.md](../validation/issue-36-acceptance.md), and the
   before/after captures are in `docs/validation/issue-36-*-*.png`.
 
-## Prompts used (Parts 0–6)
+## Prompts used (Parts 0–7)
 
-The user issued six sequential work orders, each a self-contained part of the same task.
+The user issued seven sequential work orders, each a self-contained part of the same task.
 In summary:
 
 1. **Part 0 — setup and baseline.** Create `feat/36-usability-hierarchy` from `origin/main`;
@@ -40,6 +41,12 @@ In summary:
    the top status line current when the decision step opens, when going back to cost
    evidence, and after a verified save; add one test for the step indicator, the lead text
    and those status lines; re-take the "after" screenshots; and refresh both records.
+8. **Part 7 — usability polish (follow-up PR).** Make the step names match the screen
+   headings; name the "Fixture demonstration" label on the demo button; show the product
+   name "Billing Review Lite" in the eyebrow; make Next page a secondary button; move one
+   audit sentence into the cost technical section; add a Net/Tax/Gross explanation; use
+   plain words in two status texts; add one test; re-take the "after" screenshots. Work is
+   on branch `feat/36-usability-polish`.
 
 Only the files named in each part were touched. `app/lib/`, `app/server.js`, `app/package.json`
 and `app/package-lock.json` were never modified, no package was installed, and no new file
@@ -56,8 +63,9 @@ was added under `app/`.
 | 4 | `d51c9c6e187dfde4d9f7ea63e93ba75e7118da13` | `app/index.html`, `app/styles.css`, `app/app.mjs`, `app/tests/browser.mjs`, `app/tests/issue-27.mjs`, `app/README.md`, `README-SOURCE.md` | 172/172 pass (167 + 5 new); FAIL list unchanged |
 | 5 | (this record's commit) | `docs/validation/issue-36-*.png`, `docs/validation/issue-36-acceptance.md`, `docs/development/issue-36-opencode.md` | 172/172 pass on the unchanged code head |
 | 6 | `d71cb9896d092e68f196a842319052a374f5ac3e` | `app/index.html`, `app/app.mjs`, `app/tests/browser.mjs`, `docs/validation/issue-36-after-*.png`, `docs/validation/issue-36-acceptance.md`, `docs/development/issue-36-opencode.md` | 173/173 pass; FAIL list empty |
+| 7 | `3cb9de943fa9c428539f718d15e7cfbdaacb3268` | `app/index.html`, `app/app.mjs`, `app/tests/browser.mjs`, `app/tests/issue-9.mjs`, `README-SOURCE.md`, `app/README.md`, `docs/validation/issue-36-after-*.png`, `docs/validation/issue-36-acceptance.md`, `docs/development/issue-36-opencode.md` | 174/174 pass; FAIL list empty |
 
-Final summary line on the code-bearing head: **`All 173 tests passed.`** No inherited test
+Final summary line on the code-bearing head: **`All 174 tests passed.`** No inherited test
 assertion was weakened; the only test-line edits were the exact expected-UI-string
 replacements listed below.
 
@@ -67,10 +75,16 @@ replacements listed below.
   → `'Try with demo data'`.
 - `app/tests/issue-27.mjs`: regex `/^Unsaved — storage write or read-back verification failed/`
   → `/^Unsaved — we could not confirm your receipt was saved/`.
+- `app/tests/issue-9.mjs`: `#receipt-status` regex `/read-back verified/` →
+  `/stored and checked/` (plain wording).
+- `app/tests/browser.mjs` (in `issue 36: step indicator, lead text and status follow the
+  current screen`): step-indicator regex `/Understand the cost/` → `/Review cost evidence/`.
+- `app/tests/browser.mjs` (same test): step-indicator regex `/Record your decision/` →
+  `/Decide and save a receipt/`.
 
-## New `issue 36` tests (added in Parts 4 and 6)
+## New `issue 36` tests (added in Parts 4, 6 and 7)
 
-All six use `rawNewContext` so the UI runs in its real default state (collapsed connection
+All seven use `rawNewContext` so the UI runs in its real default state (collapsed connection
 panel, closed disclosures). They passed in the final run:
 
 - `issue 36: connection panel collapses after choosing a source and Change source reopens it by keyboard`
@@ -79,6 +93,7 @@ panel, closed disclosures). They passed in the final run:
 - `issue 36: saved confirmation names the intent, document and gross amount`
 - `issue 36: no horizontal page scroll on all three screens at 390px and 1280px`
 - `issue 36: step indicator, lead text and status follow the current screen`
+- `issue 36: names stay consistent and the amount card explains Net, Tax and Gross`
 
 ## Verification
 

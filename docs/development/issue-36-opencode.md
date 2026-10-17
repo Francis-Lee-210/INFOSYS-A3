@@ -13,10 +13,10 @@
   kept separately in [issue-36-acceptance.md](../validation/issue-36-acceptance.md), and the
   before/after captures are in `docs/validation/issue-36-*-*.png`.
 
-## Prompts used (Parts 0–5)
+## Prompts used (Parts 0–6)
 
-The user issued five sequential work orders, each a self-contained part of the same task,
-plus this final packaging part. In summary:
+The user issued six sequential work orders, each a self-contained part of the same task.
+In summary:
 
 1. **Part 0 — setup and baseline.** Create `feat/36-usability-hierarchy` from `origin/main`;
    read Issue #36 for background only; record the baseline `npm test` result; add a
@@ -36,6 +36,10 @@ plus this final packaging part. In summary:
    the affected test expectations, and add five new `issue 36` tests.
 6. **Part 5 — packaging.** Capture before/after screenshots, write this record and the
    acceptance record, commit, push and open the pull request.
+7. **Part 6 — review fixes.** Make the sample-data wording true in every data mode; keep
+   the top status line current when the decision step opens, when going back to cost
+   evidence, and after a verified save; add one test for the step indicator, the lead text
+   and those status lines; re-take the "after" screenshots; and refresh both records.
 
 Only the files named in each part were touched. `app/lib/`, `app/server.js`, `app/package.json`
 and `app/package-lock.json` were never modified, no package was installed, and no new file
@@ -51,8 +55,9 @@ was added under `app/`.
 | 3 | `c5074309cd1244049ab4198f8b1043dc65faedd7` | `app/index.html`, `app/styles.css`, `app/app.mjs` | 167/167 pass; FAIL list unchanged |
 | 4 | `d51c9c6e187dfde4d9f7ea63e93ba75e7118da13` | `app/index.html`, `app/styles.css`, `app/app.mjs`, `app/tests/browser.mjs`, `app/tests/issue-27.mjs`, `app/README.md`, `README-SOURCE.md` | 172/172 pass (167 + 5 new); FAIL list unchanged |
 | 5 | (this record's commit) | `docs/validation/issue-36-*.png`, `docs/validation/issue-36-acceptance.md`, `docs/development/issue-36-opencode.md` | 172/172 pass on the unchanged code head |
+| 6 | `d71cb9896d092e68f196a842319052a374f5ac3e` | `app/index.html`, `app/app.mjs`, `app/tests/browser.mjs`, `docs/validation/issue-36-after-*.png`, `docs/validation/issue-36-acceptance.md`, `docs/development/issue-36-opencode.md` | 173/173 pass; FAIL list empty |
 
-Final summary line on the code-bearing head: **`All 172 tests passed.`** No inherited test
+Final summary line on the code-bearing head: **`All 173 tests passed.`** No inherited test
 assertion was weakened; the only test-line edits were the exact expected-UI-string
 replacements listed below.
 
@@ -63,9 +68,9 @@ replacements listed below.
 - `app/tests/issue-27.mjs`: regex `/^Unsaved — storage write or read-back verification failed/`
   → `/^Unsaved — we could not confirm your receipt was saved/`.
 
-## New `issue 36` tests (added in Part 4)
+## New `issue 36` tests (added in Parts 4 and 6)
 
-All five use `rawNewContext` so the UI runs in its real default state (collapsed connection
+All six use `rawNewContext` so the UI runs in its real default state (collapsed connection
 panel, closed disclosures). They passed in the final run:
 
 - `issue 36: connection panel collapses after choosing a source and Change source reopens it by keyboard`
@@ -73,6 +78,7 @@ panel, closed disclosures). They passed in the final run:
 - `issue 36: cost amount card shows exact reported amounts without formatting`
 - `issue 36: saved confirmation names the intent, document and gross amount`
 - `issue 36: no horizontal page scroll on all three screens at 390px and 1280px`
+- `issue 36: step indicator, lead text and status follow the current screen`
 
 ## Verification
 
@@ -80,9 +86,6 @@ panel, closed disclosures). They passed in the final run:
   throughout.
 - Part 0 installed the Playwright Chromium browser with `npx playwright install chromium`
   because it was initially missing.
-- The five new tests were additionally checked by hand in a real browser at 1280px and
-  390px (collapse/reopen, keyboard disclosure open, exact amount strings, saved
-  confirmation, no page-level horizontal scroll).
 - Part 5 captured the before/after screenshots from a throwaway script outside the
   repository: "before" from a temporary `origin/main` worktree on port 6290 (removed
   afterwards), "after" from this branch on port 6291. No `app/` file was changed in Part 5.

@@ -3,6 +3,8 @@ const error = document.getElementById('error');
 const provenance = document.getElementById('provenance');
 const recordsBody = document.getElementById('records-body');
 const listMeta = document.getElementById('list-meta');
+// Short plain page summary under the list; the full coverage statement stays in #list-meta.
+const listSummary = document.getElementById('list-summary');
 const detail = document.getElementById('detail');
 const detailActions = document.getElementById('detail-actions');
 const evidence = document.getElementById('evidence');
@@ -287,6 +289,7 @@ function resetSession() {
   apiKeyInput.value = '';
   recordsBody.innerHTML = '<tr><td colspan="5" class="empty">No records loaded.</td></tr>';
   listMeta.textContent = 'No list request has returned.';
+  listSummary.textContent = 'No records loaded yet.';
   detail.className = 'detail empty-detail';
   detail.innerHTML = '<p>Select a document to load its detail.</p>';
   detailActions.hidden = true;
@@ -367,6 +370,7 @@ async function loadPage(operation, moveFocus = false) {
   state.loadedMeta = null;
   recordsBody.innerHTML = '<tr><td colspan="5" class="empty">Loading...</td></tr>';
   listMeta.textContent = `Loading page ${page}. Previous page rows and selection are cleared.`;
+  listSummary.textContent = `Loading page ${page}...`;
   detail.className = 'detail empty-detail';
   detail.innerHTML = '<p>Select a document to load its detail.</p>';
   detailActions.hidden = true;
@@ -484,6 +488,7 @@ async function loadPage(operation, moveFocus = false) {
     state.records = [];
     state.loadedMeta = null;
     recordsBody.innerHTML = '<tr><td colspan="5" class="empty">Page unavailable — read failed.</td></tr>';
+    listSummary.textContent = `Page ${page} could not be loaded.`;
     listMeta.textContent = `Page ${page} read failed. No previous page is shown as this page. ${caught?.code === 'AUTH' ? 'Correct the key and reconnect before selecting a record.' : 'Retry the failed page or restart the list.'}`;
     const message = readFailure(caught, operation);
     showError(message);
@@ -500,6 +505,7 @@ function renderPageMeta(json) {
   const coverage = reads.continuation.startsWith('rejected')
     ? 'Continuation rejected / navigation stopped; coverage remains unknown, not complete.'
     : (reads.next ? 'Partial coverage: you can check the next page for more records.' : (state.mode !== 'live' && json.boundedComplete === true ? 'Explicitly bounded fixture coverage exhausted; not SAP account history.' : 'Continuation exhausted (none reported); complete account history is not established.'));
+  listSummary.textContent = `Page ${reads.page}: ${json.records.length} record(s). ${reads.continuation.startsWith('rejected') ? 'The next page could not be used.' : (reads.next ? 'You can check the next page for more records.' : 'No further page was reported.')}`;
   listMeta.textContent = `Page ${reads.page}: ${json.records.length} loaded, ${json.usableCount ?? json.records.filter(item => item.usable).length} usable on this page only. ${coverage} Loaded records, not complete history. No annual coverage or combined financial total.`;
 }
 
@@ -1318,11 +1324,8 @@ function renderDecision() {
   const value = receipt || (!receiptRecovery && snapshot ? receiptFromSnapshot(snapshot, chosenIntent) : null);
   document.getElementById('decision-history').textContent = receiptRecovery
     ? 'No verified saved receipt is displayed. Reset demo offers deliberate deletion and verification; cancelling does not change storage.'
-    : (saved ? 'Historical snapshot — not a newly refreshed bill. Original evidence and provenance are retained.'
+    : (saved ? 'Historical snapshot — not a newly refreshed record. The original evidence and data source are kept.'
       : 'Review this evidence and choose an intention before confirming.');
-  if (saved && snapshot && reviewIdentity(snapshot.document) !== receipt.reviewId) {
-    document.getElementById('decision-history').textContent += ` A saved receipt for document ${receipt.document.key} already exists. The current document ${snapshot.document.key} has NOT been recorded. Reset demo is required to record a new intention (one receipt at a time).`;
-  }
   const fields = value ? [
     ['Document kind / key', `${value.document.kind} / ${value.document.key}`],
     ['Provenance', PROVENANCE_LABELS[value.document.provenance]],

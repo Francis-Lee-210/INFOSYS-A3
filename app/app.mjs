@@ -478,7 +478,7 @@ async function loadPage(operation, moveFocus = false) {
 function renderPageMeta(json) {
   const coverage = reads.continuation.startsWith('rejected')
     ? 'Continuation rejected / navigation stopped; coverage remains unknown, not complete.'
-    : (reads.next ? 'Partial coverage: more records are available with Next page.' : (state.mode !== 'live' && json.boundedComplete === true ? 'Explicitly bounded fixture coverage exhausted; not SAP account history.' : 'Continuation exhausted (none reported); complete account history is not established.'));
+    : (reads.next ? 'Partial coverage: you can check the next page for more records.' : (state.mode !== 'live' && json.boundedComplete === true ? 'Explicitly bounded fixture coverage exhausted; not SAP account history.' : 'Continuation exhausted (none reported); complete account history is not established.'));
   listMeta.textContent = `Page ${reads.page}: ${json.records.length} loaded, ${json.usableCount ?? json.records.filter(item => item.usable).length} usable on this page only. ${coverage} Loaded records, not complete history. No annual coverage or combined financial total.`;
 }
 

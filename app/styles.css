@@ -129,3 +129,15 @@ button:disabled { opacity: .55; cursor: default; }
 #decision-summary { overflow-wrap: anywhere; }
 #continue-decision, #reset-demo { margin-top: 16px; }
 @media (max-width: 600px) { .mobile-table-hint { display: block; } }
+
+/* #36 step indicator */
+.steps { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0 0 16px; padding: 0; }
+.steps li { padding: 6px 12px; border: 1px solid var(--rule); border-radius: 999px; background: var(--white); color: var(--muted); font-size: 13px; font-weight: 700; }
+.steps li[aria-current="step"] { border-color: var(--plum); background: var(--plum); color: var(--white); }
+
+/* #36 collapsible connection panel */
+.connection-panel.is-collapsed { padding: 12px 18px; }
+.connection-panel.is-collapsed .connection-grid { display: none; }
+.connection-panel.is-collapsed > h2 { display: none; }
+.connection-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.connection-panel.is-collapsed .status { margin-top: 8px; padding: 6px 10px; font-size: 13px; }

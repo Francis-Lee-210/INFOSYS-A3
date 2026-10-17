@@ -16,9 +16,18 @@
       </div>
       <div id="provenance" class="badge" aria-live="polite">Not connected</div>
     </header>
+    <ol id="steps" class="steps" aria-label="Review progress">
+      <li data-step="list">1. Choose a document</li>
+      <li data-step="cost">2. Understand the cost</li>
+      <li data-step="decision">3. Record your decision</li>
+    </ol>
 
     <section class="connection-panel" aria-labelledby="connection-title">
       <h2 id="connection-title">Connection</h2>
+      <div id="connection-summary" class="connection-summary" hidden>
+        <span>Data source: <strong id="connection-summary-label"></strong></span>
+        <button id="change-source" type="button" class="secondary">Change source</button>
+      </div>
       <div class="connection-grid">
         <div class="field">
           <label for="api-key">SAP sandbox API key (session only)</label>

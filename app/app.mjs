@@ -33,6 +33,17 @@ const retryReadButton = document.getElementById('retry-read');
 const readRecovery = document.getElementById('read-recovery');
 const readRecoveryMessage = document.getElementById('read-recovery-message');
 const correctKeyButton = document.getElementById('correct-key');
+const connectionPanel = document.querySelector('.connection-panel');
+const connectionSummary = document.getElementById('connection-summary');
+const connectionSummaryLabel = document.getElementById('connection-summary-label');
+// True while the user has explicitly reopened the connection form with Change source.
+let connectionExpanded = false;
+function syncConnectionPanel() {
+  const collapsed = state.mode !== 'none' && !reads.recovery && !connectionExpanded;
+  connectionPanel.classList.toggle('is-collapsed', collapsed);
+  connectionSummary.hidden = !collapsed;
+  connectionSummaryLabel.textContent = provenance.textContent;
+}
 const RECEIPT_KEY = 'planReviewSnapshot.receipt';
 const RECEIPT_VERSION = 'issue-7-receipt-v2';
 const INTENTS = { keep: 'Keep', 'review-options': 'Review options', help: 'Help', later: 'Later' };
@@ -49,15 +60,21 @@ let pendingReceipt = null;
 let receiptWriteAttempted = false;
 let decisionSnapshot = null;
 const screenNames = [
-  { screen: screenList, heading: 'Choose a document to review', title: 'Choose a document – Plan Review Snapshot' },
-  { screen: screenCost, heading: 'Review cost evidence', title: 'Cost evidence – Plan Review Snapshot' },
-  { screen: screenDecision, heading: 'Decide and save a receipt', title: 'Decision and receipt – Plan Review Snapshot' }
+  { screen: screenList, heading: 'Choose a document to review', title: 'Choose a document – Plan Review Snapshot', step: 'list', lead: 'Pick a billing record to see what it charges. Use demo data, or connect to the SAP sandbox with a key.' },
+  { screen: screenCost, heading: 'Review cost evidence', title: 'Cost evidence – Plan Review Snapshot', step: 'cost', lead: 'Check the amounts and what this record cannot tell you.' },
+  { screen: screenDecision, heading: 'Decide and save a receipt', title: 'Decision and receipt – Plan Review Snapshot', step: 'decision', lead: 'Record what you want to do next. Nothing changes in any account.' }
 ];
 function syncScreenName() {
   const active = screenNames.find(({ screen }) => !screen.hidden);
   if (!active) return;
   pageHeading.textContent = active.heading;
   document.title = active.title;
+  const lead = document.querySelector('.title-row .lead');
+  if (lead) lead.textContent = active.lead;
+  for (const item of document.querySelectorAll('#steps li')) {
+    if (item.dataset.step === active.step) item.setAttribute('aria-current', 'step');
+    else item.removeAttribute('aria-current');
+  }
 }
 new MutationObserver(syncScreenName).observe(screenList.parentElement, { attributes: true, attributeFilter: ['hidden'], subtree: true });
 syncScreenName();
@@ -127,6 +144,7 @@ function updateReadControls() {
   }
   const recovery = reads.recovery;
   readRecovery.hidden = !recovery;
+  syncConnectionPanel();
   if (!recovery) return;
   correctKeyButton.hidden = recovery.code !== 'AUTH';
   retryReadButton.hidden = recovery.code === 'AUTH';
@@ -215,15 +233,18 @@ function setMode(mode) {
   // the active view, not whichever asynchronous request happened to finish last.
   if (receipt && !screenDecision.hidden) {
     setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
+    syncConnectionPanel();
     return;
   }
   if (mode === 'live') setProvenance('Live SAP sandbox', 'live');
   else if (mode === 'fixture') setProvenance('Fixture demonstration', 'fixture');
   else if (mode === 'synthetic') setProvenance('Synthetic fixture', 'fixture');
   else setProvenance('Not connected', '');
+  syncConnectionPanel();
 }
 
 function resetSession() {
+  connectionExpanded = false;
   state.connectionToken += 1;
   state.records = [];
   state.selectedKey = '';
@@ -269,6 +290,7 @@ function appendQuery(path, pairs) {
 }
 
 async function loadList(mode) {
+  connectionExpanded = false;
   clearError();
   const suppliedKey = mode === 'live' ? apiKeyInput.value.trim() : '';
   if (mode === 'live' && suppliedKey === '') {
@@ -1059,6 +1081,11 @@ document.getElementById('connect-live').addEventListener('click', () => loadList
 document.getElementById('use-synthetic')?.addEventListener('click', () => loadList('synthetic'));
 document.getElementById('use-fixture').addEventListener('click', () => loadList('fixture'));
 document.getElementById('disconnect').addEventListener('click', resetSession);
+document.getElementById('change-source').addEventListener('click', () => {
+  connectionExpanded = true;
+  syncConnectionPanel();
+  document.getElementById('use-fixture').focus();
+});
 document.getElementById('reload-detail').addEventListener('click', () => {
   if (state.selectedKey) selectRecord(state.selectedKey, true);
 });

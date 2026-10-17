@@ -53,6 +53,26 @@ screenshots were re-taken on this head.
 | R40-07 | The intent help says "this record", never "this bill" | H2 | `issue 36 review: date wording follows the source, …` |
 | Extra | After a receipt is saved, opening another document explains that only one receipt is kept and that Reset demo is needed | H1; H9 | `issue 36 review: date wording follows the source, …` |
 
+**Round 3 (Francis's re-review of `ea72539`).** R40-03 and R40-05 were still partial.
+Code-bearing head tested: `8d4bcd770055757d392e7d01b68a7edcfcc715a9`. Final `npm test` summary line on this head:
+**`All 180 tests passed.`**; FAIL list empty. No visible main-flow screen changed, so the "after"
+screenshots were not re-taken.
+
+- R40-03 (test coverage): on the default UI with no harness, a failed detail read expands the
+  collapsed connection panel and keyboard Retry read recovers, with focus on "Review cost
+  evidence"; a key failure expands it, keyboard Correct key moves focus to the key field, and
+  a keyboard reconnect collapses the panel again; the decision-screen "Technical evidence (for
+  reviewers)" opens and closes by keyboard with focus kept on its summary. Tests: `issue 36
+  review: a failed read expands …`, `issue 36 review: a key failure expands …`, and the added
+  assertions in `issue 36: technical evidence is closed by default and opens by keyboard on
+  each screen`.
+- R40-05 (H2; H4 Consistency and standards; H9): service period, payment status and missing
+  linked-row amounts display "Not available"; the stored snapshot and receipt keep their
+  original values. A failed Reset of an unreadable saved receipt now says "Reset could not
+  delete the unreadable saved receipt. It is still stored. Try Confirm reset again." Tests:
+  `issue 36 review: cost evidence shows Not available …` and `issue 36 review: a failed Reset
+  of an unreadable saved receipt …`.
+
 **Why the legacy-expanded harness stays (R40-03).** Removing it would mean rewriting the setup
 of 167 inherited tests just before submission, with a high risk of breaking assertions that
 pass today. Instead, the paths the collapsed defaults can affect are covered on the real

@@ -98,7 +98,7 @@ Chromium; the app served on the loopback interface only.
 ## Review fixes (Francis's review of 17 Oct 2026)
 
 Francis reviewed PR #40 at `bed8d6b` with seven findings (R40-01 to R40-07) and PR #41 at
-`37e2983` with one more (R41-01). The same OpenCode session applied them in two rounds of
+`37e2983` with one more (R41-01). The same OpenCode session applied them in three rounds of
 work orders.
 
 1. **Round 1.** R40-01: the date explanation follows the data source. R40-02: the specific
@@ -112,6 +112,15 @@ work orders.
    Document / Date / Amount / Currency, one missing-value wording ("Not available"), and plain
    read-error wording. R40-04: optional-items status next to "Check optional items". R40-03:
    two new tests run the default UI with no harness. Commit `da05a54655bd301ff50e64c4c37020930e4c9694`: `All 176 tests passed.`
+3. **Round 3 (Francis's re-review of `ea72539`).** R40-03: two new tests on the default UI
+   with no harness (a failed read expands the collapsed connection panel and keyboard Retry
+   read recovers; a key failure expands it and keyboard Correct key reconnects), and the
+   keyboard disclosure test now also opens and closes the decision-screen disclosure.
+   R40-05: service period, payment status and linked-row missing amounts display
+   "Not available" (stored values unchanged), and a failed Reset of an unreadable saved
+   receipt uses plain words; two new tests. No existing assertion was changed. No visible
+   main-flow screen changed, so the after screenshots were not re-taken. Commit
+   `8d4bcd770055757d392e7d01b68a7edcfcc715a9`: `All 180 tests passed.`
 
 Test-line edits in round 2 (old → new):
 
@@ -137,6 +146,10 @@ New tests:
 - `issue 36 review: date wording follows the source, intent help says record, and a second document explains the one-receipt limit` (round 1)
 - `issue 36 review: default UI keeps synthetic under More data sources, labels list columns plainly and shows Disconnect only after a source is chosen` (round 2)
 - `issue 36 review: Check optional items shows pending, failure and recovery next to the button on the default UI` (round 2)
+- `issue 36 review: a failed read expands the collapsed connection panel and keyboard Retry read recovers on the default UI` (round 3)
+- `issue 36 review: a key failure expands the collapsed connection panel and keyboard Correct key reconnects on the default UI` (round 3)
+- `issue 36 review: cost evidence shows Not available for missing service, payment and linked-row values while stored values are unchanged` (round 3)
+- `issue 36 review: a failed Reset of an unreadable saved receipt explains it in plain words and keeps the data` (round 3)
 
 The after screenshots were re-taken on `da05a54655bd301ff50e64c4c37020930e4c9694`. The legacy-expanded harness for the
 pre-#36 tests is kept; the acceptance record explains why.

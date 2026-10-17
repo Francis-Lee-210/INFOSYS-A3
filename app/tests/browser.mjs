@@ -1530,6 +1530,7 @@ for (const conflict of ['synthetic relation', 'linked currency']) {
         assert.equal(await p.getByRole('radio', { name: 'Keep', exact: true }).isDisabled(), true);
         assert.equal(await p.getByRole('radio', { name: 'Review options', exact: true }).isDisabled(), true);
         await expectText(p, '#decision-restriction', 'only Help or Later');
+        await expectText(p, '#decision-restriction', 'Reason: ');
         // Even a forged enabled radio cannot bypass the confirmation guard.
         await p.locator('input[value="keep"]').evaluate(input => {
           input.disabled = false; input.checked = true; input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -2150,6 +2151,56 @@ test('issue 7 review: connection input and hint remain usable with Reopen visibl
       await issue7Screenshot(p, `layout-${width}`);
     } finally { await context.close(); }
   }
+});
+
+test('issue 36 review: date wording follows the source, intent help says record, and a second document explains the one-receipt limit', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  const select = async (key) => {
+    await p.locator(`#records-body tr[data-key="${key}"]`).click();
+    await p.waitForFunction((expected) => {
+      const statusText = document.querySelector('#status')?.textContent || '';
+      return statusText.includes('Detail loaded') && statusText.includes(expected);
+    }, key);
+  };
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.locator('#use-synthetic').click();
+    await select('SYN-0001');
+    assert.match(await p.locator('#detail .detail-main').innerText(), /synthetic processing date, not a payment date/);
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#screen-cost').waitFor({ state: 'visible' });
+    const syntheticMeta = await p.locator('.amount-hero').innerText();
+    assert.match(syntheticMeta, /a synthetic processing date supplied by the demo fixture/);
+    assert.doesNotMatch(syntheticMeta, /booked/);
+    await p.locator('#back-to-list').click();
+    await p.locator('#change-source').click();
+    await p.locator('#use-fixture').click();
+    await select('9000000001');
+    assert.match(await p.locator('#detail .detail-main').innerText(), /date the follow-on billing document is to be processed, not a payment date/);
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#screen-cost').waitFor({ state: 'visible' });
+    await p.locator('#continue-decision').click();
+    await p.locator('#screen-decision').waitFor({ state: 'visible' });
+    const intentText = await p.locator('#intent-options').innerText();
+    assert.doesNotMatch(intentText, /this bill/);
+    assert.match(intentText, /explain this record/);
+    await p.locator('input[value="keep"]').check();
+    await p.locator('#confirm-intent').click();
+    await p.locator('#receipt-success').waitFor({ state: 'visible' });
+    assert.equal(await p.locator('#one-receipt-note').isVisible(), true);
+    await p.locator('#decision-return-to-list').click();
+    await select('9000000002');
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#screen-cost').waitFor({ state: 'visible' });
+    await p.locator('#continue-decision').click();
+    await p.locator('#screen-decision').waitFor({ state: 'visible' });
+    assert.equal(await p.locator('#receipt-success').isVisible(), false);
+    assert.equal(await p.locator('#one-receipt-note').isVisible(), false);
+    assert.match(await p.locator('#decision-restriction').innerText(), /Only one receipt is kept\. Document 9000000001 is already recorded, so document 9000000002 cannot be recorded until you use Reset demo/);
+    assert.match(await p.locator('#status').innerText(), /A receipt for document 9000000001 is already saved\. Use Reset demo to record a decision for document 9000000002\./);
+    await p.locator('#reset-demo').click();
+    await p.locator('#confirm-reset').click();
+  } finally { await context.close(); }
 });
 
 test('issue 36: connection panel collapses after choosing a source and Change source reopens it by keyboard', async () => {

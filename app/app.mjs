@@ -609,7 +609,7 @@ function renderDetail(record) {
   detail.innerHTML = `
     <dl class="detail-main">
       ${li('Document', `${escapeHtml(record.documentKind || 'billing request')} ${escapeHtml(record.key || 'Unknown')}`)}
-      ${li('Date', `${escapeHtml(record.dateNormalized || 'Unknown')} (accounting date, not a payment date)`)}
+      ${li('Date', `${escapeHtml(record.dateNormalized || 'Unknown')} (${escapeHtml(plainDateMeaning(record.dateMeaning).short)})`)}
       ${li('Net', money(amounts.net))}
       ${li('Tax', money(amounts.tax))}
       ${li('Gross', money(amounts.gross))}
@@ -768,6 +768,12 @@ function escapeHtml(value) {
 // Mirror the normalized public contract before allowing Screen 2. Amounts stay text.
 const REQUEST_DATE_MEANING = 'Date on which the subsequent billing document is processed and booked for accounting purposes. Not a payment or service-coverage date.';
 const SYNTHETIC_DATE_MEANING = 'Synthetic processing date supplied by the fixture; not a payment or service-coverage date.';
+// #36 review R40-01: plain wording that keeps each source's own date meaning.
+function plainDateMeaning(meaning) {
+  if (meaning === SYNTHETIC_DATE_MEANING) return { short: 'synthetic processing date, not a payment date', long: 'a synthetic processing date supplied by the demo fixture. It is not a payment date or a service period.' };
+  if (meaning === REQUEST_DATE_MEANING) return { short: 'date the follow-on billing document is to be processed, not a payment date', long: 'the date on which the follow-on billing document is to be processed and booked for accounting. It is not a payment date or a service period.' };
+  return { short: String(meaning || 'meaning not reported'), long: String(meaning || 'meaning not reported') };
+}
 
 function knownCurrency(value) {
   if (typeof value !== 'string' || !/^[A-Z]{3}$/.test(value)) return false;
@@ -1029,7 +1035,7 @@ function renderCost(snapshot) {
         <p class="amount-gross"><span class="amount-label">Gross</span> <span class="amount-value">${show(snapshot.amounts.gross)}</span> <span class="amount-cur">${cur}</span></p>
         <p class="amount-parts">Net ${show(snapshot.amounts.net)} ${cur} · Tax ${show(snapshot.amounts.tax)} ${cur}</p>
         <p class="amount-meta">Net is the amount before sales tax, after surcharges and discounts. Tax is the sales tax in the document currency. Gross is the total amount reported for the document.</p>
-        <p class="amount-meta">Billing date ${escapeHtml(snapshot.date.value || 'Unknown')}: the date SAP booked this for accounting. It is not a payment date or a service period.</p>
+        <p class="amount-meta">Billing date ${escapeHtml(snapshot.date.value || 'Unknown')}: ${escapeHtml(plainDateMeaning(snapshot.date.meaning).long)}</p>
         <p class="amount-meta">${escapeHtml(snapshot.document.kind)} ${escapeHtml(snapshot.document.key)} · Data source: ${escapeHtml(snapshot.source.provenanceLabel)}</p>
       </div>
       <div class="limits-box">
@@ -1325,7 +1331,10 @@ function renderDecision() {
     </details>
   ` : '';
   const restricted = value?.materialInconsistency === true;
-  document.getElementById('decision-restriction').textContent = restricted ? 'Material inconsistency: only Help or Later can be confirmed. The reason is retained with the receipt.' : '';
+  const otherDocument = Boolean(saved && snapshot && reviewIdentity(snapshot.document) !== receipt.reviewId);
+  document.getElementById('decision-restriction').textContent = otherDocument
+    ? `Only one receipt is kept. Document ${receipt.document.key} is already recorded, so document ${snapshot.document.key} cannot be recorded until you use Reset demo (this also clears the connection and key).`
+    : (restricted ? `Material inconsistency: only Help or Later can be confirmed. The reason is retained with the receipt. Reason: ${value.reasons.join(' ')}` : '');
   intentOptions.hidden = saved || receiptRecovery;
   for (const input of intentOptions.querySelectorAll('input')) {
     input.disabled = restricted && ['keep', 'review-options'].includes(input.value);
@@ -1339,8 +1348,9 @@ function renderDecision() {
   retryReceiptButton.hidden = true;
   receiptStatus.textContent = saved ? 'Saved — your receipt was stored and checked.' : 'Unsaved — no intention has been recorded.';
   const success = document.getElementById('receipt-success');
-  success.hidden = !(saved && !receiptRecovery);
-  success.textContent = saved && !receiptRecovery
+  success.hidden = !(saved && !receiptRecovery && !otherDocument);
+  document.getElementById('one-receipt-note').hidden = !(saved && !receiptRecovery && !otherDocument);
+  success.textContent = saved && !receiptRecovery && !otherDocument
     ? `✓ Saved: ${INTENTS[receipt.intent]} for ${receipt.document.kind} ${receipt.document.key} (${receipt.amounts.gross ?? 'gross not reported'} ${receipt.amounts.currency}).`
     : '';
   if (receiptRecovery) receiptStatus.textContent = resetUncertain
@@ -1358,6 +1368,7 @@ function openDecision() {
   if (receipt) setProvenance(PROVENANCE_LABELS[receipt.document.provenance], receipt.document.provenance === 'live-sap-sandbox' ? 'live' : 'fixture');
   showDecision();
   if (!receipt && !receiptRecovery && decisionSnapshot) setStatus(`Decision step opened for document ${decisionSnapshot.document.key}. Choose an intent, then Confirm intent.`);
+  else if (receipt && state.costSnapshot && reviewIdentity(state.costSnapshot.document) !== receipt.reviewId) setStatus(`A receipt for document ${receipt.document.key} is already saved. Use Reset demo to record a decision for document ${state.costSnapshot.document.key}.`);
 }
 
 function currentCostEvidenceReady() {

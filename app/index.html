@@ -172,7 +172,7 @@
         <legend>Choose an intent</legend>
         <div class="intent-card">
           <label><input type="radio" name="intent" value="keep" aria-describedby="intent-help-keep"> Keep</label>
-          <p id="intent-help-keep" class="intent-help">You are fine with this bill for now. It is a note to yourself, not a plan recommendation.</p>
+          <p id="intent-help-keep" class="intent-help">You are fine with this record for now. It is a note to yourself, not a plan recommendation.</p>
         </div>
         <div class="intent-card">
           <label><input type="radio" name="intent" value="review-options" aria-describedby="intent-help-review"> Review options</label>
@@ -180,7 +180,7 @@
         </div>
         <div class="intent-card">
           <label><input type="radio" name="intent" value="help" aria-describedby="intent-help-help"> Help</label>
-          <p id="intent-help-help" class="intent-help">You want someone to explain this bill. No support ticket is sent.</p>
+          <p id="intent-help-help" class="intent-help">You want someone to explain this record. No support ticket is sent.</p>
         </div>
         <div class="intent-card">
           <label><input type="radio" name="intent" value="later" aria-describedby="intent-help-later"> Later</label>
@@ -195,6 +195,7 @@
         <button id="retry-receipt" type="button" hidden>Retry</button>
       </div>
       <p id="receipt-status" class="status" role="status" aria-live="polite"></p>
+      <p id="one-receipt-note" class="hint" hidden>Only one receipt is kept at a time. To record a decision for another document, use Reset demo (this also clears the connection and key).</p>
       <button id="reset-demo" type="button" class="ghost danger">Reset demo</button>
       <div id="reset-confirmation" hidden>
         <p>Delete any stored receipt and clear the session, including the API key?</p>

@@ -478,7 +478,7 @@ async function loadPage(operation, moveFocus = false) {
 function renderPageMeta(json) {
   const coverage = reads.continuation.startsWith('rejected')
     ? 'Continuation rejected / navigation stopped; coverage remains unknown, not complete.'
-    : (reads.next ? 'Partial coverage; a supported continuation is available.' : (state.mode !== 'live' && json.boundedComplete === true ? 'Explicitly bounded fixture coverage exhausted; not SAP account history.' : 'Continuation exhausted (none reported); complete account history is not established.'));
+    : (reads.next ? 'Partial coverage: more records are available with Next page.' : (state.mode !== 'live' && json.boundedComplete === true ? 'Explicitly bounded fixture coverage exhausted; not SAP account history.' : 'Continuation exhausted (none reported); complete account history is not established.'));
   listMeta.textContent = `Page ${reads.page}: ${json.records.length} loaded, ${json.usableCount ?? json.records.filter(item => item.usable).length} usable on this page only. ${coverage} Loaded records, not complete history. No annual coverage or combined financial total.`;
 }
 
@@ -1028,6 +1028,7 @@ function renderCost(snapshot) {
       <div class="amount-hero">
         <p class="amount-gross"><span class="amount-label">Gross</span> <span class="amount-value">${show(snapshot.amounts.gross)}</span> <span class="amount-cur">${cur}</span></p>
         <p class="amount-parts">Net ${show(snapshot.amounts.net)} ${cur} · Tax ${show(snapshot.amounts.tax)} ${cur}</p>
+        <p class="amount-meta">Net is the amount before sales tax, after surcharges and discounts. Tax is the sales tax in the document currency. Gross is the total amount reported for the document.</p>
         <p class="amount-meta">Billing date ${escapeHtml(snapshot.date.value || 'Unknown')}: the date SAP booked this for accounting. It is not a payment date or a service period.</p>
         <p class="amount-meta">${escapeHtml(snapshot.document.kind)} ${escapeHtml(snapshot.document.key)} · Data source: ${escapeHtml(snapshot.source.provenanceLabel)}</p>
       </div>
@@ -1336,7 +1337,7 @@ function renderDecision() {
   document.getElementById('back-to-evidence').hidden = saved || receiptRecovery;
   document.getElementById('decision-return-to-list').hidden = !saved && !receiptRecovery;
   retryReceiptButton.hidden = true;
-  receiptStatus.textContent = saved ? 'Saved — receipt write and read-back verified.' : 'Unsaved — no intention has been recorded.';
+  receiptStatus.textContent = saved ? 'Saved — your receipt was stored and checked.' : 'Unsaved — no intention has been recorded.';
   const success = document.getElementById('receipt-success');
   success.hidden = !(saved && !receiptRecovery);
   success.textContent = saved && !receiptRecovery

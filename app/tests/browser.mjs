@@ -2301,12 +2301,12 @@ test('issue 36: step indicator, lead text and status follow the current screen',
     assert.match(await p.locator('#screen-list .panel-head .hint').innerText(), /Sample data only \(SAP sandbox or offline demo\)/);
     await p.locator('#review-cost-evidence').click();
     await p.locator('#screen-cost').waitFor({ state: 'visible' });
-    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Understand the cost/);
+    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Review cost evidence/);
     assert.match(await p.locator('.title-row .lead').innerText(), /Check the amounts/);
     assert.match(await p.locator('.limits-box').innerText(), /This is sample data \(SAP sandbox or offline demo\), not a Spark customer bill\./);
     await p.locator('#continue-decision').click();
     await p.locator('#screen-decision').waitFor({ state: 'visible' });
-    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Record your decision/);
+    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Decide and save a receipt/);
     assert.match(await p.locator('#status').innerText(), /Decision step opened for document 9000000001\./);
     await p.locator('#back-to-evidence').click();
     await p.locator('#screen-cost').waitFor({ state: 'visible' });
@@ -2317,6 +2317,40 @@ test('issue 36: step indicator, lead text and status follow the current screen',
     await p.locator('#confirm-intent').click();
     await p.locator('#receipt-success').waitFor({ state: 'visible' });
     assert.match(await p.locator('#status').innerText(), /Receipt saved for document 9000000001\./);
+    await p.locator('#reset-demo').click();
+    await p.locator('#confirm-reset').click();
+  } finally { await context.close(); }
+});
+
+test('issue 36: names stay consistent and the amount card explains Net, Tax and Gross', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    assert.equal(await p.locator('.title-row .eyebrow').textContent(), 'Billing Review Lite');
+    assert.match(await p.locator('#use-fixture').innerText(), /Try with demo data \(Fixture demonstration\)/);
+    await p.locator('#use-fixture').click();
+    await p.locator('#records-body tr[data-key="9000000001"]').click();
+    await p.waitForFunction(() => {
+      const statusText = document.querySelector('#status')?.textContent || '';
+      return statusText.includes('Detail loaded') && statusText.includes('9000000001');
+    });
+    assert.match(await p.locator('#connection-summary').innerText(), /Fixture demonstration/);
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#screen-cost').waitFor({ state: 'visible' });
+    assert.equal(await p.locator('h1').innerText(), 'Review cost evidence');
+    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Review cost evidence/);
+    const hero = await p.locator('.amount-hero').innerText();
+    assert.match(hero, /Net is the amount before sales tax/);
+    assert.match(hero, /Gross is the total amount reported for the document/);
+    assert.doesNotMatch(await p.locator('#screen-cost .cost-head').innerText(), /converted-total claim/);
+    await p.locator('#continue-decision').click();
+    await p.locator('#screen-decision').waitFor({ state: 'visible' });
+    assert.equal(await p.locator('h1').innerText(), 'Decide and save a receipt');
+    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Decide and save a receipt/);
+    await p.locator('input[value="keep"]').check();
+    await p.locator('#confirm-intent').click();
+    await p.locator('#receipt-success').waitFor({ state: 'visible' });
+    assert.match(await p.locator('#receipt-status').innerText(), /Saved — your receipt was stored and checked\./);
     await p.locator('#reset-demo').click();
     await p.locator('#confirm-reset').click();
   } finally { await context.close(); }

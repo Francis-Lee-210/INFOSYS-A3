@@ -2264,6 +2264,147 @@ test('issue 36 review: Check optional items shows pending, failure and recovery 
   } finally { await context.close(); }
 });
 
+// #36 review R40-03: read recovery on the real default UI (no legacy-expanded harness).
+function issue36RecoveryTransport(detailStatus) {
+  const transport = async (url, options) => {
+    const href = String(url);
+    transport.calls.push({ url: href, options });
+    if (href.includes("A_BillingDocumentRequest('")) {
+      const status = detailStatus(options);
+      if (status) return { status, ok: false, text: async () => '{}', headers: { get: () => null } };
+      return { status: 200, ok: true, text: async () => JSON.stringify({ d: validRawRecord('RECOV001') }), headers: { get: () => null } };
+    }
+    return { status: 200, ok: true, text: async () => JSON.stringify(rawOData([validRawRecord('RECOV001')])), headers: { get: () => null } };
+  };
+  transport.calls = [];
+  return transport;
+}
+
+async function issue36TabTo(p, id, limit = 60) {
+  for (let i = 0; i < limit; i++) {
+    if (await p.evaluate((target) => document.activeElement?.id === target, id)) return;
+    await p.keyboard.press('Tab');
+  }
+  assert.fail(`Keyboard could not reach ${id}`);
+}
+
+const issue36PanelCollapsed = (p) => p.locator('.connection-panel').evaluate((element) => element.classList.contains('is-collapsed'));
+
+test('issue 36 review: a failed read expands the collapsed connection panel and keyboard Retry read recovers on the default UI', async () => {
+  const port = TEST_PORT + 90;
+  let failDetail = true;
+  const transport = issue36RecoveryTransport(() => (failDetail ? 503 : 0));
+  injectedServers.push(await startInjectedServer(port, transport));
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(`http://127.0.0.1:${port}`, { waitUntil: 'domcontentloaded' });
+    await p.locator('#api-key').fill('SENTINEL-ISSUE36-RETRY');
+    await p.locator('#connect-live').click();
+    const row = p.locator('#records-body tr[data-key="RECOV001"]');
+    await row.waitFor({ state: 'visible' });
+    assert.equal(await issue36PanelCollapsed(p), true);
+    assert.equal(await p.locator('#api-key').isVisible(), false);
+    assert.equal(await p.locator('#read-recovery').isVisible(), false);
+    await row.focus();
+    await p.keyboard.press('Enter');
+    await p.locator('#read-recovery').waitFor({ state: 'visible' });
+    assert.equal(await issue36PanelCollapsed(p), false);
+    // The failed row keeps keyboard focus while the expanded panel shows the recovery.
+    assert.equal(await row.evaluate((element) => element === document.activeElement && element.checkVisibility()), true);
+    assert.match(await p.locator('#read-recovery-message').innerText(), /Service failure/);
+    assert.equal(await p.locator('#retry-read').isVisible(), true);
+    assert.equal(await p.locator('#correct-key').isVisible(), false);
+    failDetail = false;
+    await issue36TabTo(p, 'retry-read');
+    assert.equal(await p.locator('#retry-read').evaluate((element) => element === document.activeElement && element.checkVisibility()), true);
+    await p.keyboard.press('Enter');
+    await p.waitForFunction(() => (document.querySelector('#status')?.textContent || '').includes('Detail loaded for document RECOV001'));
+    assert.equal(await p.locator('#review-cost-evidence').evaluate((element) => element === document.activeElement && element.checkVisibility()), true);
+    assert.equal(await p.locator('#read-recovery').isVisible(), false);
+    assert.equal(await issue36PanelCollapsed(p), true);
+    assert.equal(transport.calls.length, 3);
+  } finally { await context.close(); }
+});
+
+test('issue 36 review: a key failure expands the collapsed connection panel and keyboard Correct key reconnects on the default UI', async () => {
+  const port = TEST_PORT + 91;
+  const transport = issue36RecoveryTransport((options) => (options.headers.APIKey === 'SENTINEL-ISSUE36-OLD' ? 401 : 0));
+  injectedServers.push(await startInjectedServer(port, transport));
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(`http://127.0.0.1:${port}`, { waitUntil: 'domcontentloaded' });
+    await p.locator('#api-key').fill('SENTINEL-ISSUE36-OLD');
+    await p.locator('#connect-live').click();
+    const row = p.locator('#records-body tr[data-key="RECOV001"]');
+    await row.waitFor({ state: 'visible' });
+    assert.equal(await issue36PanelCollapsed(p), true);
+    await row.focus();
+    await p.keyboard.press('Enter');
+    await p.locator('#read-recovery').waitFor({ state: 'visible' });
+    assert.equal(await issue36PanelCollapsed(p), false);
+    // The failed row keeps keyboard focus while the expanded panel shows the recovery.
+    assert.equal(await row.evaluate((element) => element === document.activeElement && element.checkVisibility()), true);
+    assert.match(await p.locator('#read-recovery-message').innerText(), /Authentication \/ key problem/);
+    assert.equal(await p.locator('#correct-key').isVisible(), true);
+    assert.equal(await p.locator('#retry-read').isVisible(), false);
+    assert.equal(await p.locator('#api-key').isVisible(), true);
+    assert.equal(await p.locator('#api-key').inputValue(), '');
+    await issue36TabTo(p, 'correct-key');
+    await p.keyboard.press('Enter');
+    assert.equal(await p.locator('#api-key').evaluate((element) => element === document.activeElement && element.checkVisibility()), true);
+    await p.keyboard.type('SENTINEL-ISSUE36-NEW');
+    await issue36TabTo(p, 'connect-live');
+    await p.keyboard.press('Enter');
+    await p.waitForFunction(() => (document.querySelector('#status')?.textContent || '').includes('Loaded 1 record'));
+    await row.waitFor({ state: 'visible' });
+    assert.equal(await p.locator('#read-recovery').isVisible(), false);
+    assert.equal(await issue36PanelCollapsed(p), true);
+    assert.equal(transport.calls.at(-1).options.headers.APIKey, 'SENTINEL-ISSUE36-NEW');
+    assert.doesNotMatch(await p.locator('body').innerText(), /SENTINEL/);
+  } finally { await context.close(); }
+});
+
+// #36 review R40-05: the remaining display paths read Not available and Reset failure uses plain words.
+test('issue 36 review: cost evidence shows Not available for missing service, payment and linked-row values while stored values are unchanged', async () => {
+  const profile = issue6RegressionProfiles[0];
+  const seed = await issue6RegressionSeed(profile);
+  const coverage = issue6RegressionCoverage(seed, 'ISSUE36-MISSING-ROW');
+  coverage.rows[0].netAmount = null;
+  coverage.rows[0].taxAmount = null;
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await issue6RegressionOpen(p, profile);
+    await issue6RegressionItems(p, profile, coverage);
+    const snapshot = await issue6RegressionReview(p);
+    assert.equal(snapshot.servicePeriod, 'Unknown / Not available');
+    assert.equal(snapshot.paymentStatus, 'Unknown / Not available');
+    assert.equal(snapshot.linkedDetail.rows[0].netAmount, 'Not reported');
+    const costTech = p.locator('#screen-cost details.tech-evidence').filter({ has: p.locator('#cost-fields') });
+    await costTech.locator('summary').click();
+    assert.equal(await p.locator('#cost-fields').isVisible(), true);
+    const fields = await p.locator('#cost-fields').innerText();
+    assert.match(fields, /Service period: Not available\. Payment status: Not available\./);
+    assert.doesNotMatch(fields, /Unknown/);
+    const items = await p.locator('#cost-items').innerText();
+    assert.match(items, /000010: net Not available, tax Not available, gross 11\.130/);
+    assert.doesNotMatch(items, /Not reported/);
+  } finally { await context.close(); }
+});
+
+test('issue 36 review: a failed Reset of an unreadable saved receipt explains it in plain words and keeps the data', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.evaluate((key) => localStorage.setItem(key, '{not JSON'), issue7ReceiptKey);
+    await p.reload({ waitUntil: 'domcontentloaded' });
+    await expectText(p, '#receipt-status', 'Stored receipt could not be recovered');
+    await issue7ResetFailure(p, 'remove');
+    await expectText(p, '#receipt-status', 'Reset could not delete the unreadable saved receipt. It is still stored. Try Confirm reset again.');
+    assert.doesNotMatch(await p.locator('#receipt-status').innerText(), /Read-back|stored data is still present/);
+    assert.equal(await p.evaluate((key) => localStorage.getItem(key), issue7ReceiptKey), '{not JSON');
+  } finally { await context.close(); }
+});
+
 test('issue 36: connection panel collapses after choosing a source and Change source reopens it by keyboard', async () => {
   const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
   try {
@@ -2311,7 +2452,21 @@ test('issue 36: technical evidence is closed by default and opens by keyboard on
     assert.equal(await p.locator('#cost-limits').isVisible(), true);
     await p.locator('#continue-decision').click();
     await p.locator('#screen-decision').waitFor({ state: 'visible' });
-    assert.equal(await p.locator('#decision-summary details').evaluate((element) => element.open), false);
+    const decisionTech = p.locator('#decision-summary details');
+    const decisionSummary = decisionTech.locator('summary');
+    assert.equal(await decisionTech.evaluate((element) => element.open), false);
+    assert.equal(await decisionTech.locator('dl').isVisible(), false);
+    // #36 review R40-03: the decision-screen disclosure opens and closes by keyboard.
+    await decisionSummary.focus();
+    await p.keyboard.press('Enter');
+    assert.equal(await decisionTech.evaluate((element) => element.open), true);
+    assert.equal(await decisionTech.locator('dl').isVisible(), true);
+    assert.match(await decisionTech.innerText(), /These are intentions only/);
+    assert.equal(await decisionSummary.evaluate((element) => element === document.activeElement), true);
+    await p.keyboard.press('Enter');
+    assert.equal(await decisionTech.evaluate((element) => element.open), false);
+    assert.equal(await decisionTech.locator('dl').isVisible(), false);
+    assert.equal(await decisionSummary.evaluate((element) => element === document.activeElement), true);
   } finally { await context.close(); }
 });
 

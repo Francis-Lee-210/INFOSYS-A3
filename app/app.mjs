@@ -55,6 +55,9 @@ const INTENTS = { keep: 'Keep', 'review-options': 'Review options', help: 'Help'
 const PROVENANCE_LABELS = { 'live-sap-sandbox': 'Live SAP sandbox', 'fixture-demonstration': 'Fixture demonstration', 'synthetic-fixture': 'Synthetic fixture' };
 // #36 review R40-05: one display wording for a missing value. Stored receipt values are unchanged.
 const NOT_AVAILABLE = 'Not available';
+// #36 review R40-05: stored placeholders ('Not reported', 'Unknown / Not available') stay
+// unchanged in the snapshot and receipt; only the displayed text reads Not available.
+const shownValue = (value) => (value === null || value === undefined || value === '' || value === 'Not reported' || value === 'Unknown / Not available' ? NOT_AVAILABLE : String(value));
 let receipt = null;
 let receiptRecovery = false;
 let resetUncertain = false;
@@ -1098,7 +1101,7 @@ function renderCost(snapshot) {
       ['Billing date', `${snapshot.date.value || NOT_AVAILABLE} (${snapshot.date.meaning})`],
       ['Payer party context', snapshot.context.payerPartyAvailable ? 'Available, opaque context only' : NOT_AVAILABLE],
       ['Contract account context', snapshot.context.contractAccountAvailable ? 'Available, opaque context only' : NOT_AVAILABLE],
-      ['Service period/payment evidence', `${snapshot.servicePeriod}; ${snapshot.paymentStatus}`],
+      ['Service period/payment evidence', `Service period: ${shownValue(snapshot.servicePeriod)}. Payment status: ${shownValue(snapshot.paymentStatus)}.`],
       ['Linked item evidence', `${snapshot.linkedDetail.status} (${snapshot.linkedDetail.count} rows)${snapshot.linkedDetail.note ? ` - ${snapshot.linkedDetail.note}` : ''}`],
       ['Retrieval time', snapshot.document.retrievedAt || NOT_AVAILABLE]
     ];
@@ -1113,7 +1116,7 @@ function renderCost(snapshot) {
   }
   if (costItems) {
     if (snapshot.linkedDetail.rows && snapshot.linkedDetail.rows.length) {
-      costItems.innerHTML = snapshot.linkedDetail.rows.map((row) => `<li>${escapeHtml(row.itemKey)}: net ${escapeHtml(row.netAmount)}, tax ${escapeHtml(row.taxAmount)}, gross ${escapeHtml(row.grossAmount)} (${escapeHtml(row.currency)}) - reported row, not a total.</li>`).join('');
+      costItems.innerHTML = snapshot.linkedDetail.rows.map((row) => `<li>${escapeHtml(row.itemKey)}: net ${escapeHtml(shownValue(row.netAmount))}, tax ${escapeHtml(shownValue(row.taxAmount))}, gross ${escapeHtml(shownValue(row.grossAmount))} (${escapeHtml(row.currency)}) - reported row, not a total.</li>`).join('');
     } else {
       const conflict = snapshot.linkedDetail.currencyConflict || snapshot.linkedDetail.sourceConflict;
       costItems.innerHTML = `<li>${escapeHtml(conflict ? 'Linked item rows are not shown as valid evidence because of a currency or source/parent conflict.' : (snapshot.linkedDetail.note || 'No linked item detail was checked or available.'))}</li>`;
@@ -1583,7 +1586,7 @@ document.getElementById('confirm-reset').addEventListener('click', () => {
       if (stored !== null && (!receipt || JSON.stringify(validateReceipt(JSON.parse(stored))) === JSON.stringify(receipt))) {
         receiptStatus.textContent = receipt
           ? 'Reset could not delete the receipt. Saved — receipt is still stored; session kept. Try Confirm reset again.'
-          : 'Reset could not delete the stored data. Read-back confirms stored data is still present. Try Confirm reset again.';
+          : 'Reset could not delete the unreadable saved receipt. It is still stored. Try Confirm reset again.';
         return;
       }
     } catch {}

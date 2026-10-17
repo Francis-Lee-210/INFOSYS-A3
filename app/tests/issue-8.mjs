@@ -313,7 +313,7 @@ export function registerIssue8Tests({ test, browser, startInjectedServer, inject
       pull(controller) { controller.enqueue(new Uint8Array(1024 * 1024)); },
       cancel() { cancelled = true; }
     })), async ({ p, calls }) => {
-      await connect(p); await recovered(p, /Contract \/ data failure.*exceeded the read limit/);
+      await connect(p); await recovered(p, /Data check failed.*exceeded the read limit/);
       assert.equal(cancelled, true);
       assert.equal(calls.length, 1);
       assert.equal(await p.locator('#records-body tr.selectable').count(), 0);
@@ -416,8 +416,9 @@ export function registerIssue8Tests({ test, browser, startInjectedServer, inject
     for (const bad of ['{invalid', { wrong: [] }]) {
       let valid = false;
       await scenario(() => response(valid ? envelope([rawRecord('DATAGOOD')]) : bad), async ({ p, calls }) => {
-        await connect(p); await recovered(p, /Contract \/ data failure/);
+        await connect(p); await recovered(p, /Data check failed/);
         assert.doesNotMatch(await p.locator('#read-recovery-message').innerText(), /Empty page|zero spending/);
+        assert.doesNotMatch(await p.locator('#read-recovery-message').innerText(), /contract|continuation|provenance/i);
         assert.equal(await p.locator('#records-body tr.selectable').count(), 0);
         valid = true; await p.locator('#retry-read').click(); await row(p, 'DATAGOOD');
         assert.equal(calls.length, 2); await noStorage(p);

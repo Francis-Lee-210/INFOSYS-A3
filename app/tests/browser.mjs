@@ -779,7 +779,7 @@ test('missing optional fields stay Unknown and are not material by themselves', 
   await p.waitForFunction(() => document.querySelector('#status')?.textContent.includes('Detail loaded'));
   await p.getByRole('button', { name: 'Review cost evidence' }).click();
   await p.waitForFunction(() => !document.querySelector('#screen-cost').hidden);
-  await expectText(p, '#cost-fields', 'Unknown / Not available');
+  await expectText(p, '#cost-fields', 'Not available');
   await expectText(p, '#cost-limits', 'No paid-bill claim');
   assert.ok(!(await p.locator('#cost-consistency').innerText()).toLowerCase().includes('materialinconsistency'));
   assert.ok((await p.locator('#cost-consistency').innerText()).toLowerCase().includes('synthetic check passed'));
@@ -985,9 +985,9 @@ test('supplement: missing optional tax on both profiles is explicit and cannot b
       await p.route(issue6RegressionDetailMatch(profile.key), (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(payload) }));
       await issue6RegressionOpen(p, profile);
       const snapshot = await issue6RegressionReview(p);
-      await issue6RegressionAmount(p, 'Total tax amount', 'Not reported');
+      await issue6RegressionAmount(p, 'Total tax amount', 'Not available');
       await issue6RegressionAmount(p, 'Total net amount', seed.record.amounts.net);
-      await expectText(p, '#cost-fields', 'Unknown / Not available');
+      await expectText(p, '#cost-fields', 'Not available');
       assert.equal(snapshot.amounts.tax, null);
       assert.equal(snapshot.materialInconsistency, false);
       assert.equal(snapshot.linkedDetail.present, false);
@@ -1531,6 +1531,7 @@ for (const conflict of ['synthetic relation', 'linked currency']) {
         assert.equal(await p.getByRole('radio', { name: 'Review options', exact: true }).isDisabled(), true);
         await expectText(p, '#decision-restriction', 'only Help or Later');
         await expectText(p, '#decision-restriction', 'Reason: ');
+        await expectText(p, '#decision-restriction', conflict === 'linked currency' ? 'different currency' : 'net + tax = gross');
         // Even a forged enabled radio cannot bypass the confirmation guard.
         await p.locator('input[value="keep"]').evaluate(input => {
           input.disabled = false; input.checked = true; input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -2164,6 +2165,7 @@ test('issue 36 review: date wording follows the source, intent help says record,
   };
   try {
     await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.locator('#more-sources > summary').click();
     await p.locator('#use-synthetic').click();
     await select('SYN-0001');
     assert.match(await p.locator('#detail .detail-main').innerText(), /synthetic processing date, not a payment date/);
@@ -2200,6 +2202,65 @@ test('issue 36 review: date wording follows the source, intent help says record,
     assert.match(await p.locator('#status').innerText(), /A receipt for document 9000000001 is already saved\. Use Reset demo to record a decision for document 9000000002\./);
     await p.locator('#reset-demo').click();
     await p.locator('#confirm-reset').click();
+  } finally { await context.close(); }
+});
+
+test('issue 36 review: default UI keeps synthetic under More data sources, labels list columns plainly and shows Disconnect only after a source is chosen', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    assert.deepEqual((await p.locator('#screen-list thead th').allTextContents()).map(text => text.trim()), ['Type', 'Document', 'Date', 'Amount', 'Currency']);
+    assert.equal(await p.locator('#more-sources').evaluate(element => element.open), false);
+    assert.equal(await p.locator('#use-synthetic').isVisible(), false);
+    assert.equal(await p.locator('#disconnect').isVisible(), false);
+    await p.locator('#more-sources > summary').focus();
+    await p.keyboard.press('Enter');
+    assert.equal(await p.locator('#use-synthetic').isVisible(), true);
+    await p.keyboard.press('Tab');
+    assert.equal(await p.evaluate(() => document.activeElement?.id), 'use-synthetic');
+    await p.keyboard.press('Enter');
+    await p.locator('#records-body tr[data-key="SYN-0001"]').waitFor();
+    await p.locator('#change-source').click();
+    assert.equal(await p.locator('#disconnect').isVisible(), true);
+    await p.locator('#disconnect').focus();
+    await p.keyboard.press('Enter');
+    await expectText(p, '#status', 'Disconnected');
+    assert.equal(await p.locator('#disconnect').isVisible(), false);
+    assert.equal(await p.evaluate(() => document.activeElement?.id), 'connect-live');
+  } finally { await context.close(); }
+});
+
+test('issue 36 review: Check optional items shows pending, failure and recovery next to the button on the default UI', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  let release; const gate = new Promise(resolve => { release = resolve; });
+  let failNext = false;
+  try {
+    await p.route('**/api/billing-requests/9000000001/items**', async (route) => {
+      if (failNext) {
+        failNext = false;
+        return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: { code: 'SERVER', message: 'The service failed. Try again.' } }) });
+      }
+      await gate;
+      return route.continue();
+    });
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.locator('#use-fixture').click();
+    await p.locator('#records-body tr[data-key="9000000001"]').click();
+    await p.waitForFunction(() => (document.querySelector('#status')?.textContent || '').includes('Detail loaded'));
+    assert.equal(await p.locator('#items-status').isVisible(), false);
+    await p.locator('#check-items').click();
+    await expectText(p, '#items-status', 'Checking optional items for document 9000000001');
+    assert.equal(await p.locator('#items-status').isVisible(), true);
+    release();
+    await p.waitForFunction(() => (document.querySelector('#items-status')?.textContent || '').includes('Optional items check finished'));
+    failNext = true;
+    await p.locator('#check-items').click();
+    await p.waitForFunction(() => (document.querySelector('#items-status')?.textContent || '').includes('Optional items could not be checked'));
+    await p.locator('#read-recovery').waitFor({ state: 'visible' });
+    assert.equal(await p.locator('#retry-read').isVisible(), true);
+    await p.locator('#retry-read').click();
+    await p.waitForFunction(() => (document.querySelector('#items-status')?.textContent || '').includes('Optional items check finished'));
+    assert.equal(await p.locator('#read-recovery').isVisible(), false);
   } finally { await context.close(); }
 });
 

@@ -16,9 +16,18 @@
       </div>
       <div id="provenance" class="badge" aria-live="polite">Not connected</div>
     </header>
+    <ol id="steps" class="steps" aria-label="Review progress">
+      <li data-step="list">1. Choose a document</li>
+      <li data-step="cost">2. Understand the cost</li>
+      <li data-step="decision">3. Record your decision</li>
+    </ol>
 
     <section class="connection-panel" aria-labelledby="connection-title">
       <h2 id="connection-title">Connection</h2>
+      <div id="connection-summary" class="connection-summary" hidden>
+        <span>Data source: <strong id="connection-summary-label"></strong></span>
+        <button id="change-source" type="button" class="secondary">Change source</button>
+      </div>
       <div class="connection-grid">
         <div class="field">
           <label for="api-key">SAP sandbox API key (session only)</label>
@@ -26,11 +35,14 @@
           <p class="hint">The key lasts only for this connection, is held in JavaScript memory, and is cleared on Disconnect/reset. It is never written to storage, files or logs.</p>
         </div>
         <div class="actions">
-          <button id="connect-live" type="button">Connect to live SAP sandbox</button>
-          <button id="use-fixture" type="button" class="secondary">Use fixture demonstration</button>
-          <button id="use-synthetic" type="button" class="secondary">Use synthetic billing-document fixture</button>
-          <button id="disconnect" type="button" class="ghost">Disconnect / reset</button>
+          <button id="connect-live" type="button">Connect to SAP sandbox (needs key)</button>
+          <button id="use-fixture" type="button" class="secondary">Try with demo data</button>
+          <button id="disconnect" type="button" class="ghost" hidden>Disconnect / reset</button>
           <button id="reopen-receipt" type="button" class="secondary" hidden>Reopen receipt</button>
+          <details id="more-sources" class="more-sources">
+            <summary>More data sources</summary>
+            <button id="use-synthetic" type="button" class="ghost">Use synthetic billing-document fixture</button>
+          </details>
         </div>
       </div>
       <div id="status" class="status" role="status" aria-live="polite">Ready. No network request has been made.</div>
@@ -52,22 +64,21 @@
         <div class="panel-head">
           <h2 id="records-title" tabindex="-1">Loaded billing records</h2>
           <p id="coverage" class="coverage">Loaded records, not complete history.</p>
-          <p class="hint">Source API: API_BILLING_DOCUMENT_REQUEST_SRV (version 1.1.0), for the live source. The synthetic fixture has its own profile and no SAP API identity. SAP sandbox records are demonstration data; they are not Spark customer bills, payments or service-history evidence.</p>
+          <p class="hint">Sample data only (SAP sandbox or offline demo), not Spark customer bills.</p>
         </div>
         <div class="table-wrap" tabindex="0" role="region" aria-label="Loaded billing records table">
           <table>
             <thead>
               <tr>
-                <th scope="col">Kind</th>
-                <th scope="col">Document key</th>
-                <th scope="col">Billing date</th>
+                <th scope="col">Type</th>
+                <th scope="col">Document</th>
+                <th scope="col">Date</th>
                 <th scope="col">Amount</th>
-                <th scope="col">Basis</th>
                 <th scope="col">Currency</th>
               </tr>
             </thead>
             <tbody id="records-body">
-              <tr><td colspan="6" class="empty">No records loaded.</td></tr>
+              <tr><td colspan="5" class="empty">No records loaded.</td></tr>
             </tbody>
           </table>
         </div>
@@ -76,12 +87,15 @@
           <button id="next-page" type="button" hidden>Next page</button>
           <button id="restart-list" type="button" class="secondary" hidden>Restart list</button>
         </nav>
+        <details class="tech-evidence">
+          <summary>Technical evidence (for reviewers)</summary>
+          <p class="hint">Source API: API_BILLING_DOCUMENT_REQUEST_SRV (version 1.1.0), for the live source. The synthetic fixture has its own profile and no SAP API identity. SAP sandbox records are demonstration data; they are not Spark customer bills, payments or service-history evidence.</p>
+        </details>
       </aside>
 
       <article class="detail-panel" aria-labelledby="detail-title">
         <div class="panel-head">
           <h2 id="detail-title">Selected document detail</h2>
-          <p class="coverage">Selected row is never reused as detail; a separate by-key GET validates the same key.</p>
         </div>
         <div id="detail" class="detail empty-detail">
           <p>Select a document to load its detail.</p>
@@ -90,9 +104,13 @@
           <button id="review-cost-evidence" type="button" disabled>Review cost evidence</button>
           <button id="reload-detail" type="button" class="secondary">Reload detail</button>
           <button id="check-items" type="button" class="ghost">Check optional items</button>
-          <button id="check-evidence" type="button" class="ghost">B0 evidence</button>
         </div>
-        <div id="evidence" class="evidence" hidden></div>
+        <p id="items-status" class="status" role="status" aria-live="polite" hidden></p>
+        <details class="tech-evidence">
+          <summary>B0 technical evidence (for reviewers)</summary>
+          <button id="check-evidence" type="button" class="ghost">B0 evidence</button>
+          <div id="evidence" class="evidence" hidden></div>
+        </details>
       </article>
     </section>
 
@@ -105,6 +123,8 @@
       <div id="cost-error" class="error" role="alert" hidden></div>
       <p id="cost-update-status" class="status" role="status" tabindex="-1" hidden></p>
       <div id="cost-summary" class="cost-summary"></div>
+      <details class="tech-evidence">
+        <summary>Amount table with SAP field meanings (for reviewers)</summary>
       <section class="amount-card" aria-labelledby="amount-title">
         <h3 id="amount-title">Reported document amounts</h3>
         <p class="mobile-table-hint hint">Scroll the table horizontally to compare all columns.</p>
@@ -122,6 +142,9 @@
         </table>
         </div>
       </section>
+      </details>
+      <details class="tech-evidence">
+        <summary>Technical evidence (for reviewers)</summary>
       <section class="cost-details" aria-labelledby="cost-details-title">
         <h3 id="cost-details-title">Source and date context</h3>
         <dl id="cost-fields" class="cost-fields"></dl>
@@ -137,36 +160,52 @@
         <h3 id="cost-coverage-title">Evidence limits</h3>
         <p id="cost-limits"></p>
       </section>
+      </details>
       <button id="continue-decision" type="button">Continue to decision</button>
     </section>
 
     <section id="screen-decision" class="screen cost-screen" hidden aria-labelledby="decision-title">
       <h2 id="decision-title" tabindex="-1">Confirm your intention</h2>
-      <p>These are intentions only. Keep is not a plan suitability verdict. Review options is not an account switch or a completed switch. Help is not a submitted support ticket. Later is not a scheduled reminder.</p>
+      <p id="receipt-success" class="success-card" role="status" hidden></p>
+      <p>These record your intention only. Nothing changes in any account.</p>
       <p id="decision-history"></p>
-      <div id="decision-summary"></div>
+      <div id="decision-card"></div>
       <p id="decision-restriction"></p>
       <fieldset id="intent-options">
         <legend>Choose an intent</legend>
-        <label><input type="radio" name="intent" value="keep"> Keep</label>
-        <label><input type="radio" name="intent" value="review-options"> Review options</label>
-        <label><input type="radio" name="intent" value="help"> Help</label>
-        <label><input type="radio" name="intent" value="later"> Later</label>
+        <div class="intent-card">
+          <label><input type="radio" name="intent" value="keep" aria-describedby="intent-help-keep"> Keep</label>
+          <p id="intent-help-keep" class="intent-help">You are fine with this record for now. It is a note to yourself, not a plan recommendation.</p>
+        </div>
+        <div class="intent-card">
+          <label><input type="radio" name="intent" value="review-options" aria-describedby="intent-help-review"> Review options</label>
+          <p id="intent-help-review" class="intent-help">You want to compare plans later. Nothing is switched.</p>
+        </div>
+        <div class="intent-card">
+          <label><input type="radio" name="intent" value="help" aria-describedby="intent-help-help"> Help</label>
+          <p id="intent-help-help" class="intent-help">You want someone to explain this record. No support ticket is sent.</p>
+        </div>
+        <div class="intent-card">
+          <label><input type="radio" name="intent" value="later" aria-describedby="intent-help-later"> Later</label>
+          <p id="intent-help-later" class="intent-help">You will come back to it. No reminder is scheduled.</p>
+        </div>
       </fieldset>
       <p id="decision-choice"></p>
       <div class="actions">
         <button id="back-to-evidence" type="button" class="secondary">Back to cost evidence</button>
-        <button id="decision-return-to-list" type="button" class="secondary" hidden>Return to list</button>
+        <button id="decision-return-to-list" type="button" hidden>Return to list</button>
         <button id="confirm-intent" type="button" disabled>Confirm intent</button>
         <button id="retry-receipt" type="button" hidden>Retry</button>
       </div>
       <p id="receipt-status" class="status" role="status" aria-live="polite"></p>
-      <button id="reset-demo" type="button" class="ghost">Reset demo</button>
+      <p id="one-receipt-note" class="hint" hidden>Only one receipt is kept at a time. To record a decision for another document, use Reset demo (this also clears the connection and key).</p>
+      <button id="reset-demo" type="button" class="ghost danger">Reset demo</button>
       <div id="reset-confirmation" hidden>
         <p>Delete any stored receipt and clear the session, including the API key?</p>
         <button id="confirm-reset" type="button">Confirm reset</button>
         <button id="cancel-reset" type="button" class="secondary">Cancel</button>
       </div>
+      <div id="decision-summary"></div>
     </section>
   </main>
   <script type="module" src="/app.mjs"></script>

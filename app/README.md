@@ -19,8 +19,8 @@ npm start
 Open <http://127.0.0.1:6285/>. The server binds only to loopback. TLS certificate
 verification is required; do not disable it. No SAP key is bundled.
 
-- **Connect to live SAP sandbox** uses a locally supplied key for this connection.
-- **Use fixture demonstration** is an offline, two-page billing-request dataset,
+- **Connect to SAP sandbox (needs key)** uses a locally supplied key for this connection.
+- **Try with demo data** is an offline, two-page billing-request dataset,
   explicitly labelled Fixture demonstration. Next page replaces the first two
   rows with two different records (EUR/USD, including exact large/negative amounts).
 - **Use synthetic billing-document fixture** has a separate bounded fixture profile

@@ -1,5 +1,13 @@
 # Issue #10 acceptance: current source freeze and live workflow
 
+> **Historical record — 16 October 2026.** The `463e409` source, ZIP identity,
+> 167/167 browser result and 28/28 packaging result below describe that run.
+> The latest 18 October final release acceptance is
+> [Issue #4: source `7c574ed`, 182/182 browser groups, 63/63 packaging cases and
+> 38/38 actual SAP observations](issue-4-final-acceptance.md). Instructions below
+> about open PRs, a running local server or keeping the parent open are historical
+> status, not current service or GitHub state. The original evidence is preserved.
+
 16 October 2026 (Pacific/Auckland). [Issue #10](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/10), primary AC25–26 of [parent #4](https://github.com/Francis-Lee-210/INFOSYS-A3/issues/4).
 
 **PASS: inspected 17-file source package, fresh-directory startup, 167/167 fixture groups, 28/28 packaging cases, and a new actual SAP workflow including identical historical reopen and verified reset.** Actual [OpenCode development](../development/issue-27-opencode.md) is recorded separately from this independent acceptance.

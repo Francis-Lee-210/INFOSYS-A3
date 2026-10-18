@@ -1,6 +1,6 @@
 # Team contribution snapshot
 
-Snapshot date: **17 October 2026 (NZDT)**. Status: **draft — pending each member's confirmation** (Issue #14).
+Snapshot date: **18 October 2026 (NZDT)**. Status: **work-to-date contribution split confirmed; final release update pending** (Issues #14 and #16).
 
 This public record lists work that can be traced to GitHub pull requests, issues, reviews and commits. Member
 UPIs go only on the Groupwork Management slide submitted with the pitch slides on Canvas, not in this public
@@ -26,9 +26,9 @@ assessment material.
 | Area | Evidence |
 |---|---|
 | Solution and decisions | Set up the repository; broke the A3 work into Issues #4–#17; first direction confirmation in #11; original PlanFit candidate (A1/A2). |
-| Implementation | SAP billing-request reader with live B0 evidence (#5, PR #18); cost-evidence screen (#6, PR #19 → #20); source package and live workflow (#10, PR #30); refreshed handoff (PR #32). |
-| Review and quality | Approved PRs #1, #3 and #22; manual walkthrough evidence for #12. |
-| Assessment material | Live evidence and independent-run records for #5 and #10. |
+| Implementation | SAP billing-request reader with live B0 evidence (#5, PR #18); cost-evidence implementation (PR #19 → #20; Ryan's focus fix remains credited to Ryan); source package and live workflow (#10, PR #30); receipt-recovery fixes and refreshed handoff (PR #32, shared with Xuan's storage-recovery work). |
+| Review and quality | Approved PRs #1, #3 and #22; PR #26 review, focus-gap reproduction and repaired-build verification; PR #34 review-driven import-check repair and independent acceptance ([87aaaa4](https://github.com/Francis-Lee-210/INFOSYS-A3/commit/87aaaa42db00ccb8972d89b8af786d9f4e6bafc7); [23de94d](https://github.com/Francis-Lee-210/INFOSYS-A3/commit/23de94d0cdf65bfdefe3a7fb1e10b9cbec514e30)). Rae's original packaging guard and Xuan's earlier comment-safe changes remain credited to them. |
+| Assessment material | Sanitized live-read/workflow and independent-run records for #5/#10; manual walkthrough of Ryan's standalone #12 wireframe (see [the record](https://github.com/Francis-Lee-210/INFOSYS-A3/blob/28aee9d7390ce69a2a3476d151abe0f9458e2831/docs/validation/issue-12-francis-manual-walkthrough-2026-10-16.md)), kept separate from live SAP and application-persistence acceptance. |
 
 ### Ryan Li
 
@@ -64,15 +64,13 @@ reviews of other members' work by every member.
 
 | Member | Proposed share | Confirmed by member |
 |---|---|---|
-| Francis Lee | 25% | ☐ pending |
+| Francis Lee | 25% | ☑ Francis confirmed in group discussion, 18 Oct |
 | Ryan Li | 25% | ☑ PR #35 comment, 16 Oct |
 | Xuan Zeng | 25% | ☑ #14 comment, 16 Oct |
 | Rae Huang | 25% | ☑ proposer, PR #35 |
 | **Total** | **100%** | |
 
-The equal split is a **proposal** based on the comparable workload above. It becomes the team record only when
-each member confirms it (or proposes a change) in Issue #14. Disagreements and how they were resolved are recorded
-there.
+The 25% each split is the **confirmed contribution allocation for work completed to date**, following the group's discussion on 18 October. This supersedes Francis's 17 October Issue #14 note that his percentage was still pending. The later slides, recording, pitch and upload work remain planned and will be reconciled in the #16 release update, with final member sign-off before the groupwork slide is frozen.
 
 ## Responsibilities
 
@@ -80,7 +78,7 @@ there.
 |---|---|---|
 | Upload the OpenCode ZIP to Canvas (rebuilt from final `main` after a clean-directory retest) | Mon 19 Oct, 11:59 AM | Ryan (PR #35 comment) |
 | Upload the pitch slides (groupwork slide last) to Canvas | Tue 20 Oct, 11:59 AM | Xuan (#14 comment; needs the final PPT and demo recording in time to check) |
-| Pitch part 1 — Situation: Spark's annual plan review and the customer need (≈1:00) | Lab 12 | Francis (said in team chat; to confirm in #14) |
+| Pitch part 1 — Situation: Spark's annual plan review and the customer need (≈1:00) | Lab 12 | Francis (confirmed in Issue #14, 17 Oct; preparation and presentation remain planned) |
 | Pitch part 2 — Complication: why bills are hard to interpret and the business impact (≈1:00) | Lab 12 | Rae |
 | Pitch part 3 — Resolution: Billing Review Lite, Option 2 adaptation and SAP API fit (≈1:15) | Lab 12 | Ryan (PR #35 comment) |
 | Pitch part 4 — App demonstration, next steps and groupwork slide (≈1:30) | Lab 12 | Xuan (#14 comment) |

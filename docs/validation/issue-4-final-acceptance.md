@@ -40,9 +40,11 @@ To reproduce the archive from a checkout containing the frozen commit:
 node tools/package-source.mjs --ref 7c574edd8514c33dce60df2bdcf6e78f7a754ab7 --output-dir release
 ```
 
-The generated sidecar is outside the ZIP. A new build can have a different ZIP
-hash because its packaging timestamp differs; compare its payload to the
-manifest, and use the recorded hash to identify this particular artifact.
+The generated sidecar is outside the ZIP. Its `packagedAt` value does not change
+ZIP bytes or the ZIP hash. Rebuilding the same frozen commit with the same
+toolchain and archive settings should reproduce the recorded ZIP hash. If the
+hash differs, investigate the archive bytes and build environment; a changed
+`packagedAt` value alone does not explain it.
 
 ## Clean-directory run and automated checks
 

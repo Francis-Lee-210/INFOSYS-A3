@@ -45,6 +45,7 @@ const PAYLOAD = [
 const PREFIX = 'plan-review-snapshot-billing-lite/';
 let pass = 0;
 let fail = 0;
+let skipped = 0;
 const kept = [];
 
 function cleanupTemp() {
@@ -68,6 +69,11 @@ function git(cwd, ...args) {
   return spawnSync('git', args, { cwd, encoding: 'utf8' });
 }
 
+// git with data piped to stdin (used for hash-object --stdin plumbing).
+function gitInput(cwd, args, input) {
+  return spawnSync('git', args, { cwd, encoding: 'utf8', input });
+}
+
 function packager(cwd, ...args) {
   return spawnSync(process.execPath, [PACKAGER, ...args], { cwd, encoding: 'utf8' });
 }
@@ -80,14 +86,35 @@ function assert(cond, message) {
   if (!cond) throw new Error(message);
 }
 
+// Windows without Developer Mode or administrator rights refuses symlinkSync
+// with EPERM. Only that exact platform/error pair may skip a test; on every
+// other platform or with any other error the test fails as before.
+class SkipTest extends Error {}
+
+function symlinkForTest(target, path) {
+  try {
+    symlinkSync(target, path);
+  } catch (error) {
+    if (process.platform === 'win32' && error.code === 'EPERM') {
+      throw new SkipTest('cannot create symlinks on Windows without Developer Mode or administrator rights (EPERM)');
+    }
+    throw error;
+  }
+}
+
 function ok(name, fn) {
   try {
     fn();
     pass += 1;
     console.log(`ok ${name}`);
   } catch (error) {
-    fail += 1;
-    console.log(`FAIL ${name}: ${error.message}`);
+    if (error instanceof SkipTest) {
+      skipped += 1;
+      console.log(`SKIP ${name}: ${error.message}`);
+    } else {
+      fail += 1;
+      console.log(`FAIL ${name}: ${error.message}`);
+    }
   }
 }
 
@@ -424,7 +451,7 @@ ok('symlinked HEAD-worktree payload is refused', () => {
   copyFileSync(join(ROOT, 'app/package.json'), target);
   const link = join(dir, 'app/lib/config.js');
   rmSync(link, { force: true });
-  symlinkSync(target, link);
+  symlinkForTest(target, link);
   const out = join(dir, 'out');
   const result = packager(dir, '--output-dir', out);
   assert(result.status !== 0, 'symlink payload should fail');
@@ -587,6 +614,70 @@ ok('untracked decoys never enter the archive', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Regression: Windows line endings (core.autocrlf / eol attributes)
+// ---------------------------------------------------------------------------
+
+ok('autocrlf=true repository packages with LF bytes', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'pkg-src-test-'));
+  kept.push(dir);
+  assert(git(dir, 'init', '-b', 'main', '-q').status === 0, `git init failed`);
+  assert(git(dir, 'config', 'core.autocrlf', 'true').status === 0, `git config core.autocrlf failed`);
+  for (const path of PAYLOAD) {
+    const dest = join(dir, path);
+    mkdirSync(dirname(dest), { recursive: true });
+    // Commit LF-only content (as a Windows checkout with autocrlf=true does);
+    // the checkout this suite runs from may itself contain CRLF bytes.
+    writeFile(dest, readFileSync(join(ROOT, path), 'utf8').replace(/\r\n/g, '\n'));
+  }
+  assert(git(dir, ...authorFlags(), 'add', '--', ...PAYLOAD).status === 0, `git add failed`);
+  assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'test payload').status === 0, `git commit failed`);
+  const serverBlob = execFileSync('git', ['cat-file', 'blob', 'HEAD:app/server.js'], { cwd: dir });
+  assert(serverBlob.includes(0x0a) && !serverBlob.includes(0x0d), 'setup: committed app/server.js must be LF-only');
+
+  const out = join(dir, 'out');
+  const result = packager(dir, '--output-dir', out);
+  assert(result.status === 0, `autocrlf=true packaging failed: ${result.stderr.trim() || result.stdout.trim()}`);
+  const files = readdirSync(out);
+  const zipName = files.find((f) => f.endsWith('.zip'));
+  const manifestName = files.find((f) => f.endsWith('.manifest.json'));
+  assert(zipName && manifestName, 'missing zip or manifest');
+
+  const extractDir = join(dir, 'extracted-autocrlf');
+  extractZip(join(out, zipName), extractDir);
+  const prefixRoot = PREFIX.slice(0, -1);
+  for (const path of PAYLOAD) {
+    const extracted = readFileSync(join(extractDir, prefixRoot, path));
+    const blob = execFileSync('git', ['cat-file', 'blob', `HEAD:${path}`], { cwd: dir });
+    assert(extracted.equals(blob), `extracted bytes must equal the committed LF blob: ${path}`);
+  }
+});
+
+ok('eol=crlf attribute is still rejected before outputs', () => {
+  // Fresh repo with LF-only committed blobs so the eol=crlf conversion really
+  // changes bytes, whatever line endings this suite's own checkout contains.
+  const dir = mkdtempSync(join(tmpdir(), 'pkg-src-test-'));
+  kept.push(dir);
+  assert(git(dir, 'init', '-b', 'main', '-q').status === 0, `git init failed`);
+  for (const path of PAYLOAD) {
+    const dest = join(dir, path);
+    mkdirSync(dirname(dest), { recursive: true });
+    writeFile(dest, readFileSync(join(ROOT, path), 'utf8').replace(/\r\n/g, '\n'));
+  }
+  assert(git(dir, ...authorFlags(), 'add', '--', ...PAYLOAD).status === 0, `git add failed`);
+  assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'test payload').status === 0, `git commit failed`);
+  const blob = execFileSync('git', ['cat-file', 'blob', 'HEAD:app/server.js'], { cwd: dir });
+  assert(blob.includes(0x0a) && !blob.includes(0x0d), 'setup: committed app/server.js must contain LF-only line endings');
+  writeFile(join(dir, '.git', 'info', 'attributes'), 'app/server.js text eol=crlf\n');
+  const out = join(dir, 'out');
+  const result = packager(dir, '--output-dir', out);
+  assert(result.status !== 0, 'eol=crlf payload should fail');
+  assert(result.stderr.includes('app/server.js'), `diagnostic omitted app/server.js: ${result.stderr}`);
+  assert(result.stderr.includes('the difference is only CRLF vs LF line endings'), `diagnostic omitted the line-ending hint: ${result.stderr}`);
+  const outFiles = readDirectory(out);
+  assert(!outFiles.some((f) => f.endsWith('.zip')) && !outFiles.some((f) => f.endsWith('.manifest.json')), 'output created despite eol=crlf refusal');
+});
+
+// ---------------------------------------------------------------------------
 // Regression: export-ignore / export-subst / .git/info/attributes
 // ---------------------------------------------------------------------------
 
@@ -633,23 +724,29 @@ ok('--ref to a commit where payload is a symlink is refused', () => {
   const dir = mkdtempSync(join(tmpdir(), 'pkg-src-test-'));
   kept.push(dir);
   assert(git(dir, 'init', '-b', 'main', '-q').status === 0);
-  // commit 1: app/lib/config.js stored as a symlink
-  for (const path of PAYLOAD) {
+  // commit 1: app/lib/config.js is a 120000 symlink blob created with git
+  // plumbing only, so this refusal runs on every platform without needing a
+  // filesystem symlink (EPERM on Windows outside Developer Mode).
+  const regularPayload = PAYLOAD.filter((p) => p !== 'app/lib/config.js');
+  for (const path of regularPayload) {
     const dest = join(dir, path);
     mkdirSync(dirname(dest), { recursive: true });
-    if (path === 'app/lib/config.js') {
-      copyFileSync(join(ROOT, 'app/package.json'), join(dir, 'pkg.json.tmp'));
-      symlinkSync(join(dir, 'pkg.json.tmp'), dest);
-    } else {
-      copyFileSync(join(ROOT, path), dest);
-    }
+    copyFileSync(join(ROOT, path), dest);
   }
-  assert(git(dir, ...authorFlags(), 'add', '--', ...PAYLOAD).status === 0);
+  assert(git(dir, ...authorFlags(), 'add', '--', ...regularPayload).status === 0);
+  const hashed = gitInput(dir, ['hash-object', '-w', '--stdin'], 'pkg.json.tmp');
+  assert(hashed.status === 0, `hash-object failed: ${(hashed.stderr || '').trim()}`);
+  const linkSha = hashed.stdout.trim();
+  assert(/^[0-9a-f]{40}$/.test(linkSha), 'hash-object did not return a full blob id');
+  assert(git(dir, 'update-index', '--add', '--cacheinfo', `120000,${linkSha},app/lib/config.js`).status === 0, 'update-index failed');
   assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'symlink commit').status === 0);
   const symlinkCommit = headRef(dir);
-  // commit 2 (HEAD): app/lib/config.js is a clean regular file
+  // commit 2 (HEAD): app/lib/config.js is a clean regular file. The cached
+  // symlink entry must be dropped first: with core.symlinks=false (Windows
+  // without Developer Mode), git add would otherwise keep the 120000 mode.
   rmSync(join(dir, 'app/lib/config.js'), { force: true });
   copyFileSync(join(ROOT, 'app/lib/config.js'), join(dir, 'app/lib/config.js'));
+  assert(git(dir, 'rm', '--cached', '-q', '--', 'app/lib/config.js').status === 0, 'git rm --cached failed');
   assert(git(dir, ...authorFlags(), 'add', '--', 'app/lib/config.js').status === 0);
   assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'regular commit').status === 0);
   const out = join(dir, 'out');
@@ -700,7 +797,7 @@ ok('dangling symlink at output path counts as existing and is refused', () => {
   mkdirSync(out, { recursive: true });
   const short = headRef(dir).slice(0, 7);
   const link = join(out, `plan-review-snapshot-billing-lite-${short}.zip`);
-  symlinkSync('/does/not/exist.zip', link); // dangling symlink
+  symlinkForTest('/does/not/exist.zip', link); // dangling symlink
   const result = packager(dir, '--output-dir', out);
   assert(result.status !== 0, 'dangling symlink output should fail');
   assert(readDirectory(out).includes(basename(link)), 'dangling symlink must remain, not be followed');
@@ -735,5 +832,5 @@ ok('equal-size export-subst is rejected by actual bytes, not only file length', 
 // Summary
 // ---------------------------------------------------------------------------
 
-console.log(`\nPackaging acceptance suite: ${pass} passed, ${fail} failed of ${pass + fail}`);
+console.log(`\nPackaging acceptance suite: ${pass} passed, ${fail} failed, ${skipped} skipped of ${pass + fail + skipped}`);
 process.exit(fail === 0 ? 0 : 1);

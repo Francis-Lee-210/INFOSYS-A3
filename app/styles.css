@@ -198,3 +198,6 @@ button.ghost:hover { background: var(--paper); }
 .more-sources > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 700; }
 .more-sources > summary:focus-visible { outline: 3px solid var(--plum); outline-offset: 2px; }
 .more-sources[open] > summary { margin-bottom: 6px; }
+
+/* Destructive confirmation: Reset demo deletes the stored receipt (#36 P1-2) */
+button.danger:not(.ghost) { border-color: var(--magenta); background: var(--magenta); color: var(--white); }

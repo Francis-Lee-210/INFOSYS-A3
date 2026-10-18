@@ -155,7 +155,7 @@ export function registerIssue9Tests({ test, browser, startInjectedServer, inject
       await tabTo(p, 'confirm-intent'); await p.keyboard.press('Enter');
       await p.waitForFunction(() => document.querySelector('#receipt-status').textContent.includes('Saved'));
       assert.equal(await p.locator('#decision-title').evaluate(element => element === document.activeElement && element.checkVisibility()), true);
-      await text(p, '#receipt-status', /read-back verified/);
+      await text(p, '#receipt-status', /stored and checked/);
       await expectOnlyReceipt(p);
       await screenshot(p, 'keyboard-receipt', [1280, 1366, 390]);
       // Reset stays deliberate from the keyboard: cancel keeps history, confirm clears it.

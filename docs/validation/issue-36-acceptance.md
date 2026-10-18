@@ -28,6 +28,27 @@ key was used, no upstream request was made, and no participant was involved.
 - Pre-existing failures carried from the Part 0 baseline at `origin/main` `28aee9d`:
   **none** (the baseline FAIL list was empty).
 
+## Follow-up polish (Part 7)
+
+Branch `feat/36-usability-polish`, based on `feat/36-usability-hierarchy` (PR #40).
+Code-bearing head tested: `3cb9de943fa9c428539f718d15e7cfbdaacb3268`
+(`feat(#36): consistent names, Net/Tax/Gross help and plainer status copy`). The "after"
+screenshots were re-taken on this head; the "before" screenshots are unchanged.
+
+| Change | Heuristic (Nielsen H1–H10) |
+|---|---|
+| Step names now match the screen headings ("2. Review cost evidence", "3. Decide and save a receipt") | H4 Consistency and standards |
+| The demo button names its own label ("Try with demo data (Fixture demonstration)"), matching the "Fixture demonstration" provenance shown after loading | H4 Consistency and standards |
+| The eyebrow shows the product name "Billing Review Lite" instead of a screen-specific label | H4 Consistency and standards |
+| Screen 1 has a single filled main button, and "Next page" became a secondary button | H8 Aesthetic and minimalist design |
+| The "Reported figures remain exactly as returned…" audit sentence moved from the top of the cost screen into the "Technical evidence (for reviewers)" disclosure | H8 Aesthetic and minimalist design |
+| New "Net is the amount before sales tax…" explanation in the amount card | H10 Help and documentation |
+| Plain status texts: "Partial coverage: more records are available with Next page." and "Saved — your receipt was stored and checked." | H2 Match between system and the real world |
+
+Covering test: `issue 36: names stay consistent and the amount card explains Net, Tax and
+Gross`. Final `npm test` summary line on this head: **`All 174 tests passed.`** (167 pre-#36
+tests + 7 new `issue 36` tests); FAIL list empty.
+
 ## Limits
 
 This is a fixture-based browser check of the shipped `app/` UI at 1280×900 and 390×844. It
@@ -86,6 +107,23 @@ the `issue 36` tests check the shipped defaults.
 "P1-4 is not implemented" (R40-04), and Disconnect shown before connecting (R40-06). The other
 deviations still apply.
 
+**On PR #41 (`feat/36-usability-polish`):** R41-01 is fixed in `ba5a540`: the list summary now
+says "Partial coverage: you can check the next page for more records." instead of promising
+that more records exist. Both review rounds were merged in (`2e4d754`, `506b3f22ffd448e693507eef887220ed499ed652`). Final
+`npm test` on this branch: **`All 177 tests passed.`**; FAIL list empty. The "after" screenshots were
+re-taken on this branch.
+
+**Round 3 on PR #41:** the R40-03 and R40-05 fixes were merged in with `e1add67580a4a36bfa5100a8ca42ee204ea7608b` (no
+conflicts). Final `npm test` on this branch: **`All 181 tests passed.`**; FAIL list empty. The "after"
+screenshots were not re-taken because no visible main-flow screen changed.
+
+**Copy polish (Part 8, `f64f5100753ffcc6b7b1aa761491276f3ef61c70`):** the list shows one short plain summary, and the full
+coverage statement is kept in the list's "Technical evidence (for reviewers)" disclosure
+(H2, H8). The saved-receipt history says "record" and "data source" (H2). The one-receipt
+message appears once next to the options instead of three times (H8). Confirm reset uses the
+destructive colour (H5). Final `npm test`: **`All 182 tests passed.`**; FAIL list empty. The "after"
+screenshots were re-taken on this commit.
+
 ## Deviations from #36
 
 - Provenance labels, list column headers, the cost-table row labels and the
@@ -104,6 +142,5 @@ deviations still apply.
   messages stay in the top status area, which remains visible on every screen when the
   connection panel is collapsed, and it is updated at each step.
 - Disconnect / reset is still shown before a source is connected.
-- The page summary under the list ("a supported continuation is available") and the saved
-  status ("receipt write and read-back verified") keep their existing wording, because many
-  existing tests assert it.
+- The list summary on the last page ("Explicitly bounded fixture coverage exhausted…" /
+  "Continuation exhausted…") keeps its existing wording, because existing tests assert it.

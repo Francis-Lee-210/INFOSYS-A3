@@ -10,7 +10,7 @@
   <main class="shell">
     <header class="title-row">
       <div>
-        <p class="eyebrow">Plan Review Snapshot - cost evidence</p>
+        <p class="eyebrow">Billing Review Lite</p>
         <h1>Choose a document to review</h1>
         <p class="lead">Connect to the fixed SAP sandbox or choose an explicitly labelled fixture, select one document, and inspect the returned amount, basis, date and currency.</p>
       </div>
@@ -18,8 +18,8 @@
     </header>
     <ol id="steps" class="steps" aria-label="Review progress">
       <li data-step="list">1. Choose a document</li>
-      <li data-step="cost">2. Understand the cost</li>
-      <li data-step="decision">3. Record your decision</li>
+      <li data-step="cost">2. Review cost evidence</li>
+      <li data-step="decision">3. Decide and save a receipt</li>
     </ol>
 
     <section class="connection-panel" aria-labelledby="connection-title">
@@ -36,7 +36,7 @@
         </div>
         <div class="actions">
           <button id="connect-live" type="button">Connect to SAP sandbox (needs key)</button>
-          <button id="use-fixture" type="button" class="secondary">Try with demo data</button>
+          <button id="use-fixture" type="button" class="secondary">Try with demo data (Fixture demonstration)</button>
           <button id="disconnect" type="button" class="ghost" hidden>Disconnect / reset</button>
           <button id="reopen-receipt" type="button" class="secondary" hidden>Reopen receipt</button>
           <details id="more-sources" class="more-sources">
@@ -82,13 +82,14 @@
             </tbody>
           </table>
         </div>
-        <p id="list-meta" class="meta">No list request has returned.</p>
+        <p id="list-summary" class="meta">No records loaded yet.</p>
         <nav class="actions page-actions" aria-label="Loaded page navigation">
-          <button id="next-page" type="button" hidden>Next page</button>
+          <button id="next-page" type="button" class="secondary" hidden>Next page</button>
           <button id="restart-list" type="button" class="secondary" hidden>Restart list</button>
         </nav>
         <details class="tech-evidence">
           <summary>Technical evidence (for reviewers)</summary>
+          <p id="list-meta" class="meta">No list request has returned.</p>
           <p class="hint">Source API: API_BILLING_DOCUMENT_REQUEST_SRV (version 1.1.0), for the live source. The synthetic fixture has its own profile and no SAP API identity. SAP sandbox records are demonstration data; they are not Spark customer bills, payments or service-history evidence.</p>
         </details>
       </aside>
@@ -118,7 +119,6 @@
       <div class="cost-head">
         <button id="back-to-list" type="button" class="secondary">Back to list</button>
         <h2 id="cost-title">Cost evidence</h2>
-        <p class="coverage">Reported figures remain exactly as returned. No payment, service-period, customer-identity or converted-total claim is made.</p>
       </div>
       <div id="cost-error" class="error" role="alert" hidden></div>
       <p id="cost-update-status" class="status" role="status" tabindex="-1" hidden></p>
@@ -145,6 +145,7 @@
       </details>
       <details class="tech-evidence">
         <summary>Technical evidence (for reviewers)</summary>
+        <p class="coverage">Reported figures remain exactly as returned. No payment, service-period, customer-identity or converted-total claim is made.</p>
       <section class="cost-details" aria-labelledby="cost-details-title">
         <h3 id="cost-details-title">Source and date context</h3>
         <dl id="cost-fields" class="cost-fields"></dl>
@@ -202,7 +203,7 @@
       <button id="reset-demo" type="button" class="ghost danger">Reset demo</button>
       <div id="reset-confirmation" hidden>
         <p>Delete any stored receipt and clear the session, including the API key?</p>
-        <button id="confirm-reset" type="button">Confirm reset</button>
+        <button id="confirm-reset" type="button" class="danger">Confirm reset</button>
         <button id="cancel-reset" type="button" class="secondary">Cancel</button>
       </div>
       <div id="decision-summary"></div>

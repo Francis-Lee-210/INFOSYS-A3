@@ -1640,7 +1640,7 @@ test('issue 7: refresh reopens original live, fixture and synthetic historical r
       assert.deepEqual(await issue7Saved(p), saved);
       assert.deepEqual(apiRequests, []);
       await expectText(p, '#decision-history', 'Historical snapshot');
-      await expectText(p, '#decision-history', 'not a newly refreshed bill');
+      await expectText(p, '#decision-history', 'not a newly refreshed record');
       await expectText(p, '#provenance', mode === 'live' ? 'Live SAP sandbox' : (mode === 'fixture' ? 'Fixture demonstration' : 'Synthetic fixture'));
       assert.equal(await p.locator('#api-key').inputValue(), '');
       assert.equal(await p.evaluate(() => window.__issue6CostSnapshot), undefined);
@@ -1769,9 +1769,9 @@ test('issue 7: a different reviewed document explains the existing receipt witho
     await issue6RegressionSelect(p, '9000000002');
     await issue6RegressionReview(p);
     await p.locator('#continue-decision').click();
-    await expectText(p, '#decision-history', `A saved receipt for document ${snapshot.document.key} already exists`);
-    await expectText(p, '#decision-history', 'The current document 9000000002 has NOT been recorded');
-    await expectText(p, '#decision-history', 'Reset demo is required to record a new intention (one receipt at a time)');
+    await expectText(p, '#decision-restriction', `Document ${snapshot.document.key} is already recorded`);
+    await expectText(p, '#decision-restriction', 'so document 9000000002 cannot be recorded');
+    await expectText(p, '#decision-restriction', 'until you use Reset demo');
     assert.equal(await p.locator('#intent-options').isVisible(), false);
     assert.equal(await p.locator('#confirm-intent').isVisible(), false);
     assert.equal(await p.evaluate(key => localStorage.getItem(key), issue7ReceiptKey), stored);
@@ -2405,6 +2405,35 @@ test('issue 36 review: a failed Reset of an unreadable saved receipt explains it
   } finally { await context.close(); }
 });
 
+test('issue 36 polish: list summary is short and plain, saved history avoids bill and provenance, and Confirm reset looks destructive', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await p.locator('#use-fixture').click();
+    await p.locator('#records-body tr[data-key="9000000001"]').waitFor();
+    assert.equal(await p.locator('#list-summary').innerText(), 'Page 1: 2 record(s). You can check the next page for more records.');
+    assert.equal(await p.locator('#list-meta').isVisible(), false);
+    assert.match(await p.locator('#list-meta').textContent(), /No annual coverage or combined financial total/);
+    await p.locator('#next-page').click();
+    await p.waitForFunction(() => (document.querySelector('#list-summary')?.textContent || '').startsWith('Page 2:'));
+    assert.match(await p.locator('#list-summary').innerText(), /No further page was reported\./);
+    await p.locator('#restart-list').click();
+    await p.locator('#records-body tr[data-key="9000000001"]').click();
+    await p.waitForFunction(() => (document.querySelector('#status')?.textContent || '').includes('Detail loaded'));
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#continue-decision').click();
+    await p.locator('input[value="later"]').check();
+    await p.locator('#confirm-intent').click();
+    await p.locator('#receipt-success').waitFor({ state: 'visible' });
+    const history = await p.locator('#decision-history').innerText();
+    assert.match(history, /not a newly refreshed record/);
+    assert.doesNotMatch(history, /bill|provenance/);
+    await p.locator('#reset-demo').click();
+    assert.equal(await p.locator('#confirm-reset').evaluate(element => element.classList.contains('danger')), true);
+    await p.locator('#confirm-reset').click();
+  } finally { await context.close(); }
+});
+
 test('issue 36: connection panel collapses after choosing a source and Change source reopens it by keyboard', async () => {
   const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
   try {
@@ -2568,12 +2597,12 @@ test('issue 36: step indicator, lead text and status follow the current screen',
     assert.match(await p.locator('#screen-list .panel-head .hint').innerText(), /Sample data only \(SAP sandbox or offline demo\)/);
     await p.locator('#review-cost-evidence').click();
     await p.locator('#screen-cost').waitFor({ state: 'visible' });
-    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Understand the cost/);
+    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Review cost evidence/);
     assert.match(await p.locator('.title-row .lead').innerText(), /Check the amounts/);
     assert.match(await p.locator('.limits-box').innerText(), /This is sample data \(SAP sandbox or offline demo\), not a Spark customer bill\./);
     await p.locator('#continue-decision').click();
     await p.locator('#screen-decision').waitFor({ state: 'visible' });
-    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Record your decision/);
+    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Decide and save a receipt/);
     assert.match(await p.locator('#status').innerText(), /Decision step opened for document 9000000001\./);
     await p.locator('#back-to-evidence').click();
     await p.locator('#screen-cost').waitFor({ state: 'visible' });
@@ -2584,6 +2613,40 @@ test('issue 36: step indicator, lead text and status follow the current screen',
     await p.locator('#confirm-intent').click();
     await p.locator('#receipt-success').waitFor({ state: 'visible' });
     assert.match(await p.locator('#status').innerText(), /Receipt saved for document 9000000001\./);
+    await p.locator('#reset-demo').click();
+    await p.locator('#confirm-reset').click();
+  } finally { await context.close(); }
+});
+
+test('issue 36: names stay consistent and the amount card explains Net, Tax and Gross', async () => {
+  const context = await rawNewContext({ viewport: { width: 1280, height: 900 } }); const p = await context.newPage();
+  try {
+    await p.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    assert.equal(await p.locator('.title-row .eyebrow').textContent(), 'Billing Review Lite');
+    assert.match(await p.locator('#use-fixture').innerText(), /Try with demo data \(Fixture demonstration\)/);
+    await p.locator('#use-fixture').click();
+    await p.locator('#records-body tr[data-key="9000000001"]').click();
+    await p.waitForFunction(() => {
+      const statusText = document.querySelector('#status')?.textContent || '';
+      return statusText.includes('Detail loaded') && statusText.includes('9000000001');
+    });
+    assert.match(await p.locator('#connection-summary').innerText(), /Fixture demonstration/);
+    await p.locator('#review-cost-evidence').click();
+    await p.locator('#screen-cost').waitFor({ state: 'visible' });
+    assert.equal(await p.locator('h1').innerText(), 'Review cost evidence');
+    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Review cost evidence/);
+    const hero = await p.locator('.amount-hero').innerText();
+    assert.match(hero, /Net is the amount before sales tax/);
+    assert.match(hero, /Gross is the total amount reported for the document/);
+    assert.doesNotMatch(await p.locator('#screen-cost .cost-head').innerText(), /converted-total claim/);
+    await p.locator('#continue-decision').click();
+    await p.locator('#screen-decision').waitFor({ state: 'visible' });
+    assert.equal(await p.locator('h1').innerText(), 'Decide and save a receipt');
+    assert.match(await p.locator('#steps li[aria-current="step"]').innerText(), /Decide and save a receipt/);
+    await p.locator('input[value="keep"]').check();
+    await p.locator('#confirm-intent').click();
+    await p.locator('#receipt-success').waitFor({ state: 'visible' });
+    assert.match(await p.locator('#receipt-status').innerText(), /Saved — your receipt was stored and checked\./);
     await p.locator('#reset-demo').click();
     await p.locator('#confirm-reset').click();
   } finally { await context.close(); }

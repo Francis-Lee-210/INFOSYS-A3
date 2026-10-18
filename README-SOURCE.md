@@ -124,7 +124,7 @@ Blocked or rejected storage still permits reviewing returned records;
 temporarily unreadable old data is not overwritten, and Retry retains the
 pending intent. The app reports Saved only after write plus an identical validated read-back. Existing verified receipt data is preserved unchanged until a deliberate reset. Failed or unverifiable resets remain visible and retryable; deletion is claimed only after verification; they are not treated as absent or deleted merely because storage is temporarily blocked or a connection is dropped.
 
-**Try with demo data** and **Use synthetic billing-document fixture**
+**Try with demo data (Fixture demonstration)** and **Use synthetic billing-document fixture**
 are separate labelled offline modes. They require no key and do not contact
 SAP. Neither fixture nor a B0-evidence button establishes a new live workflow.
 

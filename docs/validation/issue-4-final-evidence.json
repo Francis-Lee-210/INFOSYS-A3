@@ -1,0 +1,240 @@
+{
+  "schemaVersion": "issue-4-final-acceptance-v1",
+  "scope": "Implementation acceptance of Issue #4; assessment artifacts and submission remain separate.",
+  "sourceCommit": "7c574edd8514c33dce60df2bdcf6e78f7a754ab7",
+  "sourceTree": "4ccb6ecc4aa9e45306f86f024721478155c34c95",
+  "sourceWasCurrentMainAtFinalCheck": true,
+  "archive": {
+    "basename": "plan-review-snapshot-billing-lite-7c574ed.zip",
+    "bytes": 108949,
+    "sha256": "300707045221bca287682d6223d1946be06b13336c7131f1bf12c2529a0f8f8f"
+  },
+  "packageInspection": {
+    "packagedAt": "2026-10-18T09:09:08.831Z",
+    "verifiedAt": "2026-10-18T09:10:37.871345+00:00",
+    "payloadCount": 17,
+    "crcValid": true,
+    "exactRegularEntries": true,
+    "allBytesMatchGitManifestAndExtraction": true,
+    "initiallyNoGitOrDependencies": true
+  },
+  "packagingSuite": {
+    "command": "node tools/tests/package-source.mjs",
+    "head": "7c574edd8514c33dce60df2bdcf6e78f7a754ab7",
+    "tree": "4ccb6ecc4aa9e45306f86f024721478155c34c95",
+    "runtime": {
+      "node": "v26.0.0",
+      "python": "3.9.6"
+    },
+    "platform": {
+      "system": "Darwin",
+      "macOS": "15.7.5",
+      "kernel": "24.6.0",
+      "architecture": "arm64"
+    },
+    "startUtc": "2026-10-18T09:08:56.679Z",
+    "endUtc": "2026-10-18T09:09:39.300Z",
+    "exitCode": 0,
+    "passCount": 63,
+    "failCount": 0,
+    "skipCount": 0,
+    "total": 63,
+    "logSha256": "8bcef2217bac1b8392be5c2ebe3eef7b82fccbd20ff7b688b227f83fb0b6e9dc",
+    "trackedCleanliness": {
+      "startClean": true,
+      "startStatus": "",
+      "endClean": true,
+      "endStatus": "",
+      "unchanged": true
+    },
+    "guards": {
+      "symlinked HEAD-worktree payload is refused": {
+        "executed": true,
+        "result": "ok symlinked HEAD-worktree payload is refused"
+      },
+      "--ref to a commit where payload is a symlink is refused": {
+        "executed": true,
+        "result": "ok --ref to a commit where payload is a symlink is refused"
+      },
+      "dangling symlink at output path counts as existing and is refused": {
+        "executed": true,
+        "result": "ok dangling symlink at output path counts as existing and is refused"
+      },
+      "autocrlf=true repository packages with LF bytes": {
+        "executed": true,
+        "result": "ok autocrlf=true repository packages with LF bytes"
+      },
+      "eol=crlf attribute is still rejected before outputs": {
+        "executed": true,
+        "result": "ok eol=crlf attribute is still rejected before outputs"
+      }
+    },
+    "childEnvironmentExclusions": [
+      "SAP_APIKEY"
+    ]
+  },
+  "freshStartup": {
+    "sourceCommit": "7c574edd8514c33dce60df2bdcf6e78f7a754ab7",
+    "archiveSha256": "300707045221bca287682d6223d1946be06b13336c7131f1bf12c2529a0f8f8f",
+    "origin": "http://127.0.0.1:6317",
+    "command": "PORT=6317 npm start",
+    "startedAt": "2026-10-18T09:11:20.890411+00:00",
+    "startedBeforeNpmInstall": true,
+    "tlsVerificationEnabled": true,
+    "httpStatus": 200,
+    "initialHeadingInSourceHtml": "Choose a document to review",
+    "startupVerifiedAt": "2026-10-18T09:11:50.672067+00:00"
+  },
+  "packagedBrowserSuite": {
+    "sourceCommit": "7c574edd8514c33dce60df2bdcf6e78f7a754ab7",
+    "archiveSha256": "300707045221bca287682d6223d1946be06b13336c7131f1bf12c2529a0f8f8f",
+    "startedAt": "2026-10-18T09:12:19.880102+00:00",
+    "basePort": 44000,
+    "unfiltered": true,
+    "overridesRemoved": [
+      "TEST_FILTER",
+      "CAPTURE_ISSUE8_SCREENSHOTS",
+      "CAPTURE_ISSUE8_REVIEW",
+      "CAPTURE_ISSUE9_SCREENSHOTS",
+      "PLAYWRIGHT_MODULE_PATH",
+      "PLAYWRIGHT_BROWSERS_PATH",
+      "CHROME_EXECUTABLE_PATH",
+      "SAP_APIKEY"
+    ],
+    "realSapRun": false,
+    "runtime": {
+      "node": "v26.0.0",
+      "npm": "11.12.1"
+    },
+    "npmCiExitCode": 0,
+    "syntaxCheckExitCode": 0,
+    "browserInstallExitCode": 0,
+    "browserTestsExitCode": 0,
+    "passCount": 182,
+    "failCount": 0,
+    "summary182": true,
+    "finishedAt": "2026-10-18T09:14:17.838012+00:00",
+    "all17PayloadFilesUnchanged": true,
+    "testLogSHA256": "c549ce449cf444c82d5b38034edafaa084cf7787708d7bf8bdbf8483c4d7fd39"
+  },
+  "browserCoverageBoundary": "182 fixture/injected browser groups: 167 inherited regressions use the legacy-expanded disclosure harness; 15 Issue #36 groups cover shipped UI defaults. This is separate from the actual SAP workflow below.",
+  "actualSapWorkflow": {
+    "sourceCommit": "7c574edd8514c33dce60df2bdcf6e78f7a754ab7",
+    "archiveSha256": "300707045221bca287682d6223d1946be06b13336c7131f1bf12c2529a0f8f8f",
+    "origin": "http://127.0.0.1:6317",
+    "transport": "default packaged local GET adapter",
+    "sourceId": "API_BILLING_DOCUMENT_REQUEST_SRV",
+    "sourceVersion": "1.1.0",
+    "checks": {
+      "liveLabelOnList": true,
+      "nonEmptyActualList": true,
+      "coverageDoesNotClaimCompleteHistory": true,
+      "detailMatchesSelectedKey": true,
+      "detailMatchesApiDate": true,
+      "detailMatchesCurrency": true,
+      "detailRetainsListAmount": true,
+      "detailRetainsBillingRequestKind": true,
+      "optionalCoverageStaysPartial": true,
+      "costMatchesSelectedKey": true,
+      "costMatchesApiDate": true,
+      "costMatchesCurrency": true,
+      "costRetainsExactNetString": true,
+      "costRetainsLiveRequestMeaning": true,
+      "dateMeaningNotPaymentOrServicePeriod": true,
+      "missingServiceAndPaymentRemainUnavailable": true,
+      "itemsRemainPartialAndUnassessed": true,
+      "decisionMatchesSelectedKey": true,
+      "decisionMatchesApiDate": true,
+      "decisionMatchesCurrency": true,
+      "decisionIsIntentionOnly": true,
+      "laterSelectedAndUnsaved": true,
+      "noReminderClaim": true,
+      "decisionRetainsThreeExactAmounts": true,
+      "savedOnlyAfterStoredAndChecked": true,
+      "savedReceiptRetainsSelectedEvidence": true,
+      "savedReceiptIsHistorical": true,
+      "savedReceiptHasLiveSource": true,
+      "reopenSameReceiptIdentity": true,
+      "reopenSameConfirmationTimestamp": true,
+      "reopenSameSelectedEvidence": true,
+      "reopenRetainsLiveOriginalProvenance": true,
+      "reopenHistoricalWithLater": true,
+      "reopenUiReportsNoNewNetwork": true,
+      "reopenKeyFieldRenderedEmpty": true,
+      "cancelResetPreservesReceipt": true,
+      "confirmResetClearsReceiptAndSession": true,
+      "afterResetReloadStaysEmpty": true
+    },
+    "loadedCount": 10,
+    "observationsStartedAt": "2026-10-18T09:15:32.735Z",
+    "usableCount": 10,
+    "itemsCoverage": {
+      "status": "partial",
+      "loadedRows": 1,
+      "summedAmounts": false
+    },
+    "reportedAmountStringCount": 3,
+    "finishedAt": "2026-10-18T09:24:36.589Z",
+    "intent": "Later",
+    "checkCount": 38,
+    "allChecksPassed": true,
+    "evidenceBoundary": "Visible browser UI/AX observations only. No direct live storage inspection or raw receipt export. No record identifiers, amounts, credentials or raw response bodies are retained here."
+  },
+  "liveTimingBoundary": "observationsStartedAt was recorded once the non-empty live list was visible; it is not a connection-start timestamp.",
+  "postRunIntegrity": {
+    "sourceCommit": "7c574edd8514c33dce60df2bdcf6e78f7a754ab7",
+    "archiveSha256": "300707045221bca287682d6223d1946be06b13336c7131f1bf12c2529a0f8f8f",
+    "verifiedAt": "2026-10-18T09:29:20.375890+00:00",
+    "payloadCount": 17,
+    "allPayloadBytesMatchGitWorktreeArchiveManifestAndExtraction": true,
+    "archiveCrcValid": true,
+    "testLogHashesMatch": true,
+    "ownedLiveServerStopped": true,
+    "ownedLivePort": 6317,
+    "portClosed": true
+  },
+  "cleanup": {
+    "ownedLiveServerStopped": true,
+    "ownedLivePortClosed": true,
+    "ownedBrowserTabsClosed": true,
+    "browserControlRuntimeReset": true
+  },
+  "evidenceBoundary": "No key, raw response, record identifier, reported amount or live receipt body is retained. Live observations used visible browser UI/AX; no direct live-storage inspection or network interception is claimed.",
+  "evidenceFiles": {
+    "issue-4-final-source-package.manifest.json": {
+      "bytes": 3008,
+      "sha256": "d0a2ad3480d455a2f5c2cf339a57537d3eced5c06a8b363dea9a1cf79b28adcc"
+    },
+    "issue-4-final-package-test-results.txt": {
+      "bytes": 4142,
+      "sha256": "8bcef2217bac1b8392be5c2ebe3eef7b82fccbd20ff7b688b227f83fb0b6e9dc"
+    },
+    "issue-4-final-browser-test-results.txt": {
+      "bytes": 18680,
+      "sha256": "c549ce449cf444c82d5b38034edafaa084cf7787708d7bf8bdbf8483c4d7fd39"
+    },
+    "issue-4-final-reset.png": {
+      "bytes": 90537,
+      "sha256": "edf403cdf4e0ca16afb9ff499eb3f2e0460084dd49d20a454d2649aa868e2a38"
+    }
+  },
+  "independentAudit": {
+    "receivedAt": "2026-10-18T09:34:04.997803+00:00",
+    "reviewer": "Separate native Codex read-only subagent",
+    "result": "PASS",
+    "blockingDiscrepancies": 0,
+    "verified": [
+      "all 17 frozen/worktree/manifest/ZIP/extracted payload bytes",
+      "archive identity, CRC, entry safety and attachment hashes",
+      "63 packaging successes and 182 browser PASS lines",
+      "38 true sanitized actual-live observation flags",
+      "26 verbatim acceptance criteria",
+      "11 relative links and anchor",
+      "empty-state screenshot privacy",
+      "historical Issue #10 banner-only change",
+      "fixture/live/historical evidence and assessment scope boundaries"
+    ],
+    "testsOrSapRepeated": false,
+    "credentialsOrBrowserStateAccessed": false
+  }
+}

@@ -42,8 +42,10 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
+import { collectModuleReferences } from './lib/scan-imports.mjs';
 
 const SCHEMA_VERSION = '1.0.0';
 const ARCHIVE_PREFIX = 'plan-review-snapshot-billing-lite/';
@@ -234,6 +236,41 @@ function scanPayload(blobs) {
   return findings;
 }
 
+// Lexically collect local ES module references and resolve each relative
+// specifier as the ESM loader would (new URL + fileURLToPath), so query,
+// fragment, percent-encoding or `..` segments cannot hide a missing or
+// repo-escaping target. Bare and built-in specifiers are out of scope.
+function scanPayloadImports(blobs) {
+  const payload = new Set(PAYLOAD);
+  const missing = [];
+  for (const path of PAYLOAD) {
+    if (!/\.(?:js|mjs)$/.test(path)) continue;
+    const text = blobs.get(path).toString('utf8');
+    let references;
+    try {
+      references = collectModuleReferences(text);
+    } catch (error) {
+      fail(`cannot scan payload module for imports: ${path}: ${error.message}`);
+    }
+    const base = pathToFileURL(resolve(ROOT, path));
+    for (const specifier of references) {
+      if (!specifier.startsWith('./') && !specifier.startsWith('../')) continue;
+      let resolved;
+      try {
+        const target = fileURLToPath(new URL(specifier, base));
+        resolved = relative(ROOT, target).split(sep).join('/');
+      } catch (error) {
+        missing.push({ path, specifier, resolved: `unresolvable module URL (${error.message})` });
+        continue;
+      }
+      if (resolved === '..' || resolved.startsWith('../') || !payload.has(resolved)) {
+        missing.push({ path, specifier, resolved });
+      }
+    }
+  }
+  return missing;
+}
+
 // Ancestor directories (repo-relative, without the archive prefix) of a file.
 function ancestorDirs(path) {
   const parts = path.split('/');
@@ -389,6 +426,14 @@ function main() {
       console.error(`Reject: ${finding.path}: ${finding.category}`);
     }
     fail(`content check found ${findings.length} issue(s); refusing to create packaged outputs`);
+  }
+
+  const missingImports = scanPayloadImports(blobs);
+  if (missingImports.length > 0) {
+    for (const item of missingImports) {
+      console.error(`payload module ${item.path} imports ${item.specifier} -> ${item.resolved}, which is not in the payload`);
+    }
+    fail(`import integrity check found ${missingImports.length} missing module(s); refusing to create packaged outputs`);
   }
 
   const outDir = resolve(ROOT, outputDir);

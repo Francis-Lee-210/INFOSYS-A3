@@ -236,6 +236,140 @@ ok('clean repo produces ZIP and manifest', () => {
   console.log(`    archive ${zipName} (${archiveBytes.length} bytes), manifest verified`);
 });
 
+function assertModuleSyntax(dir) {
+  const result = spawnSync(process.execPath, ['--check', join(dir, 'app/tests/browser.mjs')], { encoding: 'utf8' });
+  assert(result.status === 0, `regression fixture must be valid module syntax: ${result.stderr}`);
+  console.log('    fixture node --check: exit 0');
+}
+
+function logFixturePackageResult(result, out) {
+  const files = readDirectory(out);
+  console.log(`    actual packager: exit ${result.status}; ZIP ${files.some(file => file.endsWith('.zip')) ? 'present' : 'absent'}; manifest ${files.some(file => file.endsWith('.manifest.json')) ? 'present' : 'absent'}`);
+}
+
+function assertImportRejected(name, source, expectedSpecifier, expectedPath = expectedSpecifier, checkSyntax = false) {
+  ok(name, () => {
+    const dir = initRepoWithPayload();
+    appendFile(join(dir, 'app/tests/browser.mjs'), `\n${source}\n`);
+    assert(git(dir, ...authorFlags(), 'add', '--', 'app/tests/browser.mjs').status === 0);
+    assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add missing import').status === 0);
+    if (checkSyntax) assertModuleSyntax(dir);
+    const out = join(dir, 'out');
+    const result = packager(dir, '--output-dir', out);
+    if (checkSyntax) logFixturePackageResult(result, out);
+    assert(result.status !== 0, 'missing local import should fail');
+    assert(result.stderr.includes('browser.mjs') && result.stderr.includes(expectedSpecifier), `diagnostic omitted importing file or specifier: ${result.stderr}`);
+    assert(result.stderr.includes(expectedPath), `diagnostic omitted resolved path: ${result.stderr}`);
+    assert(readDirectory(out).length === 0, 'output created despite missing import refusal');
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Import integrity
+// ---------------------------------------------------------------------------
+
+assertImportRejected('missing static import is rejected before outputs', "import './issue-28.mjs';", './issue-28.mjs', 'app/tests/issue-28.mjs');
+assertImportRejected('missing side-effect import is rejected', "import './x.mjs';", './x.mjs', 'app/tests/x.mjs');
+assertImportRejected('missing re-export is rejected', "export * from './y.js';", './y.js', 'app/tests/y.js');
+assertImportRejected('missing dynamic string import is rejected', "import('./z.mjs');", './z.mjs', 'app/tests/z.mjs');
+assertImportRejected('import escaping repository root is rejected', "import '../../../outside.mjs';", '../../../outside.mjs', '../outside.mjs');
+assertImportRejected('missing import with quotes, semicolons and parentheses in clause comments is rejected', "import {\n  a, // don't drop; (legacy)\n  /* b's (old); */ b,\n} from './w.mjs';\nexport { c /* (c); */ } from './v.mjs';", './w.mjs', 'app/tests/w.mjs');
+
+ok('bare, built-in and variable imports are ignored', () => {
+  const dir = initRepoWithPayload();
+  appendFile(join(dir, 'app/tests/browser.mjs'), "\nimport 'node:fs';\nimport 'playwright';\nimport(variable);\n");
+  assert(git(dir, ...authorFlags(), 'add', '--', 'app/tests/browser.mjs').status === 0);
+  assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add external imports').status === 0);
+  const out = join(dir, 'out');
+  const result = packager(dir, '--output-dir', out);
+  assert(result.status === 0, `valid non-local imports failed: ${result.stderr.trim()}`);
+  assert(readDirectory(out).some((file) => file.endsWith('.zip')), 'successful packaging produced no ZIP');
+});
+
+ok('imports after function exports, declarations, and import.meta are detected', () => {
+  const dir = initRepoWithPayload();
+  const cases = [
+    ['app/tests/browser.mjs', "export function f() {\n  return import('./miss-function.mjs');\n}\nexport * from './issue-27.mjs';"],
+    ['app/tests/issue-8.mjs', "export const a = 1;\nimport './miss-declaration.mjs';\nimport z from './issue-27.mjs';"],
+    ['app/tests/issue-9.mjs', "const u = import.meta.url;\nimport './miss-meta.mjs';\nimport y from './issue-27.mjs';"],
+  ];
+  for (const [path, content] of cases) {
+    appendFile(join(dir, path), `\n${content}\n`);
+    assert(git(dir, ...authorFlags(), 'add', '--', path).status === 0);
+  }
+  assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add imports after declarations').status === 0);
+  const out = join(dir, 'out');
+  const result = packager(dir, '--output-dir', out);
+  assert(result.status !== 0, 'missing imports should fail');
+  for (const target of ['miss-function.mjs', 'miss-declaration.mjs', 'miss-meta.mjs']) {
+    assert(result.stderr.includes(target), `diagnostic omitted ${target}: ${result.stderr}`);
+  }
+  assert(readDirectory(out).length === 0, 'output created despite missing imports');
+});
+
+ok('multiline import list with a comment, import.meta and export default package successfully', () => {
+  const dir = initRepoWithPayload();
+  appendFile(join(dir, 'app/tests/browser.mjs'), "\nimport {\n a,\n b, // moved from './gone.mjs'; don't re-add\n} from './issue-27.mjs';\nconst url = import.meta.url;\nexport default function () {}\n");
+  assert(git(dir, ...authorFlags(), 'add', '--', 'app/tests/browser.mjs').status === 0);
+  assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add multiline import').status === 0);
+  const out = join(dir, 'out');
+  const result = packager(dir, '--output-dir', out);
+  assert(result.status === 0, `valid multiline import failed: ${result.stderr.trim()}`);
+  assert(readDirectory(out).some((file) => file.endsWith('.zip')), 'successful packaging produced no ZIP');
+});
+
+// ---------------------------------------------------------------------------
+// Import integrity: lexical context (comments, quoted names, string escapes,
+// URL query/fragment, member access). Issue #33 review regressions.
+// ---------------------------------------------------------------------------
+
+function assertImportAccepted(name, source, checkSyntax = false) {
+  ok(name, () => {
+    const dir = initRepoWithPayload();
+    appendFile(join(dir, 'app/tests/browser.mjs'), `\n${source}\n`);
+    assert(git(dir, ...authorFlags(), 'add', '--', 'app/tests/browser.mjs').status === 0);
+    assert(git(dir, ...authorFlags(), 'commit', '-q', '-m', 'add accepted import').status === 0);
+    if (checkSyntax) assertModuleSyntax(dir);
+    const out = join(dir, 'out');
+    const result = packager(dir, '--output-dir', out);
+    if (checkSyntax) logFixturePackageResult(result, out);
+    assert(result.status === 0, `valid source should package: ${result.stderr.trim() || result.stdout.trim()}`);
+    assert(readDirectory(out).some((file) => file.endsWith('.zip')), 'accepted source produced no ZIP');
+    assert(readDirectory(out).some((file) => file.endsWith('.manifest.json')), 'accepted source produced no manifest');
+  });
+}
+
+assertImportRejected('comment between from and specifier is detected', "import { x as __pr34_x } from /* review */ './review-missing.mjs';", './review-missing.mjs', 'app/tests/review-missing.mjs');
+assertImportRejected('comment after side-effect import is detected', "import /* review */ './review-missing.mjs';", './review-missing.mjs', 'app/tests/review-missing.mjs');
+assertImportRejected('comment inside dynamic import is detected', "import(/* review */ './review-missing.mjs');", './review-missing.mjs', 'app/tests/review-missing.mjs');
+assertImportRejected('quoted import name does not hide a missing dependency', 'import { "x" as __pr34_x } from \'./review-missing.mjs\';', './review-missing.mjs', 'app/tests/review-missing.mjs');
+assertImportRejected('escaped slash hiding a missing relative module is rejected', String.raw`import '.\u002freview-missing.mjs';`, './review-missing.mjs', 'app/tests/review-missing.mjs');
+assertImportRejected('real import inside a template expression is rejected', "const __pr34_t = `x ${await import('./review-missing.mjs')}`;", './review-missing.mjs', 'app/tests/review-missing.mjs');
+assertImportRejected('missing module with query and fragment is rejected', "import './review-missing.mjs?cache=1#x';", './review-missing.mjs?cache=1#x', 'app/tests/review-missing.mjs');
+
+assertImportAccepted('escaped dot in an existing module name packages successfully', String.raw`import './issue-27\u002emjs';`);
+assertImportAccepted('existing module with a query packages successfully', "import './issue-27.mjs?review=1';");
+assertImportAccepted('existing module with a fragment packages successfully', "import './issue-27.mjs#review';");
+assertImportAccepted('import text in a comment, string, template and object method is ignored', "// import './miss-comment.mjs';\nconst __pr34_s = \"import './miss-string.mjs';\";\nconst __pr34_t = `import './miss-template.mjs';`;\nconst __pr34_loader = { import(v) { return v; } }; __pr34_loader.import('./miss-method.mjs');");
+assertImportAccepted('concatenated dynamic import is ignored', "const __pr34_suffix = 'missing'; import('./' + __pr34_suffix + '.mjs');");
+assertImportAccepted('existing module with a percent-encoded filename packages successfully', "import './issue-27%2Emjs';");
+assertImportRejected('percent-encoded traversal with a missing target is rejected', "import './%2e%2e/%2e%2e/review-missing.mjs';", './%2e%2e/%2e%2e/review-missing.mjs', 'review-missing.mjs');
+assertImportRejected('quoted export name does not hide a missing dependency', 'export { "x" as __pr34_y } from \'./review-missing.mjs\';', './review-missing.mjs', 'app/tests/review-missing.mjs');
+assertImportRejected('genuine nested import inside a non-literal dynamic import is detected', "import((await import('./review-missing.mjs')).default);", './review-missing.mjs', 'app/tests/review-missing.mjs');
+assertImportAccepted('regex import text after a control condition is not a reference', "if (true) /import('.\\x2Freview-missing.mjs')/.test('');");
+assertImportRejected('division after a function expression before a real import is detected', "const __pr34_ratio = function () {} / (await import('./review-missing.mjs'));", './review-missing.mjs', 'app/tests/review-missing.mjs');
+assertImportRejected('division after a class expression before a real import is detected', "const __pr34_ratio = class {} / (await import('./review-missing.mjs'));", './review-missing.mjs', 'app/tests/review-missing.mjs');
+
+// DebuggerStatement has no operand: ASI leaves a following slash in regex
+// context, unlike an ordinary property named debugger. Check every new fixture
+// as a whole .mjs module, then invoke the actual packager on its committed blob.
+assertImportAccepted('debugger ASI before regex containing a closing brace packages successfully', "debugger\n/}/.test('');", true);
+assertImportAccepted('debugger ASI before regex import text does not invent a dependency', String.raw`debugger
+/import('.\x2Freview-missing.mjs')/.test('');`, true);
+assertImportAccepted('debugger explicit-semicolon regex control packages successfully', "debugger;\n/}/.test('');", true);
+assertImportRejected('real missing import after debugger ASI and regex is detected before outputs', "debugger\n/}/.test('');\nawait import('./review-missing.mjs');", './review-missing.mjs', 'app/tests/review-missing.mjs', true);
+assertImportRejected('debugger property division retains a real literal dynamic import', "const __pr34_debuggerObject = { debugger: 8 };\n__pr34_debuggerObject.debugger / (await import('./review-missing.mjs'));", './review-missing.mjs', 'app/tests/review-missing.mjs', true);
+
 // ---------------------------------------------------------------------------
 // Refusal behaviors
 // ---------------------------------------------------------------------------
